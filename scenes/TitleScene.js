@@ -1,3 +1,5 @@
+const Phaser = window.Phaser;
+
 /**
  * TitleScene.js
  *
