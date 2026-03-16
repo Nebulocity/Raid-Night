@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Stormcaller</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: monospace;
+    }
+
+    /* Phaser injects its canvas here */
+    #game-container canvas {
+      display: block;
+      /* Crisp pixel art scaling */
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* Loading screen overlay (shown before Phaser takes over) */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: #0a0a0a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #c8a96e;
+      gap: 16px;
+      z-index: 999;
+      transition: opacity 0.5s ease;
+    }
+
+    #loading-overlay.hidden { 
+      opacity: 0; 
+      pointer-events: none; 
+    }
+
+    #loading-overlay h1 { 
+      font-size: 1.4rem; 
+      letter-spacing: 0.2em; 
+      text-transform: uppercase; 
+    }
+
+    #loading-bar-outer {
+      width: 200px; height: 6px;
+      background: #2a2a2a;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    #loading-bar-inner {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #c8a96e, #ffd700);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    #loading-status { 
+      font-size: 0.7rem; 
+      color: #888; 
+      letter-spacing: 0.1em; 
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Pre-phaser loading overlay -->
+  <div id="loading-overlay">
+    <h1>Stormcaller</h1>
+    <div id="loading-bar-outer">
+      <div id="loading-bar-inner"></div>
+    </div>
+    <div id="loading-status">Initializing...</div>
+  </div>
+
+  <!-- Phaser mounts its canvas here -->
+  <div id="game-container"></div>
+
+  <!-- Single Vite entry point - imports everything -->
+  <script type="module" src="/main.js"></script>
+
+</body>
+</html>
