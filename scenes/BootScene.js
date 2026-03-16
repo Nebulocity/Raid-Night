@@ -10,6 +10,8 @@
  *
  * Nothing gameplay-related lives here.
  */
+const Phaser = window.Phaser;
+
 export default class BootScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BootScene' });
