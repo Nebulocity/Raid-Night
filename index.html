@@ -17,7 +17,7 @@
       font-family: monospace;
     }
 
-    /* Phaser injects its canvas here */
+    /* Phaser canvas */
     #game-container canvas {
       display: block;
       /* Crisp pixel art scaling */
@@ -25,7 +25,7 @@
       image-rendering: crisp-edges;
     }
 
-    /* Loading screen overlay (shown before Phaser takes over) */
+    /* Loading screen overlay */
     #loading-overlay {
       position: fixed;
       inset: 0;
@@ -75,7 +75,7 @@
 </head>
 <body>
 
-  <!-- Pre-phaser loading overlay -->
+  <!-- Loading overlay -->
   <div id="loading-overlay">
     <h1>Stormcaller</h1>
     <div id="loading-bar-outer">
@@ -84,11 +84,11 @@
     <div id="loading-status">Initializing...</div>
   </div>
 
-  <!-- Phaser mounts its canvas here -->
+  <!-- Phaser mount -->
   <div id="game-container"></div>
 
-  <!-- Single Vite entry point - imports everything -->
-  <script type="module" src="/main.js"></script>
+  <!-- Vite entry point -->
+  <script type="module" src="./main.js"></script>
 
 </body>
 </html>
