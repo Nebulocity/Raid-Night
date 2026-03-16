@@ -1,3 +1,5 @@
+const Phaser = window.Phaser;
+
 /**
  * BootScene.js
  *
@@ -10,7 +12,7 @@
  *
  * Nothing gameplay-related lives here.
  */
-const Phaser = window.Phaser;
+
 
 export default class BootScene extends Phaser.Scene {
   constructor() {
