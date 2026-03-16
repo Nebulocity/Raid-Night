@@ -9,7 +9,7 @@ const Phaser = window.Phaser;
  * are read from levelData (the JSON). No boss-specific strings are
  * hardcoded here. Adding a new boss means writing a new JSON file only.
  */
-import Phaser from 'phaser';
+//import Phaser from 'phaser';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
