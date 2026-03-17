@@ -1,7 +1,7 @@
 {
   "level": {
     "id": "level_01",
-    "name": "The Molten Core",
+    "name": "The Churning Core",
     "background": "molten_cave",
     "music": "boss_theme_01",
     "bossId": "ragnaros"

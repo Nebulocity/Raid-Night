@@ -1,0 +1,683 @@
+{
+  "level": {
+    "id": "spookspire_dorothy",
+    "name": "Spookspire Keep",
+    "background": "lair_ragnaros",
+    "music": "boss_theme_01",
+    "bossId": "dorothy"
+  },
+  "assets": {
+    "background": {
+      "key": "lair_ragnaros",
+      "path": "sprites/lair_ragnaros.png"
+    },
+    "spritesheets": [
+      {
+        "key": "ragnaros_idle",
+        "path": "sprites/ragnaros_idle.png",
+        "frameWidth": 256,
+        "frameHeight": 256
+      },
+      {
+        "key": "ragnaros_attack",
+        "path": "sprites/ragnaros_attack.png",
+        "frameWidth": 256,
+        "frameHeight": 256
+      },
+      {
+        "key": "ragnaros_submerge",
+        "path": "sprites/ragnaros_submerge.png",
+        "frameWidth": 256,
+        "frameHeight": 256
+      },
+      {
+        "key": "ragnaros_wrath",
+        "path": "sprites/ragnaros_wrath.png",
+        "frameWidth": 256,
+        "frameHeight": 256
+      }
+    ]
+  },
+  "boss": {
+    "id": "dorothy",
+    "name": "Dorothy",
+    "sprite": "boss_ragnaros",
+    "openingDialogue": [
+      "DOROTHY steps forward!"
+    ],
+    "stats": {
+      "health": 180000,
+      "maxHealth": 180000,
+      "mana": 10000,
+      "maxMana": 10000,
+      "usesMana": false,
+      "armor": 6000,
+      "attackHit": 95,
+      "spellHit": 95,
+      "attackSpeed": 3,
+      "damageRange": [
+        1200,
+        1800
+      ],
+      "resistList": {
+        "fire": 25,
+        "frost": 25,
+        "nature": 25,
+        "holy": 0,
+        "shadow": 25,
+        "arcane": 25
+      },
+      "missChance": 5
+    },
+    "phases": [
+      {
+        "id": "phase_1",
+        "label": "Phase 1",
+        "trigger": {
+          "type": "health_percent",
+          "value": 100
+        },
+        "abilityIds": [
+          "skipping_reel",
+          "ruby_panic"
+        ],
+        "backgroundVariant": "lair_ragnaros",
+        "dialogue": null
+      }
+    ],
+    "threatTable": {
+      "player": 0,
+      "tank": 0,
+      "healer": 0
+    },
+    "spriteKey": "ragnaros_idle",
+    "spriteScale": 4,
+    "blendMode": "ADD",
+    "animations": {
+      "idle": {
+        "key": "ragnaros_idle",
+        "startFrame": 0,
+        "endFrame": 11,
+        "frameRate": 6,
+        "repeat": -1,
+        "yoyo": false
+      },
+      "attack": {
+        "key": "ragnaros_attack",
+        "startFrame": 0,
+        "endFrame": 15,
+        "frameRate": 12,
+        "repeat": 0,
+        "yoyo": false
+      },
+      "submerge": {
+        "key": "ragnaros_submerge",
+        "startFrame": 0,
+        "endFrame": 2,
+        "frameRate": 4,
+        "repeat": 0,
+        "yoyo": false
+      },
+      "lavapool": {
+        "key": "ragnaros_submerge",
+        "startFrame": 3,
+        "endFrame": 5,
+        "frameRate": 3,
+        "repeat": -1,
+        "yoyo": true
+      },
+      "emerge": {
+        "key": "ragnaros_submerge",
+        "startFrame": 6,
+        "endFrame": 8,
+        "frameRate": 5,
+        "repeat": 0,
+        "yoyo": false
+      },
+      "wrath": {
+        "key": "ragnaros_wrath",
+        "startFrame": 0,
+        "endFrame": 15,
+        "frameRate": 12,
+        "repeat": 0,
+        "yoyo": false
+      }
+    },
+    "openingSound": "audio/ragnaros_intro.ogg",
+    "deathDialogue": [
+      "Dorothy collapses in a heap of theatrical nonsense."
+    ],
+    "deathSound": "audio/ragnaros_death.ogg",
+    "attackSound": "audio/ragnaros_attack.ogg",
+    "audioDuration": 4000
+  },
+  "characters": {
+    "player": {
+      "id": "player",
+      "name": "Earth Mother's Favorite",
+      "class": "shaman",
+      "race": "tauren",
+      "sprite": "tauren_shaman",
+      "stats": {
+        "health": 8010,
+        "maxHealth": 8010,
+        "mana": 8963,
+        "maxMana": 8963,
+        "armor": 9471,
+        "attackHit": 90,
+        "spellHit": 92,
+        "attackSpeed": 2,
+        "damageRange": [
+          118,
+          250
+        ],
+        "actionInterval": 2,
+        "blockChance": 5,
+        "missChance": 5
+      },
+      "abilityIds": [
+        "lightning_bolt",
+        "chain_lightning",
+        "strength_of_earth_totem",
+        "windfury_totem",
+        "grounding_totem",
+        "totem_of_wrath",
+        "wrath_of_air_totem"
+      ]
+    },
+    "tank": {
+      "id": "tank",
+      "name": "Tanky McTankface",
+      "class": "paladin",
+      "sprite": "tank",
+      "stats": {
+        "health": 12067,
+        "maxHealth": 12067,
+        "mana": 5418,
+        "maxMana": 5418,
+        "armor": 14817,
+        "attackHit": 88,
+        "spellHit": 80,
+        "attackSpeed": 2,
+        "damageRange": [
+          107,
+          212
+        ],
+        "actionInterval": 2,
+        "blockChance": 35,
+        "missChance": 5
+      },
+      "abilityIds": [
+        "consecration",
+        "judgement_of_righteousness",
+        "judgement_of_wisdom",
+        "holy_shield"
+      ]
+    },
+    "healer": {
+      "id": "healer",
+      "name": "Healer McHealface",
+      "class": "druid",
+      "sprite": "druid_healer",
+      "stats": {
+        "health": 7497,
+        "maxHealth": 7497,
+        "mana": 9303,
+        "maxMana": 9303,
+        "armor": 12256,
+        "attackHit": 75,
+        "spellHit": 88,
+        "attackSpeed": 3,
+        "damageRange": [
+          200,
+          350
+        ],
+        "actionInterval": 1,
+        "missChance": 5
+      },
+      "abilityIds": [
+        "innervate",
+        "lifebloom",
+        "regrowth",
+        "swiftmend",
+        "rejuvenation",
+        "rebirth",
+        "faerie_fire",
+        "healing_touch"
+      ]
+    }
+  },
+  "abilities": {
+    "consecration": {
+      "id": "consecration",
+      "name": "Consecration",
+      "type": "damage_aoe",
+      "manaCost": 666,
+      "immediateFlag": false,
+      "immediateEffect": null,
+      "duration": 4,
+      "tickEffect": {
+        "type": "damage",
+        "damageType": "holy",
+        "value": 1000
+      },
+      "threatPerDamage": 2.0,
+      "recastTimer": 8,
+      "targetType": "boss",
+      "sprite": "fx_consecration"
+    },
+    "judgement_of_righteousness": {
+      "id": "judgement_of_righteousness",
+      "name": "Judgement of Righteousness",
+      "type": "damage_direct",
+      "manaCost": 400,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "damage",
+        "damageType": "holy",
+        "value": 800
+      },
+      "duration": 0,
+      "tickEffect": null,
+      "threatPerDamage": 2.0,
+      "recastTimer": 10,
+      "targetType": "boss",
+      "sprite": "fx_judgement"
+    },
+    "judgement_of_wisdom": {
+      "id": "judgement_of_wisdom",
+      "name": "Judgement of Wisdom",
+      "type": "debuff",
+      "manaCost": 350,
+      "immediateFlag": false,
+      "immediateEffect": null,
+      "duration": 15,
+      "tickEffect": null,
+      "onHitEffect": {
+        "type": "mana_restore",
+        "value": 80,
+        "target": "attacker",
+        "refreshesDuration": true
+      },
+      "threatPerDamage": 1,
+      "recastTimer": 15,
+      "targetType": "boss",
+      "sprite": "fx_judgement_wisdom"
+    },
+    "holy_shield": {
+      "id": "holy_shield",
+      "name": "Holy Shield",
+      "type": "buff_self",
+      "manaCost": 295,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "apply_buff",
+        "target": "self",
+        "duration": 10,
+        "charges": 3,
+        "blockChance": 30,
+        "blockDamage": 205,
+        "blockThreatMultiplier": 1.35
+      },
+      "duration": 10,
+      "tickEffect": null,
+      "threatPerDamage": 2,
+      "recastTimer": 10,
+      "targetType": "self",
+      "sprite": "fx_holy_shield"
+    },
+    "regrowth": {
+      "id": "regrowth",
+      "name": "Regrowth",
+      "type": "heal",
+      "manaCost": 675,
+      "immediateFlag": true,
+      "immediateHealMin": 1980,
+      "immediateHealMax": 2700,
+      "immediateEffect": {
+        "type": "heal",
+        "value": 2000
+      },
+      "duration": 20,
+      "tickHealMin": 760,
+      "tickHealMax": 1015,
+      "tickEffect": {
+        "type": "heal",
+        "value": 887
+      },
+      "threatPerHealing": 0.1,
+      "recastTimer": 0,
+      "targetType": "ally_lowest_hp",
+      "sprite": "fx_regrowth"
+    },
+    "rejuvenation": {
+      "id": "rejuvenation",
+      "name": "Rejuvenation",
+      "type": "heal_over_time",
+      "manaCost": 415,
+      "immediateFlag": false,
+      "immediateEffect": null,
+      "duration": 10,
+      "tickHealMin": 415,
+      "tickHealMax": 632,
+      "tickEffect": {
+        "type": "heal",
+        "value": 500
+      },
+      "threatPerHealing": 0.1,
+      "recastTimer": 0,
+      "targetType": "ally_lowest_hp",
+      "sprite": "fx_rejuvenation"
+    },
+    "faerie_fire": {
+      "id": "faerie_fire",
+      "name": "Faerie Fire",
+      "type": "debuff",
+      "manaCost": 145,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "apply_debuff",
+        "effects": [
+          {
+            "stat": "armor_percent",
+            "value": -10
+          },
+          {
+            "stat": "hit_chance_debuff",
+            "value": -3
+          }
+        ]
+      },
+      "duration": 40,
+      "tickEffect": null,
+      "recastTimer": 40,
+      "targetType": "boss",
+      "sprite": "fx_faerie_fire"
+    },
+    "lightning_bolt": {
+      "id": "lightning_bolt",
+      "name": "Lightning Bolt",
+      "type": "damage_direct",
+      "manaCost": 300,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "damage",
+        "damageType": "nature",
+        "value": 1200
+      },
+      "duration": 0,
+      "tickEffect": null,
+      "threatPerDamage": 1.0,
+      "recastTimer": 0,
+      "targetType": "boss",
+      "sprite": "fx_lightning_bolt",
+      "immediateMin": 800,
+      "immediateMax": 1400
+    },
+    "chain_lightning": {
+      "id": "chain_lightning",
+      "name": "Chain Lightning",
+      "type": "damage_direct",
+      "manaCost": 760,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "damage",
+        "damageType": "nature",
+        "value": 1800
+      },
+      "duration": 0,
+      "tickEffect": null,
+      "threatPerDamage": 1.0,
+      "recastTimer": 6,
+      "targetType": "boss",
+      "sprite": "fx_chain_lightning",
+      "immediateMin": 500,
+      "immediateMax": 900,
+      "hitCount": 3
+    },
+    "strength_of_earth_totem": {
+      "id": "strength_of_earth_totem",
+      "name": "Strength of Earth",
+      "type": "totem_buff",
+      "manaCost": 200,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "apply_buff",
+        "target": "all_allies",
+        "effects": [
+          {
+            "stat": "damage_percent",
+            "value": 5
+          }
+        ]
+      },
+      "duration": 60,
+      "tickEffect": null,
+      "recastTimer": 60,
+      "targetType": "self",
+      "totemSlot": "earth",
+      "sprite": "totem_earth"
+    },
+    "windfury_totem": {
+      "id": "windfury_totem",
+      "name": "Windfury Totem",
+      "type": "totem_buff",
+      "manaCost": 185,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "apply_buff",
+        "target": "all_allies",
+        "effects": [
+          {
+            "stat": "on_hit_proc",
+            "procId": "windfury_extra_attack",
+            "procChance": 20,
+            "procEffect": {
+              "type": "bonus_attack",
+              "multiplier": 1.0
+            }
+          }
+        ]
+      },
+      "duration": 60,
+      "tickEffect": null,
+      "recastTimer": 60,
+      "targetType": "self",
+      "totemSlot": "air",
+      "sprite": "totem_windfury"
+    },
+    "grounding_totem": {
+      "id": "grounding_totem",
+      "name": "Grounding Totem",
+      "type": "totem_absorb",
+      "manaCost": 165,
+      "immediateFlag": false,
+      "immediateEffect": null,
+      "duration": 60,
+      "tickEffect": null,
+      "specialEffect": {
+        "type": "absorb_next_spell",
+        "target": "all_allies",
+        "consumesOnUse": true
+      },
+      "recastTimer": 15,
+      "targetType": "self",
+      "totemSlot": "earth",
+      "sprite": "totem_grounding"
+    },
+    "totem_of_wrath": {
+      "id": "totem_of_wrath",
+      "name": "Totem of Wrath",
+      "type": "totem_buff",
+      "manaCost": 210,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "apply_buff",
+        "target": "all_allies",
+        "effects": [
+          {
+            "stat": "hit_chance_bonus",
+            "value": 3
+          },
+          {
+            "stat": "spell_crit_bonus",
+            "value": 3
+          }
+        ]
+      },
+      "duration": 60,
+      "tickEffect": null,
+      "recastTimer": 60,
+      "targetType": "self",
+      "totemSlot": "fire",
+      "sprite": "totem_wrath"
+    },
+    "wrath_of_air_totem": {
+      "id": "wrath_of_air_totem",
+      "name": "Wrath of Air",
+      "type": "totem_buff",
+      "manaCost": 200,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "apply_buff",
+        "target": "all_allies",
+        "effects": [
+          {
+            "stat": "spell_power_percent",
+            "value": 10
+          }
+        ]
+      },
+      "duration": 60,
+      "tickEffect": null,
+      "recastTimer": 60,
+      "targetType": "self",
+      "totemSlot": "air",
+      "sprite": "totem_wrath_of_air"
+    },
+    "rebirth": {
+      "id": "rebirth",
+      "name": "Rebirth",
+      "type": "revive",
+      "manaCost": 1000,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "revive",
+        "restoreHealth": 1100,
+        "restoreMana": 1700
+      },
+      "duration": 0,
+      "tickEffect": null,
+      "threatPerHealing": 0.1,
+      "recastTimer": 0,
+      "oncePerLevel": true,
+      "targetType": "ally_dead",
+      "sprite": "fx_rebirth"
+    },
+    "lifebloom": {
+      "id": "lifebloom",
+      "name": "Lifebloom",
+      "type": "heal_over_time",
+      "manaCostPct": 0.06,
+      "immediateFlag": false,
+      "immediateEffect": null,
+      "duration": 7,
+      "tickHealMin": 400,
+      "tickHealMax": 600,
+      "tickEffect": {
+        "type": "heal",
+        "value": 369
+      },
+      "bloomHealMin": 600,
+      "bloomHealMax": 975,
+      "maxStacks": 3,
+      "threatPerHealing": 0.1,
+      "recastTimer": 0,
+      "targetType": "ally_lowest_hp",
+      "sprite": "fx_lifebloom"
+    },
+    "swiftmend": {
+      "id": "swiftmend",
+      "name": "Swiftmend",
+      "type": "heal_instant_consume",
+      "manaCostPct": 0.16,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "heal_consume_hot",
+        "consumeAbilities": [
+          "rejuvenation",
+          "regrowth"
+        ]
+      },
+      "duration": 0,
+      "tickEffect": null,
+      "threatPerHealing": 0.1,
+      "recastTimer": 15,
+      "targetType": "ally_lowest_hp",
+      "sprite": "fx_swiftmend"
+    },
+    "innervate": {
+      "id": "innervate",
+      "name": "Innervate",
+      "type": "mana_regen_buff",
+      "manaCost": 0,
+      "immediateFlag": false,
+      "immediateEffect": null,
+      "duration": 20,
+      "tickEffect": {
+        "type": "mana_restore",
+        "valuePct": 4.0
+      },
+      "threatPerHealing": 0,
+      "recastTimer": 360,
+      "targetType": "ally_lowest_mana",
+      "sprite": "fx_innervate"
+    },
+    "skipping_reel": {
+      "id": "skipping_reel",
+      "name": "Skipping Reel",
+      "type": "boss_mechanic",
+      "manaCost": 0,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "damage"
+      },
+      "immediateMin": 700,
+      "immediateMax": 1200,
+      "duration": 0,
+      "tickEffect": null,
+      "tickMin": 0,
+      "tickMax": 0,
+      "threatPerDamage": 0,
+      "recastTimer": 12,
+      "targetType": "all_allies",
+      "dialogue": "Dorothy crackles with stormy film magic.",
+      "sound": "audio/ragnaros_attack.ogg",
+      "audioDuration": 2000,
+      "iconId": "chain_lightning"
+    },
+    "ruby_panic": {
+      "id": "ruby_panic",
+      "name": "Ruby Panic",
+      "type": "boss_mechanic",
+      "manaCost": 0,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "damage"
+      },
+      "immediateMin": 1500,
+      "immediateMax": 2200,
+      "duration": 0,
+      "tickEffect": null,
+      "tickMin": 0,
+      "tickMax": 0,
+      "threatPerDamage": 0,
+      "recastTimer": 20,
+      "targetType": "random_ally",
+      "dialogue": "There is no place like panic!",
+      "sound": "audio/ragnaros_attack.ogg",
+      "audioDuration": 2000,
+      "iconId": "magma_blast"
+    }
+  }
+}

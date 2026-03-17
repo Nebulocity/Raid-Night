@@ -14,8 +14,8 @@ export default class RaidBossSelectScene extends Phaser.Scene {
   create() {
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
     const saveData = loadSaveData();
-    const selectedRaidId = this.registry.get('selectedRaidId') || saveData.lastSelectedRaidId || 'molten_core';
-    const raid = RAID_CATALOG[selectedRaidId] || RAID_CATALOG.molten_core;
+    const selectedRaidId = this.registry.get('selectedRaidId') || saveData.lastSelectedRaidId || 'the_churning_core';
+    const raid = RAID_CATALOG[selectedRaidId] || RAID_CATALOG.the_churning_core;
 
     this.registry.set('saveData', saveData);
     this.registry.set('selectedRaidId', raid.id);
@@ -44,17 +44,13 @@ export default class RaidBossSelectScene extends Phaser.Scene {
     const zoneTop = HEIGHT * 0.15;
     const zoneHeight = HEIGHT * 0.75;
     const unlockedBossIds = saveData.unlockedBossIds?.[raid.id] || [];
-    const bosses = raid.bosses.slice(0, 12);
-    const rows = [[], [], []];
-
+    const bosses = raid.bosses.slice();
+    const maxPerRow = bosses.length > 12 ? 4 : 4;
+    const rows = [];
     bosses.forEach((boss, index) => {
-      if (index < 4) {
-        rows[0].push(boss);
-      } else if (index < 8) {
-        rows[1].push(boss);
-      } else {
-        rows[2].push(boss);
-      }
+      const rowIndex = Math.floor(index / maxPerRow);
+      if (!rows[rowIndex]) rows[rowIndex] = [];
+      rows[rowIndex].push(boss);
     });
 
     const visibleRows = rows.filter((row) => row.length > 0);
@@ -69,24 +65,24 @@ export default class RaidBossSelectScene extends Phaser.Scene {
         const x = colGap * (colIndex + 1);
         const unlocked = unlockedBossIds.includes(boss.id);
 
-        const panel = this.add.rectangle(x, y, 220, 220, 0x1a100c, 0.90)
+        const panel = this.add.rectangle(x, y, 220, 180, 0x1a100c, 0.90)
           .setStrokeStyle(4, unlocked ? 0xd7a44a : 0x666666, 1)
           .setAlpha(unlocked ? 1 : 0.42)
           .setInteractive(unlocked ? { useHandCursor: true } : undefined);
 
-        this.add.image(x, y - 10, boss.buttonKey)
-          .setDisplaySize(132, 132)
+        this.add.image(x, y - 18, boss.buttonKey)
+          .setDisplaySize(96, 96)
           .setOrigin(0.5)
           .setAlpha(unlocked ? 1 : 0.42);
 
-        this.add.text(x, y + 84, boss.name, {
+        this.add.text(x, y + 52, boss.name, {
           fontFamily: 'monospace',
-          fontSize: '24px',
+          fontSize: '19px',
           color: unlocked ? '#fff1c7' : '#9e9e9e',
           stroke: '#000000',
           strokeThickness: 5,
           align: 'center',
-          wordWrap: { width: 190 },
+          wordWrap: { width: 180 },
         }).setOrigin(0.5);
 
         if (!unlocked) {
@@ -108,9 +104,9 @@ export default class RaidBossSelectScene extends Phaser.Scene {
           this.registry.set('selectedBossId', boss.id);
           this.registry.set('selectedBossMeta', boss);
 
-          this.time.delayedCall(TICK_MS * 2, () => {
-            this.cameras.main.fadeOut(450, 0, 0, 0);
-            this.time.delayedCall(500, () => {
+          this.time.delayedCall(100, () => {
+            this.cameras.main.fadeOut(200, 0, 0, 0);
+            this.time.delayedCall(200, () => {
               this.scene.start('BossLoadingScene');
             });
           });

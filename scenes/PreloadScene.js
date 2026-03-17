@@ -4,6 +4,8 @@
  * Loads shared game assets and menu assets used before entering a fight.
  * Boss-specific gameplay JSON and art are loaded later by BossLoadingScene.
  */
+import { RAID_CATALOG } from '../data/raidCatalog.js';
+
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
     super({ key: 'PreloadScene' });
@@ -36,7 +38,6 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.json('level01', 'data/level01.json');
 
     this._loadSharedAssets();
-    this._loadMenuArt();
   }
 
   // ======
@@ -61,68 +62,43 @@ export default class PreloadScene extends Phaser.Scene {
   // private helpers
   // ===============
 
-  _loadMenuArt() {
-    this.load.image('bg_karazhan', 'assets/bg_karazhan.png');
-    this.load.image('bg_kharazan', 'assets/bg_kharazan.png');
-    this.load.image('button_karazhan', 'assets/button_karazhan.png');
-    this.load.image('button_kharazan', 'assets/button_kharazan.png');
-
-    [
-      'attumen',
-      'moroes',
-      'maiden_of_virtue',
-      'opera_event',
-      'the_curator',
-      'terestian_illhoof',
-      'shade_of_aran',
-      'netherspite',
-      'chess_event',
-      'prince_malchezaar',
-      'nightbane',
-      'servants_quarters',
-    ].forEach((bossId) => {
-      this.load.image('button_' + bossId, 'assets/button_' + bossId + '.png');
-      this.load.image('loading_' + bossId, 'assets/loading_' + bossId + '.png');
-    });
-  }
-
   _loadSharedAssets() {
     // ====================
     // Shaman (player)
     // ====================
     this.load.spritesheet('shaman_idle',
-      'sprites/shaman_idle.png',
+      'sprites/characters/player/shaman_idle.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
     this.load.spritesheet('shaman_attack',
-      'sprites/shaman_attack.png',
+      'sprites/characters/player/shaman_attack.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
     this.load.spritesheet('shaman_casting',
-      'sprites/shaman_casting.png',
+      'sprites/characters/player/shaman_casting.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
     this.load.spritesheet('shaman_hit',
-      'sprites/shaman_hit.png',
+      'sprites/characters/player/shaman_hit.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
     this.load.spritesheet('shaman_totem',
-      'sprites/shaman_totem.png',
+      'sprites/characters/player/shaman_totem.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
     // Temporary safe fallbacks until dedicated lightning sheets are added.
     this.load.spritesheet('shaman_lightning',
-      'sprites/shaman_casting.png',
+      'sprites/characters/player/shaman_casting.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
     this.load.spritesheet('shaman_chain',
-      'sprites/shaman_casting.png',
+      'sprites/characters/player/shaman_casting.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
@@ -130,17 +106,17 @@ export default class PreloadScene extends Phaser.Scene {
     // Tank (Yalb)
     // ====================
     this.load.spritesheet('tank_idle',
-      'sprites/tank_idle.png',
+      'sprites/characters/tank/tank_idle.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
     this.load.spritesheet('tank_attack',
-      'sprites/tank_attack.png',
+      'sprites/characters/tank/tank_attack.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
     this.load.spritesheet('tank_hit',
-      'sprites/tank_hit.png',
+      'sprites/characters/tank/tank_hit.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
@@ -148,17 +124,17 @@ export default class PreloadScene extends Phaser.Scene {
     // Healer (Beefwalker)
     // ====================
     this.load.spritesheet('druid_idle',
-      'sprites/druid_idle.png',
+      'sprites/characters/healer/druid_idle.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
     this.load.spritesheet('druid_casting',
-      'sprites/druid_casting.png',
+      'sprites/characters/healer/druid_casting.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
     this.load.spritesheet('druid_hit',
-      'sprites/druid_hit.png',
+      'sprites/characters/healer/druid_hit.png',
       { frameWidth: 256, frameHeight: 256 }
     );
 
@@ -166,17 +142,17 @@ export default class PreloadScene extends Phaser.Scene {
     // Totems
     // ====================
     this.load.spritesheet('totem_earth',
-      'sprites/totem_earth.png',
+      'sprites/characters/player/shaman_totem.png',
       { frameWidth: 128, frameHeight: 128 }
     );
 
     // ====================
     // Defeat animations
     // ====================
-    this.load.spritesheet('shaman_defeated', 'sprites/shaman_defeated.png', { frameWidth: 256, frameHeight: 256 });
-    this.load.spritesheet('druid_defeated',  'sprites/druid_defeated.png',  { frameWidth: 256, frameHeight: 256 });
-    this.load.spritesheet('tank_defeated',   'sprites/tank_defeated.png',   { frameWidth: 256, frameHeight: 256 });
-    this.load.spritesheet('ragnaros_defeated', 'sprites/ragnaros_defeated.png', { frameWidth: 256, frameHeight: 256 });
+    this.load.spritesheet('shaman_defeated', 'sprites/characters/player/shaman_defeated.png', { frameWidth: 256, frameHeight: 256 });
+    this.load.spritesheet('druid_defeated',  'sprites/characters/healer/druid_defeated.png',  { frameWidth: 256, frameHeight: 256 });
+    this.load.spritesheet('tank_defeated',   'sprites/characters/tank/tank_defeated.png',   { frameWidth: 256, frameHeight: 256 });
+    this.load.spritesheet('ragnaros_defeated', 'sprites/the_churning_core/ragnaros/boss_ragnaros_defeated.png', { frameWidth: 256, frameHeight: 256 });
 
     // ====================
     // Ability icons (64x64)
@@ -200,6 +176,28 @@ export default class PreloadScene extends Phaser.Scene {
     ].forEach(id => this.load.image('icon_' + id, 'sprites/icons/icon_' + id + '.jpg'));
 
     this.load.image('icon_autoAttack', 'sprites/icons/icon_autoAttack.jpg');
+
+    this._loadMenuAndBossSelectAssets();
+  }
+
+
+
+  _loadMenuAndBossSelectAssets() {
+    Object.values(RAID_CATALOG).forEach((raid) => {
+      if (raid.backgroundKey && raid.backgroundPath) {
+        this.load.image(raid.backgroundKey, raid.backgroundPath);
+      }
+
+      (raid.bosses || []).forEach((boss) => {
+        if (boss.buttonKey && boss.buttonPath) {
+          this.load.image(boss.buttonKey, boss.buttonPath);
+        }
+
+        if (boss.loadingKey && boss.loadingPath) {
+          this.load.image(boss.loadingKey, boss.loadingPath);
+        }
+      });
+    });
   }
 
   _buildFallbackMenuTextures() {
@@ -207,17 +205,36 @@ export default class PreloadScene extends Phaser.Scene {
 
     this._buildFallbackScreenTexture('screen_title', WIDTH, HEIGHT, 0x140b07, 0x3b1708, 'TITLE');
     this._buildFallbackScreenTexture('screen_raid_select', WIDTH, HEIGHT, 0x120d0b, 0x22160d, 'RAID');
-    this._buildFallbackScreenTexture('bg_molten_core', WIDTH, HEIGHT, 0x180804, 0x5a1b09, 'MC');
-    this._buildFallbackScreenTexture('bg_karazhan', WIDTH, HEIGHT, 0x100c18, 0x28153a, 'KZ');
-    this._buildFallbackScreenTexture('bg_gruul', WIDTH, HEIGHT, 0x1a120a, 0x4d3115, 'GL');
-    this._buildFallbackScreenTexture('bg_magtheridon', WIDTH, HEIGHT, 0x12070b, 0x4c0f1f, 'ML');
+    this._buildFallbackScreenTexture('bg_the_churning_core', WIDTH, HEIGHT, 0x180804, 0x5a1b09, 'MC');
+    this._buildFallbackScreenTexture('bg_spookspire_keep', WIDTH, HEIGHT, 0x100c18, 0x28153a, 'KZ');
+    this._buildFallbackScreenTexture('bg_the_cracked_mountain', WIDTH, HEIGHT, 0x1a120a, 0x4d3115, 'CM');
+    this._buildFallbackScreenTexture('bg_the_demon_basement', WIDTH, HEIGHT, 0x12070b, 0x4c0f1f, 'DB');
     this._buildFallbackScreenTexture('loading_ragnaros', WIDTH, HEIGHT, 0x180804, 0x7a2208, 'RAG');
 
-    this._buildFallbackButtonTexture('button_molten_core', 256, 256, 0x7a250d, 'MC');
-    this._buildFallbackButtonTexture('button_karazhan', 256, 256, 0x4b2d78, 'KZ');
-    this._buildFallbackButtonTexture('button_gruul', 256, 256, 0x6d4a18, 'GL');
-    this._buildFallbackButtonTexture('button_magtheridon', 256, 256, 0x7a1f38, 'ML');
+    this._buildFallbackButtonTexture('button_the_churning_core', 256, 256, 0x7a250d, 'MC');
+    this._buildFallbackButtonTexture('button_spookspire_keep', 256, 256, 0x4b2d78, 'KZ');
+    this._buildFallbackButtonTexture('button_the_cracked_mountain', 256, 256, 0x6d4a18, 'CM');
+    this._buildFallbackButtonTexture('button_the_demon_basement', 256, 256, 0x7a1f38, 'DB');
     this._buildFallbackButtonTexture('button_ragnaros', 256, 256, 0xaf3b10, 'R');
+
+    Object.values(RAID_CATALOG).forEach((raid) => {
+      if (raid.backgroundKey && !this.textures.exists(raid.backgroundKey)) {
+        const stamp = (raid.name || raid.id || 'RAID').slice(0, 3).toUpperCase();
+        this._buildFallbackScreenTexture(raid.backgroundKey, WIDTH, HEIGHT, 0x160d10, 0x2d1822, stamp);
+      }
+
+      (raid.bosses || []).forEach((boss) => {
+        if (boss.buttonKey && !this.textures.exists(boss.buttonKey)) {
+          const stamp = (boss.name || boss.id || 'B').replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || 'B';
+          this._buildFallbackButtonTexture(boss.buttonKey, 256, 256, 0x5a2430, stamp);
+        }
+
+        if (boss.loadingKey && !this.textures.exists(boss.loadingKey)) {
+          const stamp = (boss.name || boss.id || 'B').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'B';
+          this._buildFallbackScreenTexture(boss.loadingKey, WIDTH, HEIGHT, 0x120d0b, 0x34161a, stamp);
+        }
+      });
+    });
   }
 
   _buildFallbackScreenTexture(key, width, height, topColor, bottomColor, stampText) {

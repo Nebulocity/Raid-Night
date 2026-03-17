@@ -31,6 +31,7 @@ export default class GameScene extends Phaser.Scene {
     // Tracks active boss DoT timers per character so they can be cancelled
     // on death or Rebirth: { player: [timer,...], tank: [...], healer: [...] }
     this.activeDots = { player: [], tank: [], healer: [] };
+    this.bossDamageMultiplier = 1;
 
     // Prevents boss abilities from overlapping while dialogue/audio is playing.
     // Set to true at the start of any boss dialogue sequence.
@@ -361,7 +362,10 @@ export default class GameScene extends Phaser.Scene {
 
     // All boss sprite config comes from the JSON
     const bossData   = this.levelData?.boss;
-    const spriteKey  = bossData?.spriteKey  || 'ragnaros';
+    const requestedSpriteKey = bossData?.spriteKey;
+    const spriteKey  = (requestedSpriteKey && this.textures.exists(requestedSpriteKey))
+      ? requestedSpriteKey
+      : (this.textures.exists('ragnaros_idle') ? 'ragnaros_idle' : (requestedSpriteKey || 'ragnaros'));
     const spriteScale = bossData?.spriteScale || 2.2;
     const idleAnimKey = bossData ? bossData.id + '_idle' : 'ragnaros_idle';
 
@@ -853,7 +857,8 @@ export default class GameScene extends Phaser.Scene {
     // Generate threat from the auto-attack so tanking threat matters
     const bossData    = this.entitySlots.boss?._data;
     const damageRange = bossData?.stats?.damageRange ?? [100, 200];
-    const damage      = Phaser.Math.Between(damageRange[0], damageRange[1]);
+    const baseDamage  = Phaser.Math.Between(damageRange[0], damageRange[1]);
+    const damage      = Math.round(baseDamage * (this.bossDamageMultiplier ?? 1));
     this._applyDamageToCharacter(targetId, damage, 'icon_autoAttack');
 
     // Tank generates passive threat just by being the target
@@ -1518,9 +1523,78 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
 
+
     // ========================
-    // Generic fallback
+    // Generic boss ability handling
     // ========================
+    const resolveTargets = () => {
+      if (targetType === 'all_allies') return ['player', 'tank', 'healer'];
+      if (targetType === 'random_ally') {
+        const alive = ['player', 'tank', 'healer'].filter(id => (this.entitySlots[id]?.currentHealth ?? 0) > 0);
+        return alive.length ? [Phaser.Utils.Array.GetRandom(alive)] : [];
+      }
+      if (targetType === 'boss_self') return [];
+      return [this.getHighestThreatTarget()];
+    };
+
+    const targets = resolveTargets();
+    const iconKey = this.textures.exists('icon_' + (ability.iconId || abilityId))
+      ? 'icon_' + (ability.iconId || abilityId)
+      : 'icon_autoAttack';
+
+    if (ability.selfBuff?.damageMultiplier) {
+      this.bossDamageMultiplier = ability.selfBuff.damageMultiplier;
+      const buffDurationTicks = ability.selfBuff.duration ?? 0;
+      if (buffDurationTicks > 0) {
+        this.time.delayedCall(buffDurationTicks * TICK_MS, () => {
+          this.bossDamageMultiplier = 1;
+        });
+      }
+    }
+
+    if (ability.immediateEffect?.type === 'heal_boss') {
+      const bossSlot = this.entitySlots.boss;
+      if (bossSlot) {
+        const maxHealth = bossSlot.hpBar?.maxValue ?? bossSlot._data?.stats?.maxHealth ?? 1;
+        const healAmount = Phaser.Math.Between(ability.immediateMin ?? 0, ability.immediateMax ?? ability.immediateMin ?? 0);
+        bossSlot.currentHealth = Math.min(maxHealth, (bossSlot.currentHealth ?? maxHealth) + healAmount);
+        const pct = bossSlot.currentHealth / maxHealth;
+        this._setBossHealthBar(bossSlot.hpBar, pct);
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene?.spawnFloatingText) {
+          uiScene.spawnFloatingText(window.GAME_CONFIG.ZONES.BOSS, healAmount, 'heal', iconKey);
+        }
+      }
+    } else if (ability.immediateFlag && (ability.immediateMin || ability.immediateMax)) {
+      const immediateDamage = Phaser.Math.Between(ability.immediateMin ?? 0, ability.immediateMax ?? ability.immediateMin ?? 0);
+      targets.forEach((targetId) => {
+        if (!targetId) return;
+        this._applyDamageToCharacter(targetId, Math.round(immediateDamage * (this.bossDamageMultiplier ?? 1)), iconKey);
+      });
+    }
+
+    if (ability.duration > 0 && ability.tickMin) {
+      let ticks = 0;
+      const dotTimer = this.time.addEvent({
+        delay: TICK_MS,
+        loop: true,
+        callback: () => {
+          ticks++;
+          const tickDamage = Phaser.Math.Between(ability.tickMin ?? 0, ability.tickMax ?? ability.tickMin ?? 0);
+          targets.forEach((targetId) => {
+            if (!targetId) return;
+            this._applyDamageToCharacter(targetId, Math.round(tickDamage * (this.bossDamageMultiplier ?? 1)), iconKey);
+          });
+          if (ticks >= ability.duration || !this.gameRunning) {
+            dotTimer.remove();
+          }
+        },
+      });
+      targets.forEach((targetId) => {
+        if (targetId) this._registerDot(targetId, dotTimer);
+      });
+    }
+
     this.playBossAttack();
     this.showAbilityDialogue(abilityId);
   }

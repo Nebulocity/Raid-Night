@@ -1,7 +1,7 @@
 /**
  * main.js - Phaser 3 game configuration and boot
  *
- * STORMCALLER
+ * RAID NIGHT
  * Target:   1080 x 2400 (portrait, FHD+ Android)
  * Browser:  auto-scales to fit viewport while keeping aspect ratio
  */

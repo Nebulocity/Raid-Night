@@ -1,0 +1,1908 @@
+{
+  "raid": {
+    "id": "spookspire_keep",
+    "name": "Spookspire Keep",
+    "sourceRaid": "spookspire_keep",
+    "recommendedPartySize": 3,
+    "contentRole": "content_pack",
+    "notes": [
+      "Standalone raid-data file for Raid Night content authoring.",
+      "Ability behaviors are designed to feel like spookspire_keep/TBC mechanics while staying simple enough to map into Raid Night later.",
+      "Several fights include multi-actor encounters and scripted phase notes that would need scene logic beyond the current single-boss level01 runtime."
+    ]
+  },
+  "encounters": [
+    {
+      "id": "nighttime_trotsalot",
+      "name": "Nighttime & Sir Trotsalot the Damned",
+      "sourceEncounter": "Attumen the Huntsman / Midnight",
+      "wing": "The Stables",
+      "actors": [
+        "Nighttime the Horse",
+        "Sir Trotsalot the Damned"
+      ],
+      "bossStats": {
+        "health": 220000,
+        "armor": 4200,
+        "attackSpeed": 3,
+        "damageRange": [
+          900,
+          1500
+        ],
+        "resistList": {
+          "shadow": 25,
+          "physical": 0
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Nighttime Alone",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "moonlit_hoofstrike",
+            "stable_stench"
+          ]
+        },
+        {
+          "id": "phase_2",
+          "label": "Rider Joins",
+          "trigger": {
+            "type": "health_percent",
+            "value": 95
+          },
+          "abilityIds": [
+            "moonlit_hoofstrike",
+            "stable_stench",
+            "rusted_axe_arc"
+          ]
+        },
+        {
+          "id": "phase_3",
+          "label": "Back in the Saddle",
+          "trigger": {
+            "type": "health_percent",
+            "value": 50
+          },
+          "abilityIds": [
+            "moonlit_hoofstrike",
+            "stable_stench",
+            "graveyard_gallop",
+            "back_in_the_saddle"
+          ]
+        }
+      ],
+      "abilities": {
+        "moonlit_hoofstrike": {
+          "id": "moonlit_hoofstrike",
+          "name": "Moonlit Hoofstrike",
+          "type": "damage_cleave",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "physical",
+          "immediateMin": 1400,
+          "immediateMax": 2200,
+          "recastTimer": 8,
+          "raidnightHint": "Frontal cleave on highest-threat target that splashes a lighter hit to one adjacent ally.",
+          "wowAnalog": "Shadow Cleave"
+        },
+        "stable_stench": {
+          "id": "stable_stench",
+          "name": "Stable Stench",
+          "type": "debuff_dot",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "targetType": "all_allies",
+          "damageType": "shadow",
+          "immediateMin": 0,
+          "immediateMax": 0,
+          "duration": 8,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "shadow"
+          },
+          "tickMin": 180,
+          "tickMax": 260,
+          "recastTimer": 14,
+          "raidnightHint": "Raid-wide cursed stink that lightly chips health and could reduce hit chance by 2%.",
+          "wowAnalog": "Intangible Presence"
+        },
+        "rusted_axe_arc": {
+          "id": "rusted_axe_arc",
+          "name": "Rusted Axe Arc",
+          "type": "damage_direct",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "physical",
+          "immediateMin": 1700,
+          "immediateMax": 2600,
+          "recastTimer": 10,
+          "raidnightHint": "Single-target heavy chop from Trotsalot.",
+          "wowAnalog": "Mounted melee pressure"
+        },
+        "graveyard_gallop": {
+          "id": "graveyard_gallop",
+          "name": "Graveyard Gallop",
+          "type": "charge",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "random_ally",
+          "damageType": "physical",
+          "immediateMin": 2000,
+          "immediateMax": 3200,
+          "recastTimer": 16,
+          "raidnightHint": "Rushes a random non-tank target, briefly dropping threat focus before snapping back.",
+          "wowAnalog": "Berserker Charge"
+        },
+        "back_in_the_saddle": {
+          "id": "back_in_the_saddle",
+          "name": "Back in the Saddle",
+          "type": "phase_mechanic",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_buff",
+            "target": "self",
+            "effects": [
+              {
+                "stat": "damage_percent",
+                "value": 15
+              },
+              {
+                "stat": "attack_speed_percent",
+                "value": 15
+              }
+            ]
+          },
+          "duration": 12,
+          "tickEffect": null,
+          "recastTimer": 999,
+          "targetType": "self",
+          "raidnightHint": "One-time transition buff when rider mounts Nighttime.",
+          "wowAnalog": "Attumen mounting Midnight"
+        }
+      }
+    },
+    {
+      "id": "mortimer",
+      "name": "Mortimer",
+      "sourceEncounter": "Moroes",
+      "wing": "Banquet Hall",
+      "actors": [
+        "Mortimer",
+        "Dinner Guests"
+      ],
+      "bossStats": {
+        "health": 205000,
+        "armor": 3600,
+        "attackSpeed": 2,
+        "damageRange": [
+          850,
+          1350
+        ],
+        "resistList": {
+          "shadow": 20
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Dinner Service",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "silverware_jab",
+            "blinding_napkin",
+            "butlers_exit",
+            "black_tie_garrote"
+          ]
+        },
+        {
+          "id": "phase_2",
+          "label": "No More Manners",
+          "trigger": {
+            "type": "health_percent",
+            "value": 30
+          },
+          "abilityIds": [
+            "silverware_jab",
+            "blinding_napkin",
+            "butlers_exit",
+            "black_tie_garrote",
+            "panic_service"
+          ]
+        }
+      ],
+      "abilities": {
+        "silverware_jab": {
+          "id": "silverware_jab",
+          "name": "Silverware Jab",
+          "type": "control_damage",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "physical",
+          "immediateMin": 1500,
+          "immediateMax": 2300,
+          "recastTimer": 10,
+          "raidnightHint": "Hits the tank and briefly lowers their threat generation or forces a target swap feel.",
+          "wowAnalog": "Gouge"
+        },
+        "blinding_napkin": {
+          "id": "blinding_napkin",
+          "name": "Blinding Napkin",
+          "type": "blind",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "immediateEffect": {
+            "type": "apply_debuff",
+            "effects": [
+              {
+                "stat": "skip_actions",
+                "value": 1
+              }
+            ]
+          },
+          "duration": 3,
+          "tickEffect": null,
+          "recastTimer": 14,
+          "targetType": "random_ally",
+          "raidnightHint": "Short disorient on a random ally.",
+          "wowAnalog": "Blind"
+        },
+        "butlers_exit": {
+          "id": "butlers_exit",
+          "name": "Butler's Exit",
+          "type": "vanish_reposition",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_buff",
+            "target": "self",
+            "effects": [
+              {
+                "stat": "evasion_percent",
+                "value": 100
+              }
+            ]
+          },
+          "duration": 2,
+          "tickEffect": null,
+          "recastTimer": 18,
+          "targetType": "self",
+          "raidnightHint": "Brief vanish that drops target lock and primes Garrote.",
+          "wowAnalog": "Vanish"
+        },
+        "black_tie_garrote": {
+          "id": "black_tie_garrote",
+          "name": "Black-Tie Garrote",
+          "type": "debuff_dot",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "duration": 12,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "physical"
+          },
+          "tickMin": 220,
+          "tickMax": 340,
+          "recastTimer": 20,
+          "targetType": "random_ally",
+          "raidnightHint": "Long bleed on one non-tank target; intended to feel scary for the healer.",
+          "wowAnalog": "Garrote"
+        },
+        "panic_service": {
+          "id": "panic_service",
+          "name": "Panic Service",
+          "type": "buff_self",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_buff",
+            "target": "self",
+            "effects": [
+              {
+                "stat": "attack_speed_percent",
+                "value": 25
+              },
+              {
+                "stat": "damage_percent",
+                "value": 20
+              }
+            ]
+          },
+          "duration": 15,
+          "tickEffect": null,
+          "recastTimer": 40,
+          "targetType": "self",
+          "raidnightHint": "Soft enrage below 30%.",
+          "wowAnalog": "Moroes Frenzy"
+        }
+      }
+    },
+    {
+      "id": "lady_properness",
+      "name": "Lady Properness",
+      "sourceEncounter": "Maiden of Virtue",
+      "wing": "The Guest Quarters",
+      "actors": [
+        "Lady Properness"
+      ],
+      "bossStats": {
+        "health": 235000,
+        "armor": 4800,
+        "attackSpeed": 3,
+        "damageRange": [
+          950,
+          1450
+        ],
+        "resistList": {
+          "holy": 40
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Proper Conduct",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "scalding_scold",
+            "proper_rebuke",
+            "time_out",
+            "sanctified_floor_wax"
+          ]
+        }
+      ],
+      "abilities": {
+        "scalding_scold": {
+          "id": "scalding_scold",
+          "name": "Scalding Scold",
+          "type": "damage_direct_dot",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "holy",
+          "immediateMin": 1800,
+          "immediateMax": 2600,
+          "duration": 6,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "holy"
+          },
+          "tickMin": 180,
+          "tickMax": 260,
+          "recastTimer": 10,
+          "raidnightHint": "Holy burn on a random ally with a short lingering tick.",
+          "wowAnalog": "Holy Fire"
+        },
+        "proper_rebuke": {
+          "id": "proper_rebuke",
+          "name": "Proper Rebuke",
+          "type": "chain_damage",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "all_allies",
+          "damageType": "holy",
+          "immediateMin": 1200,
+          "immediateMax": 1800,
+          "recastTimer": 14,
+          "raidnightHint": "Bounces through the party, dealing higher damage when allies are all alive.",
+          "wowAnalog": "Holy Wrath"
+        },
+        "time_out": {
+          "id": "time_out",
+          "name": "Time-Out",
+          "type": "mass_cc",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "immediateEffect": {
+            "type": "apply_debuff",
+            "effects": [
+              {
+                "stat": "skip_actions",
+                "value": 1
+              }
+            ]
+          },
+          "duration": 3,
+          "tickEffect": null,
+          "recastTimer": 20,
+          "targetType": "all_allies",
+          "raidnightHint": "Short party-wide stun/disorient, except the highest-threat target if you want a tank-safe implementation.",
+          "wowAnalog": "Repentance"
+        },
+        "sanctified_floor_wax": {
+          "id": "sanctified_floor_wax",
+          "name": "Sanctified Floor Wax",
+          "type": "ground_dot",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "duration": 10,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "holy"
+          },
+          "tickMin": 150,
+          "tickMax": 220,
+          "recastTimer": 18,
+          "targetType": "all_allies",
+          "raidnightHint": "Persistent radiant floor damage aura while active.",
+          "wowAnalog": "Holy Ground"
+        }
+      }
+    },
+    {
+      "id": "big_bad_wolf",
+      "name": "Big Bad Wolf",
+      "sourceEncounter": "Opera Event - The Big Bad Wolf",
+      "wing": "The Movie Theater",
+      "actors": [
+        "Big Bad Wolf"
+      ],
+      "bossStats": {
+        "health": 180000,
+        "armor": 3200,
+        "attackSpeed": 2,
+        "damageRange": [
+          850,
+          1400
+        ],
+        "resistList": {
+          "shadow": 10
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Matinee of Terror",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "marked_for_the_matinee",
+            "feedback_howl",
+            "aisle_rake"
+          ]
+        }
+      ],
+      "abilities": {
+        "marked_for_the_matinee": {
+          "id": "marked_for_the_matinee",
+          "name": "Marked for the Matinee",
+          "type": "fixate",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_debuff",
+            "effects": [
+              {
+                "stat": "threat_drop_percent",
+                "value": 100
+              }
+            ]
+          },
+          "duration": 6,
+          "tickEffect": null,
+          "recastTimer": 18,
+          "targetType": "random_ally",
+          "raidnightHint": "Fixates one non-tank target and chases them for a few seconds.",
+          "wowAnalog": "Little Red Riding Hood"
+        },
+        "feedback_howl": {
+          "id": "feedback_howl",
+          "name": "Feedback Howl",
+          "type": "fear",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "immediateEffect": {
+            "type": "apply_debuff",
+            "effects": [
+              {
+                "stat": "skip_actions",
+                "value": 1
+              }
+            ]
+          },
+          "duration": 2,
+          "tickEffect": null,
+          "recastTimer": 15,
+          "targetType": "all_allies",
+          "raidnightHint": "Short fear-like control burst.",
+          "wowAnalog": "Terrifying Howl"
+        },
+        "aisle_rake": {
+          "id": "aisle_rake",
+          "name": "Aisle Rake",
+          "type": "damage_direct",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "physical",
+          "immediateMin": 1900,
+          "immediateMax": 2800,
+          "recastTimer": 9,
+          "raidnightHint": "Heavy melee sweep on the tank.",
+          "wowAnalog": "Wide Swipe"
+        }
+      }
+    },
+    {
+      "id": "romeo_and_juliette",
+      "name": "Romeo & Juliette",
+      "sourceEncounter": "Opera Event - Romulo and Julianne",
+      "wing": "The Movie Theater",
+      "actors": [
+        "Romeo",
+        "Juliette"
+      ],
+      "bossStats": {
+        "health": 245000,
+        "armor": 3500,
+        "attackSpeed": 2,
+        "damageRange": [
+          850,
+          1400
+        ],
+        "resistList": {
+          "shadow": 15,
+          "holy": 15
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Juliette Takes the Stage",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "spotlight_kiss",
+            "center_stage_pull",
+            "love_scene_retake"
+          ]
+        },
+        {
+          "id": "phase_2",
+          "label": "Romeo Joins",
+          "trigger": {
+            "type": "health_percent",
+            "value": 70
+          },
+          "abilityIds": [
+            "spotlight_kiss",
+            "center_stage_pull",
+            "love_scene_retake",
+            "critics_dagger",
+            "stage_dive",
+            "grandstanding"
+          ]
+        },
+        {
+          "id": "phase_3",
+          "label": "Finale",
+          "trigger": {
+            "type": "health_percent",
+            "value": 30
+          },
+          "abilityIds": [
+            "spotlight_kiss",
+            "center_stage_pull",
+            "love_scene_retake",
+            "critics_dagger",
+            "stage_dive",
+            "grandstanding",
+            "no_one_leaves_before_the_finale"
+          ]
+        }
+      ],
+      "abilities": {
+        "spotlight_kiss": {
+          "id": "spotlight_kiss",
+          "name": "Spotlight Kiss",
+          "type": "blind",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "immediateEffect": {
+            "type": "apply_debuff",
+            "effects": [
+              {
+                "stat": "skip_actions",
+                "value": 1
+              }
+            ]
+          },
+          "duration": 2,
+          "tickEffect": null,
+          "recastTimer": 12,
+          "targetType": "random_ally",
+          "raidnightHint": "Brief disorient from Juliette.",
+          "wowAnalog": "Blinding Passion"
+        },
+        "center_stage_pull": {
+          "id": "center_stage_pull",
+          "name": "Center-Stage Pull",
+          "type": "threat_shuffle",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_debuff",
+            "effects": [
+              {
+                "stat": "threat_drop_percent",
+                "value": 50
+              }
+            ]
+          },
+          "duration": 0,
+          "tickEffect": null,
+          "recastTimer": 14,
+          "targetType": "highest_threat",
+          "raidnightHint": "Threat shakeup that encourages repositioning or aggro recovery.",
+          "wowAnalog": "Powerful Attraction"
+        },
+        "love_scene_retake": {
+          "id": "love_scene_retake",
+          "name": "Love Scene Retake",
+          "type": "heal",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "heal",
+            "value": 8000
+          },
+          "immediateHealMin": 6000,
+          "immediateHealMax": 9500,
+          "duration": 0,
+          "tickEffect": null,
+          "recastTimer": 18,
+          "targetType": "self",
+          "raidnightHint": "Juliette heals herself or Romeo.",
+          "wowAnalog": "Eternal Affection"
+        },
+        "critics_dagger": {
+          "id": "critics_dagger",
+          "name": "Critic's Dagger",
+          "type": "damage_direct_dot",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "physical",
+          "immediateMin": 1400,
+          "immediateMax": 2100,
+          "duration": 6,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "poison"
+          },
+          "tickMin": 180,
+          "tickMax": 260,
+          "recastTimer": 10,
+          "raidnightHint": "Romeo poisons the current target.",
+          "wowAnalog": "Poisoned Thrust"
+        },
+        "stage_dive": {
+          "id": "stage_dive",
+          "name": "Stage Dive",
+          "type": "damage_direct",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "physical",
+          "immediateMin": 1900,
+          "immediateMax": 2800,
+          "recastTimer": 11,
+          "raidnightHint": "Romeo lunges aggressively at the tank.",
+          "wowAnalog": "Backward Lunge"
+        },
+        "grandstanding": {
+          "id": "grandstanding",
+          "name": "Grandstanding",
+          "type": "buff_self",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_buff",
+            "target": "self",
+            "effects": [
+              {
+                "stat": "damage_percent",
+                "value": 20
+              }
+            ]
+          },
+          "duration": 10,
+          "tickEffect": null,
+          "recastTimer": 16,
+          "targetType": "self",
+          "raidnightHint": "Short self-buff for Romeo.",
+          "wowAnalog": "Daring"
+        },
+        "no_one_leaves_before_the_finale": {
+          "id": "no_one_leaves_before_the_finale",
+          "name": "No One Leaves Before the Finale",
+          "type": "revive_script",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_buff",
+            "target": "self",
+            "effects": [
+              {
+                "stat": "death_save",
+                "value": 1
+              }
+            ]
+          },
+          "duration": 999,
+          "tickEffect": null,
+          "recastTimer": 999,
+          "targetType": "self",
+          "raidnightHint": "If one lover 'dies' too early, the other revives them once unless both are finished close together.",
+          "wowAnalog": "Romulo & Julianne shared death mechanic"
+        }
+      }
+    },
+    {
+      "id": "dorothy_and_friends",
+      "name": "Dorothy and Friends",
+      "sourceEncounter": "Opera Event - Wizard of Oz",
+      "wing": "The Movie Theater",
+      "actors": [
+        "Dorothy",
+        "Toto",
+        "Tin Man",
+        "The Cowardly Lion",
+        "The Wicked Witch"
+      ],
+      "bossStats": {
+        "health": 260000,
+        "armor": 3000,
+        "attackSpeed": 2,
+        "damageRange": [
+          700,
+          1200
+        ],
+        "resistList": {
+          "arcane": 15,
+          "nature": 15
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Opening Number",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "twister_toss",
+            "yapping_frenzy",
+            "oil_can_chop",
+            "cowardly_pounce"
+          ]
+        },
+        {
+          "id": "phase_2",
+          "label": "Witch in the Wings",
+          "trigger": {
+            "type": "health_percent",
+            "value": 50
+          },
+          "abilityIds": [
+            "twister_toss",
+            "yapping_frenzy",
+            "oil_can_chop",
+            "cowardly_pounce",
+            "projector_vortex",
+            "broomfire_barrage"
+          ]
+        }
+      ],
+      "abilities": {
+        "twister_toss": {
+          "id": "twister_toss",
+          "name": "Twister Toss",
+          "type": "damage_direct",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "random_ally",
+          "damageType": "nature",
+          "immediateMin": 1200,
+          "immediateMax": 1900,
+          "recastTimer": 8,
+          "raidnightHint": "Dorothy peppers random targets with storm magic.",
+          "wowAnalog": "Dorothee ranged spell pressure"
+        },
+        "yapping_frenzy": {
+          "id": "yapping_frenzy",
+          "name": "Yapping Frenzy",
+          "type": "charge",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "random_ally",
+          "damageType": "physical",
+          "immediateMin": 800,
+          "immediateMax": 1200,
+          "recastTimer": 10,
+          "raidnightHint": "Toto harasses a random target with quick bites.",
+          "wowAnalog": "Tito nuisance attacks"
+        },
+        "oil_can_chop": {
+          "id": "oil_can_chop",
+          "name": "Oil-Can Chop",
+          "type": "damage_direct",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "physical",
+          "immediateMin": 1600,
+          "immediateMax": 2400,
+          "recastTimer": 9,
+          "raidnightHint": "Tin Man cleaves the tank with stiff metallic swings.",
+          "wowAnalog": "Tinhead melee pressure"
+        },
+        "cowardly_pounce": {
+          "id": "cowardly_pounce",
+          "name": "Cowardly Pounce",
+          "type": "fear_damage",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "random_ally",
+          "damageType": "physical",
+          "immediateMin": 1000,
+          "immediateMax": 1600,
+          "duration": 2,
+          "tickEffect": null,
+          "recastTimer": 13,
+          "raidnightHint": "The Cowardly Lion startles one target and may briefly fear them.",
+          "wowAnalog": "Roar fear pressure"
+        },
+        "projector_vortex": {
+          "id": "projector_vortex",
+          "name": "Projector Vortex",
+          "type": "cyclone",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "immediateEffect": {
+            "type": "apply_debuff",
+            "effects": [
+              {
+                "stat": "skip_actions",
+                "value": 1
+              }
+            ]
+          },
+          "duration": 3,
+          "tickEffect": null,
+          "recastTimer": 18,
+          "targetType": "random_ally",
+          "raidnightHint": "Wicked Witch whirls one target out of action briefly.",
+          "wowAnalog": "Cyclone"
+        },
+        "broomfire_barrage": {
+          "id": "broomfire_barrage",
+          "name": "Broomfire Barrage",
+          "type": "damage_aoe",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "all_allies",
+          "damageType": "fire",
+          "immediateMin": 1000,
+          "immediateMax": 1500,
+          "recastTimer": 16,
+          "raidnightHint": "Light raid-wide fire burst from the Witch.",
+          "wowAnalog": "Witch caster pressure"
+        }
+      }
+    },
+    {
+      "id": "the_archivist",
+      "name": "The Archivist",
+      "sourceEncounter": "The Curator",
+      "wing": "The Menagerie",
+      "actors": [
+        "The Archivist",
+        "Loose Pages"
+      ],
+      "bossStats": {
+        "health": 250000,
+        "armor": 4000,
+        "attackSpeed": 3,
+        "damageRange": [
+          900,
+          1450
+        ],
+        "resistList": {
+          "arcane": 30
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Catalog In Progress",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "overdue_manifestation",
+            "condescending_citation",
+            "catalog_reorganization"
+          ]
+        },
+        {
+          "id": "phase_2",
+          "label": "Archive Lockdown",
+          "trigger": {
+            "type": "health_percent",
+            "value": 15
+          },
+          "abilityIds": [
+            "overdue_manifestation",
+            "condescending_citation",
+            "archive_lockdown"
+          ]
+        }
+      ],
+      "abilities": {
+        "overdue_manifestation": {
+          "id": "overdue_manifestation",
+          "name": "Overdue Manifestation",
+          "type": "summon_add",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "summon",
+            "count": 1,
+            "summonId": "loose_page"
+          },
+          "duration": 0,
+          "tickEffect": null,
+          "recastTimer": 10,
+          "targetType": "self",
+          "raidnightHint": "Summons one astral add equivalent that pressures the party.",
+          "wowAnalog": "Astral Flare"
+        },
+        "condescending_citation": {
+          "id": "condescending_citation",
+          "name": "Condescending Citation",
+          "type": "damage_direct",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_mana",
+          "damageType": "arcane",
+          "immediateMin": 1800,
+          "immediateMax": 2600,
+          "recastTimer": 8,
+          "raidnightHint": "Heavy arcane bolt aimed at the mana user with the most resources or a non-tank ally.",
+          "wowAnalog": "Hateful Bolt"
+        },
+        "catalog_reorganization": {
+          "id": "catalog_reorganization",
+          "name": "Catalog Reorganization",
+          "type": "channel_recharge",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_buff",
+            "target": "self",
+            "effects": [
+              {
+                "stat": "takes_extra_damage_percent",
+                "value": 200
+              },
+              {
+                "stat": "skip_actions",
+                "value": 1
+              }
+            ]
+          },
+          "duration": 6,
+          "tickEffect": null,
+          "recastTimer": 30,
+          "targetType": "self",
+          "raidnightHint": "Stops attacking, takes extra damage, and 'recharges' before resuming.",
+          "wowAnalog": "Evocation"
+        },
+        "archive_lockdown": {
+          "id": "archive_lockdown",
+          "name": "Archive Lockdown",
+          "type": "buff_self",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_buff",
+            "target": "self",
+            "effects": [
+              {
+                "stat": "damage_percent",
+                "value": 30
+              },
+              {
+                "stat": "attack_speed_percent",
+                "value": 30
+              }
+            ]
+          },
+          "duration": 999,
+          "tickEffect": null,
+          "recastTimer": 999,
+          "targetType": "self",
+          "raidnightHint": "Permanent execute-phase enrage.",
+          "wowAnalog": "Curator last phase burn"
+        }
+      }
+    },
+    {
+      "id": "malvestian_doomhoof",
+      "name": "Malvestian Doomhoof",
+      "sourceEncounter": "Terestian Illhoof",
+      "wing": "The Summoning Cellar",
+      "actors": [
+        "Malvestian Doomhoof",
+        "Blackhoof Familiar",
+        "Hellstall Imps"
+      ],
+      "bossStats": {
+        "health": 230000,
+        "armor": 3300,
+        "attackSpeed": 2,
+        "damageRange": [
+          800,
+          1250
+        ],
+        "resistList": {
+          "shadow": 35,
+          "fire": 20
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Fel Bargain",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "branding_circle",
+            "fel_stable_hex",
+            "blackhoof_familiar",
+            "hellstall_swarm"
+          ]
+        }
+      ],
+      "abilities": {
+        "branding_circle": {
+          "id": "branding_circle",
+          "name": "Branding Circle",
+          "type": "sacrifice",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "duration": 8,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "shadow"
+          },
+          "tickMin": 260,
+          "tickMax": 380,
+          "recastTimer": 20,
+          "targetType": "random_ally",
+          "raidnightHint": "Pins one target in place and drains them until broken out.",
+          "wowAnalog": "Sacrifice"
+        },
+        "fel_stable_hex": {
+          "id": "fel_stable_hex",
+          "name": "Fel Stable Hex",
+          "type": "damage_direct",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "random_ally",
+          "damageType": "shadow",
+          "immediateMin": 1300,
+          "immediateMax": 2100,
+          "recastTimer": 7,
+          "raidnightHint": "Frequent shadow nuke.",
+          "wowAnalog": "Shadow Bolt"
+        },
+        "blackhoof_familiar": {
+          "id": "blackhoof_familiar",
+          "name": "Blackhoof Familiar",
+          "type": "summon_add",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "summon",
+            "count": 1,
+            "summonId": "blackhoof_familiar"
+          },
+          "duration": 0,
+          "tickEffect": null,
+          "recastTimer": 30,
+          "targetType": "self",
+          "raidnightHint": "Persistent pet that buffs the boss until killed.",
+          "wowAnalog": "Kil'rek"
+        },
+        "hellstall_swarm": {
+          "id": "hellstall_swarm",
+          "name": "Hellstall Swarm",
+          "type": "summon_add",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "summon",
+            "count": 4,
+            "summonId": "hellstall_imp"
+          },
+          "duration": 0,
+          "tickEffect": null,
+          "recastTimer": 18,
+          "targetType": "self",
+          "raidnightHint": "Small imp pack floods the party with chip damage.",
+          "wowAnalog": "Fiendish Portals / imps"
+        }
+      }
+    },
+    {
+      "id": "phantom_magister",
+      "name": "The Phantom Magister",
+      "sourceEncounter": "Shade of Aran",
+      "wing": "The Library",
+      "actors": [
+        "The Phantom Magister"
+      ],
+      "bossStats": {
+        "health": 240000,
+        "armor": 2200,
+        "attackSpeed": 3,
+        "damageRange": [
+          700,
+          1100
+        ],
+        "resistList": {
+          "arcane": 35,
+          "fire": 20,
+          "frost": 20
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Lecture Begins",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "spectral_fire_ring",
+            "ghostfrost_squall",
+            "library_detonation",
+            "ectoplasmic_shackles"
+          ]
+        },
+        {
+          "id": "phase_2",
+          "label": "Exam Prep",
+          "trigger": {
+            "type": "health_percent",
+            "value": 40
+          },
+          "abilityIds": [
+            "spectral_fire_ring",
+            "ghostfrost_squall",
+            "library_detonation",
+            "ectoplasmic_shackles",
+            "classroom_detention",
+            "final_exam"
+          ]
+        }
+      ],
+      "abilities": {
+        "spectral_fire_ring": {
+          "id": "spectral_fire_ring",
+          "name": "Spectral Fire Ring",
+          "type": "positional_dot",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "duration": 8,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "fire"
+          },
+          "tickMin": 260,
+          "tickMax": 360,
+          "recastTimer": 18,
+          "targetType": "all_allies",
+          "raidnightHint": "Party-wide warning mechanic: if anyone 'moves' or takes another action too soon, apply extra fire damage.",
+          "wowAnalog": "Flame Wreath"
+        },
+        "ghostfrost_squall": {
+          "id": "ghostfrost_squall",
+          "name": "Ghostfrost Squall",
+          "type": "damage_aoe",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "all_allies",
+          "damageType": "frost",
+          "immediateMin": 900,
+          "immediateMax": 1500,
+          "duration": 4,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "frost"
+          },
+          "tickMin": 120,
+          "tickMax": 180,
+          "recastTimer": 12,
+          "raidnightHint": "Blizzard-like room pressure.",
+          "wowAnalog": "Blizzard"
+        },
+        "library_detonation": {
+          "id": "library_detonation",
+          "name": "Library Detonation",
+          "type": "damage_aoe",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "all_allies",
+          "damageType": "arcane",
+          "immediateMin": 2200,
+          "immediateMax": 3200,
+          "recastTimer": 16,
+          "raidnightHint": "Large room-wide burst that should be telegraphed.",
+          "wowAnalog": "Arcane Explosion"
+        },
+        "ectoplasmic_shackles": {
+          "id": "ectoplasmic_shackles",
+          "name": "Ectoplasmic Shackles",
+          "type": "slow",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "immediateEffect": {
+            "type": "apply_debuff",
+            "effects": [
+              {
+                "stat": "skip_actions",
+                "value": 1
+              }
+            ]
+          },
+          "duration": 2,
+          "tickEffect": null,
+          "recastTimer": 10,
+          "targetType": "random_ally",
+          "raidnightHint": "Short control effect on one target.",
+          "wowAnalog": "Chains of Ice"
+        },
+        "classroom_detention": {
+          "id": "classroom_detention",
+          "name": "Classroom Detention",
+          "type": "mass_cc",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "immediateEffect": {
+            "type": "apply_debuff",
+            "effects": [
+              {
+                "stat": "skip_actions",
+                "value": 1
+              }
+            ]
+          },
+          "duration": 3,
+          "tickEffect": null,
+          "recastTimer": 24,
+          "targetType": "all_allies",
+          "raidnightHint": "Mass polymorph-style pause that sets up the next cast.",
+          "wowAnalog": "Mass Polymorph"
+        },
+        "final_exam": {
+          "id": "final_exam",
+          "name": "Final Exam",
+          "type": "damage_direct",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "random_ally",
+          "damageType": "fire",
+          "immediateMin": 2800,
+          "immediateMax": 4200,
+          "recastTimer": 26,
+          "raidnightHint": "Huge single-target nuke after Detention if not interrupted.",
+          "wowAnalog": "Pyroblast"
+        }
+      }
+    },
+    {
+      "id": "aether_drake",
+      "name": "The Aether Drake",
+      "sourceEncounter": "Netherspite",
+      "wing": "The Observatory",
+      "actors": [
+        "The Aether Drake"
+      ],
+      "bossStats": {
+        "health": 255000,
+        "armor": 3900,
+        "attackSpeed": 3,
+        "damageRange": [
+          950,
+          1450
+        ],
+        "resistList": {
+          "arcane": 40,
+          "shadow": 20
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Aether Channeling",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "bloodstar_ray",
+            "menders_ray",
+            "mindlash_ray",
+            "collapsed_constellation"
+          ]
+        },
+        {
+          "id": "phase_2",
+          "label": "Planar Drift",
+          "trigger": {
+            "type": "time_elapsed",
+            "value": 45
+          },
+          "abilityIds": [
+            "astral_breath",
+            "starburn",
+            "planar_drift"
+          ]
+        },
+        {
+          "id": "phase_3",
+          "label": "Aether Channeling",
+          "trigger": {
+            "type": "time_elapsed",
+            "value": 75
+          },
+          "abilityIds": [
+            "bloodstar_ray",
+            "menders_ray",
+            "mindlash_ray",
+            "collapsed_constellation"
+          ]
+        }
+      ],
+      "abilities": {
+        "bloodstar_ray": {
+          "id": "bloodstar_ray",
+          "name": "Bloodstar Ray",
+          "type": "beam_buff",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_buff",
+            "target": "self",
+            "effects": [
+              {
+                "stat": "damage_percent",
+                "value": 20
+              }
+            ]
+          },
+          "duration": 8,
+          "tickEffect": null,
+          "recastTimer": 12,
+          "targetType": "self",
+          "raidnightHint": "Red-beam analogue: increases boss damage while one ally soaks it.",
+          "wowAnalog": "Perseverance beam / red beam"
+        },
+        "menders_ray": {
+          "id": "menders_ray",
+          "name": "Mender's Ray",
+          "type": "beam_heal",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "heal",
+            "value": 4000
+          },
+          "immediateHealMin": 3500,
+          "immediateHealMax": 5500,
+          "duration": 0,
+          "tickEffect": null,
+          "recastTimer": 14,
+          "targetType": "self",
+          "raidnightHint": "Green-beam analogue: heals the boss unless handled.",
+          "wowAnalog": "Serenity beam / green beam"
+        },
+        "mindlash_ray": {
+          "id": "mindlash_ray",
+          "name": "Mindlash Ray",
+          "type": "beam_mana_burn",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "mana_restore",
+            "value": -800
+          },
+          "duration": 0,
+          "tickEffect": null,
+          "recastTimer": 11,
+          "targetType": "highest_mana",
+          "raidnightHint": "Blue-beam analogue: drains mana and amplifies magic pressure.",
+          "wowAnalog": "Dominance beam / blue beam"
+        },
+        "collapsed_constellation": {
+          "id": "collapsed_constellation",
+          "name": "Collapsed Constellation",
+          "type": "void_zone",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "duration": 8,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "arcane"
+          },
+          "tickMin": 180,
+          "tickMax": 280,
+          "recastTimer": 15,
+          "targetType": "all_allies",
+          "raidnightHint": "Persistent void-zone style raid damage.",
+          "wowAnalog": "Void Zone"
+        },
+        "astral_breath": {
+          "id": "astral_breath",
+          "name": "Astral Breath",
+          "type": "damage_direct",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "arcane",
+          "immediateMin": 1800,
+          "immediateMax": 2800,
+          "recastTimer": 9,
+          "raidnightHint": "Heavy tank breath in banish phase.",
+          "wowAnalog": "Netherbreath"
+        },
+        "starburn": {
+          "id": "starburn",
+          "name": "Starburn",
+          "type": "debuff_dot",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "duration": 8,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "arcane"
+          },
+          "tickMin": 220,
+          "tickMax": 320,
+          "recastTimer": 14,
+          "targetType": "random_ally",
+          "raidnightHint": "Nether Burn style magical DoT.",
+          "wowAnalog": "Nether Burn"
+        },
+        "planar_drift": {
+          "id": "planar_drift",
+          "name": "Planar Drift",
+          "type": "phase_mechanic",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_buff",
+            "target": "self",
+            "effects": [
+              {
+                "stat": "takes_extra_damage_percent",
+                "value": 50
+              },
+              {
+                "stat": "damage_percent",
+                "value": 10
+              }
+            ]
+          },
+          "duration": 10,
+          "tickEffect": null,
+          "recastTimer": 30,
+          "targetType": "self",
+          "raidnightHint": "Banish-phase swap with altered resistances and softer melee presence.",
+          "wowAnalog": "Banish phase"
+        }
+      }
+    },
+    {
+      "id": "prince_malarkey",
+      "name": "Prince Malarkey",
+      "sourceEncounter": "Prince Malchezaar",
+      "wing": "The Spire",
+      "actors": [
+        "Prince Malarkey",
+        "Infernal Stalkers",
+        "Floating Axes"
+      ],
+      "bossStats": {
+        "health": 300000,
+        "armor": 4300,
+        "attackSpeed": 3,
+        "damageRange": [
+          1100,
+          1700
+        ],
+        "resistList": {
+          "shadow": 30,
+          "fire": 15
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Royal Audience",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "petty_curse",
+            "withering_insult",
+            "royal_tantrum"
+          ]
+        },
+        {
+          "id": "phase_2",
+          "label": "Drop the Chandelier",
+          "trigger": {
+            "type": "health_percent",
+            "value": 60
+          },
+          "abilityIds": [
+            "petty_curse",
+            "withering_insult",
+            "royal_tantrum",
+            "drop_the_chandelier"
+          ]
+        },
+        {
+          "id": "phase_3",
+          "label": "Dual Inconveniences",
+          "trigger": {
+            "type": "health_percent",
+            "value": 30
+          },
+          "abilityIds": [
+            "withering_insult",
+            "royal_tantrum",
+            "drop_the_chandelier",
+            "dual_inconveniences",
+            "title_backed_smackdown"
+          ]
+        }
+      ],
+      "abilities": {
+        "petty_curse": {
+          "id": "petty_curse",
+          "name": "Petty Curse",
+          "type": "debuff_dot",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "duration": 8,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "shadow"
+          },
+          "tickMin": 180,
+          "tickMax": 280,
+          "recastTimer": 10,
+          "targetType": "random_ally",
+          "raidnightHint": "Shadow Word: Pain style curse.",
+          "wowAnalog": "Shadow Word: Pain"
+        },
+        "withering_insult": {
+          "id": "withering_insult",
+          "name": "Withering Insult",
+          "type": "debuff",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_debuff",
+            "effects": [
+              {
+                "stat": "health_percent_floor",
+                "value": 1
+              }
+            ]
+          },
+          "duration": 7,
+          "tickEffect": null,
+          "recastTimer": 18,
+          "targetType": "all_allies",
+          "raidnightHint": "Temporarily crushes everyone's health toward 1 HP without killing them.",
+          "wowAnalog": "Enfeeble"
+        },
+        "royal_tantrum": {
+          "id": "royal_tantrum",
+          "name": "Royal Tantrum",
+          "type": "damage_aoe",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "all_allies",
+          "damageType": "shadow",
+          "immediateMin": 1800,
+          "immediateMax": 2600,
+          "recastTimer": 14,
+          "raidnightHint": "Room-wide Shadow Nova burst.",
+          "wowAnalog": "Shadow Nova"
+        },
+        "drop_the_chandelier": {
+          "id": "drop_the_chandelier",
+          "name": "Drop the Chandelier",
+          "type": "summon_hazard",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "summon",
+            "count": 1,
+            "summonId": "chandelier_infernal"
+          },
+          "duration": 0,
+          "tickEffect": null,
+          "recastTimer": 20,
+          "targetType": "random_ally",
+          "raidnightHint": "Infernal-style hazard lands on a target zone and keeps burning it.",
+          "wowAnalog": "Summon Infernal"
+        },
+        "dual_inconveniences": {
+          "id": "dual_inconveniences",
+          "name": "Dual Inconveniences",
+          "type": "phase_mechanic",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "apply_buff",
+            "target": "self",
+            "effects": [
+              {
+                "stat": "attack_speed_percent",
+                "value": 25
+              },
+              {
+                "stat": "dual_strike",
+                "value": 1
+              }
+            ]
+          },
+          "duration": 999,
+          "tickEffect": null,
+          "recastTimer": 999,
+          "targetType": "self",
+          "raidnightHint": "Phase 3 weapon shift to faster attacks.",
+          "wowAnalog": "Prince axes phase"
+        },
+        "title_backed_smackdown": {
+          "id": "title_backed_smackdown",
+          "name": "Title-Backed Smackdown",
+          "type": "armor_break",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "physical",
+          "immediateMin": 1200,
+          "immediateMax": 1800,
+          "recastTimer": 12,
+          "raidnightHint": "Adds a stacking armor reduction to the tank.",
+          "wowAnalog": "Sunder Armor"
+        }
+      }
+    },
+    {
+      "id": "dreadwing_the_restless",
+      "name": "Dreadwing the Restless",
+      "sourceEncounter": "Nightbane",
+      "wing": "Upper Ramparts",
+      "actors": [
+        "Dreadwing the Restless",
+        "Gravebound Remnants"
+      ],
+      "bossStats": {
+        "health": 320000,
+        "armor": 4500,
+        "attackSpeed": 3,
+        "damageRange": [
+          1200,
+          1800
+        ],
+        "resistList": {
+          "fire": 25,
+          "shadow": 20
+        }
+      },
+      "phases": [
+        {
+          "id": "phase_1",
+          "label": "Ground Phase",
+          "trigger": {
+            "type": "health_percent",
+            "value": 100
+          },
+          "abilityIds": [
+            "grave_rend",
+            "cryptfire_breath",
+            "restless_ashes",
+            "sepulcher_sweep"
+          ]
+        },
+        {
+          "id": "phase_2",
+          "label": "Air Phase",
+          "trigger": {
+            "type": "health_percent",
+            "value": 75
+          },
+          "abilityIds": [
+            "skeletal_downpour",
+            "cinder_spit",
+            "gravebound_remnants"
+          ]
+        },
+        {
+          "id": "phase_3",
+          "label": "Ground Phase",
+          "trigger": {
+            "type": "health_percent",
+            "value": 50
+          },
+          "abilityIds": [
+            "grave_rend",
+            "cryptfire_breath",
+            "restless_ashes",
+            "sepulcher_sweep"
+          ]
+        },
+        {
+          "id": "phase_4",
+          "label": "Air Phase",
+          "trigger": {
+            "type": "health_percent",
+            "value": 25
+          },
+          "abilityIds": [
+            "skeletal_downpour",
+            "cinder_spit",
+            "gravebound_remnants"
+          ]
+        }
+      ],
+      "abilities": {
+        "grave_rend": {
+          "id": "grave_rend",
+          "name": "Grave Rend",
+          "type": "damage_direct",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "physical",
+          "immediateMin": 1900,
+          "immediateMax": 2800,
+          "recastTimer": 8,
+          "raidnightHint": "Basic cleave on the tank.",
+          "wowAnalog": "Cleave"
+        },
+        "cryptfire_breath": {
+          "id": "cryptfire_breath",
+          "name": "Cryptfire Breath",
+          "type": "damage_direct_dot",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "highest_threat",
+          "damageType": "fire",
+          "immediateMin": 1600,
+          "immediateMax": 2400,
+          "duration": 6,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "fire"
+          },
+          "tickMin": 180,
+          "tickMax": 260,
+          "recastTimer": 12,
+          "raidnightHint": "Tank breath with short burn.",
+          "wowAnalog": "Smoldering Breath"
+        },
+        "restless_ashes": {
+          "id": "restless_ashes",
+          "name": "Restless Ashes",
+          "type": "ground_dot",
+          "manaCost": 0,
+          "immediateFlag": false,
+          "duration": 10,
+          "tickEffect": {
+            "type": "damage",
+            "damageType": "fire"
+          },
+          "tickMin": 180,
+          "tickMax": 280,
+          "recastTimer": 14,
+          "targetType": "all_allies",
+          "raidnightHint": "Charred-earth style ground hazard.",
+          "wowAnalog": "Charred Earth"
+        },
+        "sepulcher_sweep": {
+          "id": "sepulcher_sweep",
+          "name": "Sepulcher Sweep",
+          "type": "knockback",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "melee_allies",
+          "damageType": "physical",
+          "immediateMin": 1200,
+          "immediateMax": 1800,
+          "recastTimer": 16,
+          "raidnightHint": "Tail-sweep style backline punishment if anyone is too close behind.",
+          "wowAnalog": "Tail Sweep"
+        },
+        "skeletal_downpour": {
+          "id": "skeletal_downpour",
+          "name": "Skeletal Downpour",
+          "type": "damage_aoe",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "all_allies",
+          "damageType": "physical",
+          "immediateMin": 1200,
+          "immediateMax": 1800,
+          "recastTimer": 15,
+          "raidnightHint": "Rain of Bones room-wide hit that sets up add spawns.",
+          "wowAnalog": "Rain of Bones"
+        },
+        "cinder_spit": {
+          "id": "cinder_spit",
+          "name": "Cinder Spit",
+          "type": "damage_direct",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "targetType": "random_ally",
+          "damageType": "fire",
+          "immediateMin": 2000,
+          "immediateMax": 3000,
+          "recastTimer": 7,
+          "raidnightHint": "Smoking Blast style repeated ranged bombardment while airborne.",
+          "wowAnalog": "Smoking Blast"
+        },
+        "gravebound_remnants": {
+          "id": "gravebound_remnants",
+          "name": "Gravebound Remnants",
+          "type": "summon_add",
+          "manaCost": 0,
+          "immediateFlag": true,
+          "immediateEffect": {
+            "type": "summon",
+            "count": 5,
+            "summonId": "gravebound_remnant"
+          },
+          "duration": 0,
+          "tickEffect": null,
+          "recastTimer": 18,
+          "targetType": "self",
+          "raidnightHint": "Skeleton adds during the air phase.",
+          "wowAnalog": "Restless Skeletons"
+        }
+      }
+    }
+  ]
+}
