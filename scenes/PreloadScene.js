@@ -297,7 +297,7 @@ export default class PreloadScene extends Phaser.Scene {
 
     this.add.rectangle(cx, cy, W, H, 0x0a0a0a);
 
-    this.add.text(cx, cy - 180, 'STORMCALLER', {
+    this.add.text(cx, cy - 180, 'RAID NIGHT', {
       fontFamily: 'monospace',
       fontSize: '52px',
       color: '#c8a96e',
@@ -305,7 +305,7 @@ export default class PreloadScene extends Phaser.Scene {
       letterSpacing: 12,
     }).setOrigin(0.5);
 
-    this.add.text(cx, cy - 100, 'TBC Classic - Shaman Edition', {
+    this.add.text(cx, cy - 100, 'A game about raiding with imaginary friends', {
       fontFamily: 'monospace',
       fontSize: '28px',
       color: '#666666',
