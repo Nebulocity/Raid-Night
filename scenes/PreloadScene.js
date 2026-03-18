@@ -77,12 +77,15 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.spritesheet('shaman_attack',   'assets/characters/shaman/character_shaman_attack.png',   { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('shaman_casting',  'assets/characters/shaman/character_shaman_casting.png',  { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('shaman_hit',      'assets/characters/shaman/character_shaman_hit.png',      { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('shaman_totem',    'assets/characters/shaman/character_shaman_totem.png',    { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('shaman_might_of_earth_totem',    'assets/characters/shaman/character_shaman_might_of_earth_totem.png',    { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('shaman_tempest_totem',    'assets/characters/shaman/character_shaman_tempest_totem.png',    { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('shaman_totem_of_fury',    'assets/characters/shaman/character_shaman_totem_of_fury.png',    { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('shaman_wrath_of_storms_totem',    'assets/characters/shaman/character_shaman_wrath_of_storms_totem.png',    { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('shaman_defeated', 'assets/characters/shaman/character_shaman_defeated.png', { frameWidth: 384, frameHeight: 384 });
 
-    // Lightning / chain lightning cast sheets (fall back to casting if not yet produced)
-    this.load.spritesheet('shaman_lightning', 'assets/characters/shaman/character_shaman_lightning.png', { frameWidth: 512, frameHeight: 512 });
-    this.load.spritesheet('shaman_chain',     'assets/characters/shaman/character_shaman_chain.png',     { frameWidth: 384, frameHeight: 512 });
+    // Static burst / arc lightning cast sheets (fall back to casting if not yet produced)
+    this.load.spritesheet('shaman_static_burst', 'assets/characters/shaman/character_shaman_static_burst.png', { frameWidth: 512, frameHeight: 512 });
+    this.load.spritesheet('shaman_chain_lightning',     'assets/characters/shaman/character_shaman_arc_lightning.png',     { frameWidth: 384, frameHeight: 512 });
 
     // ---- Tank ----
     this.load.spritesheet('tank_idle',     'assets/characters/tank/character_tank_idle.png',     { frameWidth: 384, frameHeight: 384 });
@@ -97,8 +100,8 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.spritesheet('druid_defeated', 'assets/characters/healer/character_healer_defeated.png', { frameWidth: 384, frameHeight: 384 });
 
     // ---- Totems ----
-    // earth: 512x384, 4x3 = 12 frames, 128x128 each
-    this.load.spritesheet('totem_earth', 'assets/characters/shaman/totem_earth.png', { frameWidth: 128, frameHeight: 128 });
+    // Might of Earth: 512x384, 4x3 = 12 frames, 128x128 each
+    // this.load.spritesheet('might_of_earth_totem', 'assets/characters/shaman/might_of_earth_totem.png', { frameWidth: 128, frameHeight: 128 });
 
     // ---- Title screen background ----
     this.load.image('bg_raidnight', 'assets/bg_raid_night.png');
@@ -160,15 +163,17 @@ export default class PreloadScene extends Phaser.Scene {
   _loadAbilityIcons() {
     const icons = [
       // Healer
-      'innervate', 'regrowth', 'rejuvenation', 'lifebloom', 'swiftmend', 'rebirth',
+      'spirit surge', 'renew', 'sustain', 'burgeon', 'quicken', 'awaken',
       // Tank
-      'judgement_of_righteousness', 'consecration', 'holy_shield', 'judgement_of_wisdom',
+      'verdict_of_righteousness', 'sanctify', 'sacred_bulwark', 'verdict_of_wisdom',
       // Player (shaman)
-      'lightning_bolt', 'chain_lightning',
-      'strength_of_earth_totem', 'windfury_totem', 'grounding_totem',
-      'totem_of_wrath', 'wrath_of_air_totem',
+      'static_burst', 'arc_lightning',
+      'might_of_earth_totem', 'tempest_totem', 'warding_totem',
+      'totem_of_fury', 'wrath_of_storms_totem',
+      
       // Boss abilities (used by floating combat text)
-      'wrath_of_ragnaros', 'magma_blast', 'submerge',
+      // 'wrath_of_ragnaros', 'magma_blast', 'submerge',
+      
       // Generic auto-attack
       'autoAttack',
     ];
