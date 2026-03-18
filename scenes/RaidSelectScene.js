@@ -121,7 +121,8 @@ export default class RaidSelectScene extends Phaser.Scene {
         yoyo: true,
         ease: 'Quad.easeOut',
         onComplete: () => flash.destroy()
-
+      }
+                      
       // Camera fades out
       this.cameras.main.fadeOut(1000, 0, 0, 0);
       this.time.delayedCall(500, () => {
