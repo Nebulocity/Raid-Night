@@ -91,7 +91,7 @@ export default class GameScene extends Phaser.Scene {
     // Initialize threat table - tank starts with high threat so
     // boss targets it by default before any combat actions occur.
     this._initThreatTable();
-    this.addThreat('tank', 5000);
+    
     // Defer threat meter update until after slots are built
     this.time.delayedCall(100, () => this._updateThreatMeters());
 
@@ -139,14 +139,14 @@ export default class GameScene extends Phaser.Scene {
     }, 'shaman_idle');
 
     // this._safeCreateAnim({
-    //   key:       'shaman_cast_lightning',
+    //   key:       'shaman_cast_static_burst',
     //   frames:    anims.generateFrameNumbers('shaman_lightning', { start: 0, end: 2 }),
     //   frameRate: 10,
     //   repeat:    0,
     // }, 'shaman_lightning');
 
     // this._safeCreateAnim({
-    //   key:       'shaman_cast_chain',
+    //   key:       'shaman_cast_arc_lightning',
     //   frames:    anims.generateFrameNumbers('shaman_chain', { start: 0, end: 3 }),
     //   frameRate: 10,
     //   repeat:    0,
@@ -195,21 +195,21 @@ export default class GameScene extends Phaser.Scene {
       repeat:    -1,
     }, 'tank_idle');
     
-    // Attack: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
-    this._safeCreateAnim({
-      key:       'tank_attack',
-      frames:    anims.generateFrameNumbers('tank_attack', { start: 0, end: 15 }),
-      frameRate: 12,
-      repeat:    0,
-    }, 'tank_attack');
+    // // Attack: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
+    // this._safeCreateAnim({
+    //   key:       'tank_attack',
+    //   frames:    anims.generateFrameNumbers('tank_attack', { start: 0, end: 15 }),
+    //   frameRate: 12,
+    //   repeat:    0,
+    // }, 'tank_attack');
 
-    // Hit: 1024x768, 4x3 = 12 frames, plays once then returns to idle
-    this._safeCreateAnim({
-      key:       'tank_hit',
-      frames:    anims.generateFrameNumbers('tank_hit', { start: 0, end: 11 }),
-      frameRate: 12,
-      repeat:    0,
-    }, 'tank_hit');
+    // // Hit: 1024x768, 4x3 = 12 frames, plays once then returns to idle
+    // this._safeCreateAnim({
+    //   key:       'tank_hit',
+    //   frames:    anims.generateFrameNumbers('tank_hit', { start: 0, end: 11 }),
+    //   frameRate: 12,
+    //   repeat:    0,
+    // }, 'tank_hit');
 
     // Judgement spell - uncomment when tank_judge.png is finalized
     // this._safeCreateAnim({
@@ -246,13 +246,13 @@ export default class GameScene extends Phaser.Scene {
     //   repeat:    0,
     // }, 'druid_casting');
 
-    // Hit: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
-    this._safeCreateAnim({
-      key:       'druid_hit',
-      frames:    anims.generateFrameNumbers('druid_hit', { start: 0, end: 15 }),
-      frameRate: 12,
-      repeat:    0,
-    }, 'druid_hit');
+    // // Hit: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
+    // this._safeCreateAnim({
+    //   key:       'druid_hit',
+    //   frames:    anims.generateFrameNumbers('druid_hit', { start: 0, end: 15 }),
+    //   frameRate: 12,
+    //   repeat:    0,
+    // }, 'druid_hit');
 
     // =====================
     // TOTEM ANIMATIONS
