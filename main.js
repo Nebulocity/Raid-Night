@@ -6,7 +6,8 @@
  * Browser:  auto-scales to fit viewport while keeping aspect ratio
  */
 
-import Phaser             from 'phaser';
+// import Phaser             from 'phaser';
+const Phaser = window.Phaser;
 import BootScene          from './scenes/BootScene.js';
 import PreloadScene       from './scenes/PreloadScene.js';
 import TitleScene         from './scenes/TitleScene.js';
