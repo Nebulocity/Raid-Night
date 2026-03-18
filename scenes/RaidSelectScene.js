@@ -64,8 +64,8 @@ export default class RaidSelectScene extends Phaser.Scene {
       .setAlpha(alpha)
       .setInteractive(unlocked ? { useHandCursor: true } : undefined);
 
-    const width = panel.width;
-    const height = panel.height;
+    const width = 64;
+    const height = 64;
 
     const icon = this.add.image(x, y - height * 0.22, raid.buttonKey)
     .setOrigin(0.5)
