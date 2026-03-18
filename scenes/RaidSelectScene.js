@@ -56,8 +56,8 @@ export default class RaidSelectScene extends Phaser.Scene {
   }
 
   _createRaidButton(x, y, raid, unlocked, saveData) {
-    // const width = 360;
-    // const height = 300;
+    const width = 360;
+    const height = 300;
     const alpha = unlocked ? 1 : 0.42;
 
     const panel = this.add.rectangle(x, y, width, height, 0x1b110d, 0.90)
