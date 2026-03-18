@@ -37,7 +37,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     const bottomY = zoneTop + zoneHeight * 0.75;
     
     const newBottomY = bottomY - 100;
-    const newTopY = newBottomY - 550;
+    const newTopY = newBottomY - 350;
     
     const centers = [
       { x: WIDTH * 0.30, y: newTopY },
