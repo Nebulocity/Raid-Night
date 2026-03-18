@@ -157,7 +157,7 @@ const THE_CRACKED_MOUNTAIN = {
       defeatedPath:             raidAssetPath('the_cracked_mountain', 'bosses/defeated/boss_grull_the_wyrm_whacker_defeated.png'),
       levelKey:                 'level_grull',
       levelPath:                'data/the_cracked_mountain/grull_the_wyrm_whacker.json',
-      unlockedBy:               [],
+      unlockedBy:               ['high_chief_bonkgar'],
     },
   ],
 };
@@ -397,8 +397,8 @@ export const RAID_CATALOG = {
 
 // RAID_ORDER: the display order on the raid selection screen
 export const RAID_ORDER = [
-  'spookspire_keep',
   'the_churning_core',
+  'spookspire_keep',  
   'the_cracked_mountain',
   'the_demon_basement',
 ];
