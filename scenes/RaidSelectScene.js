@@ -32,12 +32,20 @@ export default class RaidSelectScene extends Phaser.Scene {
 
     const zoneTop = HEIGHT * 0.15;
     const zoneHeight = HEIGHT * 0.75;
+    
+    const topY = zoneTop + zoneHeight * 0.25;
+    const bottomY = zoneTop + zoneHeight * 0.75;
+    
+    const newBottomY = bottomY - 100;
+    const newTopY = newBottomY - 50;
+    
     const centers = [
-      { x: WIDTH * 0.30, y: zoneTop + zoneHeight * 0.25 },
-      { x: WIDTH * 0.70, y: zoneTop + zoneHeight * 0.25 },
-      { x: WIDTH * 0.30, y: zoneTop + zoneHeight * 0.75 },
-      { x: WIDTH * 0.70, y: zoneTop + zoneHeight * 0.75 },
+      { x: WIDTH * 0.30, y: newTopY },
+      { x: WIDTH * 0.70, y: newTopY },
+      { x: WIDTH * 0.30, y: newBottomY },
+      { x: WIDTH * 0.70, y: newBottomY },
     ];
+
 
     RAID_ORDER.forEach((raidId, index) => {
       const raid = RAID_CATALOG[raidId];
