@@ -61,15 +61,9 @@ export default class RaidSelectScene extends Phaser.Scene {
     const alpha = unlocked ? 1 : 0.42;
 
     const panel = this.add.rectangle(x, y, width, height, 0x1b110d, 0.90)
-      .setStrokeStyle(4, unlocked ? 0xd79f4e : 0x666666, 1)
+      .setStrokeStyle(8, unlocked ? 0xd79f4e : 0x666666, 1)
       .setAlpha(alpha)
       .setInteractive(unlocked ? { useHandCursor: true } : undefined);
-
-    // this.add.image(x, y - 20, raid.buttonKey)
-    //   .setDisplaySize(180, 180)
-    //   .setOrigin(0.5)
-    //   .setAlpha(alpha)
-    //   .setScale(2);
 
     const icon = this.add.image(x, y - 20, raid.buttonKey)
     .setOrigin(0.5)
@@ -96,31 +90,40 @@ export default class RaidSelectScene extends Phaser.Scene {
       }).setOrigin(0.5);
       return;
     }
+  
+    // Hover effect on buttons
+    panel.on('pointerover', () => panel.setStrokeStyle(8, 0xffd37a, 1));
+    panel.on('pointerout', () => panel.setStrokeStyle(8, 0xd79f4e, 1));
 
-    panel.on('pointerover', () => panel.setStrokeStyle(4, 0xffd37a, 1));
-    panel.on('pointerout', () => panel.setStrokeStyle(4, 0xd79f4e, 1));
+    // Click effect on pressing a button
     panel.on('pointerdown', () => {
+      
+      // Flash the button
       this.tweens.add({ targets: panel, scaleX: 0.98, scaleY: 0.98, duration: 90, yoyo: true });
-      
+
+      // Set and save the selected raid (in case of a wipe)
       const nextSave = { ...saveData, lastSelectedRaidId: raid.id };
-      saveSaveData(nextSave);
-      
+      saveSaveData(nextSave);     
       this.registry.set('saveData', nextSave);
       this.registry.set('selectedRaidId', raid.id);
 
-      const flash = this.add.rectangle(x, y, width, height, 0xffffff, 0)
+      // Create the screen flash
+      const flash = this.add.rectangle(x, y, width, height, 0xffffff, 1)
         .setOrigin(0.5)
-        .setDepth(9999);
-      
+        .setDepth(9999)
+        .setAlpha(0);
+
+      // Add flash to tween
       this.tweens.add({
         targets: flash,
-        alpha: { from: 0, to: 0.6 },
+        alpha: { from: 0, to: 1 },
         duration: 80,
         yoyo: true,
+        ease: 'Quad.easeOut',
         onComplete: () => flash.destroy()
-      });
 
-      this.cameras.main.fadeOut(450, 0, 0, 0);
+      // Camera fades out
+      this.cameras.main.fadeOut(1000, 0, 0, 0);
       this.time.delayedCall(500, () => {
         this.scene.start('RaidBossSelectScene');
       });
@@ -135,10 +138,10 @@ export default class RaidSelectScene extends Phaser.Scene {
 
     this.add.text(WIDTH / 2, HEIGHT * 0.95, 'Raid Wipe Tokens Left: ' + saveData.raidWipeTokensLeft, {
       fontFamily: 'monospace',
-      fontSize: '52px',
+      fontSize: '96px',
       color: '#f3e6c2',
       stroke: '#000000',
-      strokeThickness: 6,
+      strokeThickness: 8,
     }).setOrigin(0.5);
   }
 }
