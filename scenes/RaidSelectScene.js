@@ -56,11 +56,10 @@ export default class RaidSelectScene extends Phaser.Scene {
   }
 
   _createRaidButton(x, y, raid, unlocked, saveData) {
-    const width = 360;
-    const height = 300;
+    
     const alpha = unlocked ? 1 : 0.42;
 
-    const panel = this.add.rectangle(x, y, width, height, 0x1b110d, 0.90)
+    const panel = this.add.rectangle(x, y, 360, 300, 0x1b110d, 0.90)
       .setStrokeStyle(8, unlocked ? 0xd79f4e : 0x666666, 1)
       .setAlpha(alpha)
       .setInteractive(unlocked ? { useHandCursor: true } : undefined);
