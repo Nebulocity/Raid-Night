@@ -3,6 +3,8 @@
  *
  * Lets the player choose which raid to enter.
  */
+const Phaser = window.Phaser; // Phaser is loaded via <script> in index.html
+
 import { RAID_CATALOG, RAID_ORDER } from '../data/raidCatalog.js';
 import { loadSaveData, saveSaveData } from '../utils/saveData.js';
 
@@ -16,9 +18,13 @@ export default class RaidSelectScene extends Phaser.Scene {
     const saveData = loadSaveData();
     this.registry.set('saveData', saveData);
 
-    this.add.image(WIDTH / 2, HEIGHT / 2, 'screen_raid_select')
+    this.add.image(WIDTH / 2, HEIGHT / 2, 'bg_raidnight')
       .setDisplaySize(WIDTH, HEIGHT)
       .setOrigin(0.5);
+
+    // this.add.image(WIDTH / 2, HEIGHT / 2, 'screen_raid_select')
+    //   .setDisplaySize(WIDTH, HEIGHT)
+    //   .setOrigin(0.5);
 
     this.add.text(WIDTH / 2, HEIGHT * 0.08, 'Choose Your Raid!', {
       fontFamily: 'monospace',

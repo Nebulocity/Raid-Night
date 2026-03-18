@@ -1,0 +1,259 @@
+{
+  "level": {
+    "id": "the_cracked_mountain_grull_the_wyrm_whacker",
+    "name": "Grull the Wyrm Whacker",
+    "raidId": "the_cracked_mountain",
+    "bossId": "grull_the_wyrm_whacker"
+  },
+  "assets": {
+    "background": {
+      "key": "bg_encounter_grull_the_wyrm_whacker",
+      "path": "assets/raids/the_cracked_mountain/backgrounds/bg_grull_the_wyrm_whacker.png"
+    },
+    "spritesheets": [
+      {
+        "key": "boss_grull_the_wyrm_whacker_idle",
+        "path": "assets/raids/the_cracked_mountain/bosses/idle/boss_grull_the_wyrm_whacker_idle.png",
+        "frameWidth": 256,
+        "frameHeight": 256
+      },
+      {
+        "key": "boss_grull_the_wyrm_whacker_attacking",
+        "path": "assets/raids/the_cracked_mountain/bosses/attacking/boss_grull_the_wyrm_whacker_attacking.png",
+        "frameWidth": 256,
+        "frameHeight": 256
+      },
+      {
+        "key": "boss_grull_the_wyrm_whacker_defeated",
+        "path": "assets/raids/the_cracked_mountain/bosses/defeated/boss_grull_the_wyrm_whacker_defeated.png",
+        "frameWidth": 256,
+        "frameHeight": 256
+      }
+    ]
+  },
+  "boss": {
+    "id": "grull_the_wyrm_whacker",
+    "name": "Grull the Wyrm Whacker",
+    "stats": {
+      "health": 650000,
+      "maxHealth": 650000,
+      "mana": 100000,
+      "maxMana": 100000,
+      "usesMana": false,
+      "damageRange": [
+        1500,
+        2500
+      ],
+      "attackSpeed": 3,
+      "armor": 15000,
+      "attackHitChance": 90,
+      "abilityHitChance": 90,
+      "resistList": {
+        "fire": 0,
+        "water": 0,
+        "nature": 0,
+        "holy": 0,
+        "shadow": 0,
+        "arcane": 0
+      }
+    },
+    "phases": [
+      {
+        "id": "phase_1",
+        "label": "Phase 1",
+        "trigger": {
+          "type": "health_percent",
+          "value": 100
+        },
+        "abilityIds": [
+          "wyrm_whack",
+          "ground_tremor",
+          "stone_spike"
+        ]
+      }
+    ],
+    "dialog": {
+      "intro": [
+        "Grull whacked many wyrms. Now Grull whack you.",
+        "YOU ARE SMALLER THAN WYRM. THIS WILL BE QUICK."
+      ],
+      "defeat": [
+        "Grull... whacked. This is... embarrassing."
+      ],
+      "victory": [
+        "GRULL IS UNDEFEATED. GRULL IS LEGEND. GRULL NEED SNACK."
+      ]
+    },
+    "sounds": {
+      "intro": "assets/raids/the_cracked_mountain/sounds/sound_intro_grull_the_wyrm_whacker.ogg",
+      "attack": "assets/raids/the_cracked_mountain/sounds/sound_attack_grull_the_wyrm_whacker.ogg",
+      "hit": "assets/raids/the_cracked_mountain/sounds/sound_hit_grull_the_wyrm_whacker.ogg",
+      "defeat": "assets/raids/the_cracked_mountain/sounds/sound_defeat_grull_the_wyrm_whacker.ogg",
+      "victory": "assets/raids/the_cracked_mountain/sounds/sound_victory.ogg"
+    },
+    "threatTable": {
+      "player": 0,
+      "tank": 0,
+      "healer": 0
+    },
+    "spriteKey": "boss_grull_the_wyrm_whacker_idle",
+    "spriteScale": 3,
+    "animations": {
+      "idle": {
+        "key": "boss_grull_the_wyrm_whacker_idle",
+        "startFrame": 0,
+        "endFrame": 11,
+        "frameRate": 6,
+        "repeat": -1
+      },
+      "attack": {
+        "key": "boss_grull_the_wyrm_whacker_attacking",
+        "startFrame": 0,
+        "endFrame": 15,
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "defeated": {
+        "key": "boss_grull_the_wyrm_whacker_defeated",
+        "startFrame": 0,
+        "endFrame": 15,
+        "frameRate": 10,
+        "repeat": 0
+      }
+    }
+  },
+  "characters": {
+    "player": {
+      "id": "player",
+      "name": "Earth Mother's Favorite",
+      "abilityIds": [],
+      "stats": {
+        "health": 8010,
+        "maxHealth": 8010,
+        "mana": 8963,
+        "maxMana": 8963,
+        "armor": 3500,
+        "attackHit": 75,
+        "spellHit": 85,
+        "attackSpeed": 3,
+        "damageRange": [
+          400,
+          650
+        ],
+        "actionInterval": 1,
+        "missChance": 5
+      }
+    },
+    "tank": {
+      "id": "tank",
+      "name": "Tanky McTankface",
+      "abilityIds": [],
+      "stats": {
+        "health": 12067,
+        "maxHealth": 12067,
+        "mana": 5418,
+        "maxMana": 5418,
+        "armor": 14817,
+        "attackHit": 88,
+        "spellHit": 80,
+        "attackSpeed": 2,
+        "damageRange": [
+          107,
+          212
+        ],
+        "actionInterval": 2,
+        "blockChance": 15,
+        "missChance": 5
+      }
+    },
+    "healer": {
+      "id": "healer",
+      "name": "Healer McHealface",
+      "abilityIds": [],
+      "stats": {
+        "health": 7497,
+        "maxHealth": 7497,
+        "mana": 9303,
+        "maxMana": 9303,
+        "armor": 2200,
+        "attackHit": 60,
+        "spellHit": 85,
+        "attackSpeed": 3,
+        "damageRange": [
+          80,
+          150
+        ],
+        "actionInterval": 1,
+        "missChance": 5
+      }
+    }
+  },
+  "abilities": {
+    "wyrm_whack": {
+      "id": "wyrm_whack",
+      "name": "Wyrm Whack",
+      "type": "boss_mechanic",
+      "manaCost": 0,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "damage",
+        "damageType": "nature"
+      },
+      "immediateMin": 3000,
+      "immediateMax": 5000,
+      "duration": 0,
+      "tickEffect": null,
+      "tickMin": 0,
+      "tickMax": 0,
+      "threatPerDamage": 0,
+      "recastTimer": 10,
+      "targetType": "highest_threat",
+      "dialogue": "GRULL WHACK WYRM. GRULL WHACK YOU TOO."
+    },
+    "ground_tremor": {
+      "id": "ground_tremor",
+      "name": "Ground Tremor",
+      "type": "boss_mechanic",
+      "manaCost": 0,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "damage",
+        "damageType": "nature"
+      },
+      "immediateMin": 1500,
+      "immediateMax": 2500,
+      "duration": 0,
+      "tickEffect": null,
+      "tickMin": 0,
+      "tickMax": 0,
+      "threatPerDamage": 0,
+      "recastTimer": 15,
+      "targetType": "all_allies",
+      "dialogue": "The ground shakes as Grull pounds the earth!"
+    },
+    "stone_spike": {
+      "id": "stone_spike",
+      "name": "Stone Spike",
+      "type": "boss_mechanic",
+      "manaCost": 0,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "damage",
+        "damageType": "nature"
+      },
+      "immediateMin": 4000,
+      "immediateMax": 6500,
+      "duration": 5,
+      "tickEffect": {
+        "type": "damage",
+        "damageType": "nature"
+      },
+      "tickMin": 600,
+      "tickMax": 900,
+      "threatPerDamage": 0,
+      "recastTimer": 30,
+      "targetType": "highest_threat",
+      "dialogue": "STONE SPIKE. VERY POINTY."
+    }
+  }
+}

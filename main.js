@@ -2,11 +2,13 @@
  * main.js - Phaser 3 game configuration and boot
  *
  * RAID NIGHT
- * Target:   1080 x 2400 (portrait, FHD+ Android)
+ * Target Resolution:   1080 x 2400 (portrait, FHD+ Android)
  * Browser:  auto-scales to fit viewport while keeping aspect ratio
  */
 
-import Phaser             from 'phaser';
+
+const Phaser = window.Phaser; // Phaser is loaded via <script> in index.html
+
 import BootScene          from './scenes/BootScene.js';
 import PreloadScene       from './scenes/PreloadScene.js';
 import TitleScene         from './scenes/TitleScene.js';
@@ -16,18 +18,19 @@ import BossLoadingScene   from './scenes/BossLoadingScene.js';
 import GameScene          from './scenes/GameScene.js';
 import UIScene            from './scenes/UIScene.js';
 
-// Layout constants (shared across all scenes via window.GAME_CONFIG)
+// Layout constants
 window.GAME_CONFIG = {
-  // Base design resolution
+
+  // Set resolution
   WIDTH: 1080,
   HEIGHT: 2400,
 
-  // Zone definitions
-  // Each zone: { x, y, w, h } in base-resolution pixels.
+  // Zones: these are areas of the screen that we'll plug game components into.
+  // Each zone: { x, y, w, h } in the default 1080x2400 coordinate space.
   // x/y = top-left corner of the zone.
   ZONES: {
     BACKGROUND: { x: 0, y: 0, w: 1080, h: 2400 },
-    BOSS: { x: 190, y: 325, w: 700, h: 760 },
+    BOSS: { x: 190, y: 325, w: 384, h: 384 },
     TANK: { x: 40, y: 950, w: 400, h: 575 },
     HEALER: { x: 640, y: 950, w: 400, h: 575 },
     PLAYER: { x: 45, y: 1500, w: 400, h: 575 },
@@ -36,8 +39,8 @@ window.GAME_CONFIG = {
     ACTION_BAR: { x: 0, y: 2200, w: 1080, h: 200 },
   },
 
-  // Gameplay timing
-  TICK_MS: 1200,
+  // Gameplay timing (2 seconds)
+  TICK_MS: 2000,
 
   // DEBUG SKIP INTRO
   DEBUG_SKIP_INTRO: true,
@@ -92,4 +95,4 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
-window.__game = game;
+window._game = game;

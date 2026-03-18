@@ -7,7 +7,9 @@
  * are read from levelData (the JSON). No boss-specific strings are
  * hardcoded here. Adding a new boss means writing a new JSON file only.
  */
-import Phaser from 'phaser';
+const Phaser = window.Phaser; // Phaser is loaded via <script> in index.html;
+
+import { loadSaveData, saveSaveData, recordBossDefeat } from '../utils/saveData.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -118,6 +120,7 @@ export default class GameScene extends Phaser.Scene {
       console.warn('[GameScene] Skipping animation "' + config.key + '" -- texture not loaded:', textureKey);
       return;
     }
+
     this.anims.create(config);
   }
 
@@ -127,64 +130,64 @@ export default class GameScene extends Phaser.Scene {
     // =====================
     // PLAYER ANIMATIONS
     // =====================
-    // Sheet: 4x3 grid, 12 frames each 256x256 - all idle
+    // Sheet: 3x4 grid, 12 frames each 256x256 - all idle
     this._safeCreateAnim({
       key:       'shaman_idle',
-      frames:    anims.generateFrameNumbers('shaman_idle', { start: 0, end: 5 }),
+      frames:    anims.generateFrameNumbers('shaman_idle', { start: 0, end: 11 }),
       frameRate: 10,
       repeat:    -1,
     }, 'shaman_idle');
 
-    this._safeCreateAnim({
-      key:       'shaman_cast_lightning',
-      frames:    anims.generateFrameNumbers('shaman_lightning', { start: 0, end: 2 }),
-      frameRate: 10,
-      repeat:    0,
-    }, 'shaman_lightning');
+    // this._safeCreateAnim({
+    //   key:       'shaman_cast_lightning',
+    //   frames:    anims.generateFrameNumbers('shaman_lightning', { start: 0, end: 2 }),
+    //   frameRate: 10,
+    //   repeat:    0,
+    // }, 'shaman_lightning');
 
-    this._safeCreateAnim({
-      key:       'shaman_cast_chain',
-      frames:    anims.generateFrameNumbers('shaman_chain', { start: 0, end: 3 }),
-      frameRate: 10,
-      repeat:    0,
-    }, 'shaman_chain');
+    // this._safeCreateAnim({
+    //   key:       'shaman_cast_chain',
+    //   frames:    anims.generateFrameNumbers('shaman_chain', { start: 0, end: 3 }),
+    //   frameRate: 10,
+    //   repeat:    0,
+    // }, 'shaman_chain');
 
     // Auto-attack: 1024x768, 4x3 = 11 frames (last row has 3), plays once
     this._safeCreateAnim({
       key:       'shaman_attack',
-      frames:    anims.generateFrameNumbers('shaman_attack', { start: 0, end: 10 }),
+      frames:    anims.generateFrameNumbers('shaman_attack', { start: 0, end: 11 }),
       frameRate: 10,
       repeat:    0,
     }, 'shaman_attack');
 
     // Casting: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
-    this._safeCreateAnim({
-      key:       'shaman_casting',
-      frames:    anims.generateFrameNumbers('shaman_casting', { start: 0, end: 15 }),
-      frameRate: 12,
-      repeat:    0,
-    }, 'shaman_casting');
+    // this._safeCreateAnim({
+    //   key:       'shaman_casting',
+    //   frames:    anims.generateFrameNumbers('shaman_casting', { start: 0, end: 15 }),
+    //   frameRate: 12,
+    //   repeat:    0,
+    // }, 'shaman_casting');
 
     // Hit: 1024x768, 4x3 = 12 frames, plays once then returns to idle
-    this._safeCreateAnim({
-      key:       'shaman_hit',
-      frames:    anims.generateFrameNumbers('shaman_hit', { start: 0, end: 11 }),
-      frameRate: 12,
-      repeat:    0,
-    }, 'shaman_hit');
+    // this._safeCreateAnim({
+    //   key:       'shaman_hit',
+    //   frames:    anims.generateFrameNumbers('shaman_hit', { start: 0, end: 11 }),
+    //   frameRate: 12,
+    //   repeat:    0,
+    // }, 'shaman_hit');
 
-    // Totem placement: 1024x768, 4x3 = 12 frames, plays once then returns to idle
-    this._safeCreateAnim({
-      key:       'shaman_totem',
-      frames:    anims.generateFrameNumbers('shaman_totem', { start: 0, end: 11 }),
-      frameRate: 12,
-      repeat:    0,
-    }, 'shaman_totem');
+    // // Totem placement: 1024x768, 4x3 = 12 frames, plays once then returns to idle
+    // this._safeCreateAnim({
+    //   key:       'shaman_totem',
+    //   frames:    anims.generateFrameNumbers('shaman_totem', { start: 0, end: 11 }),
+    //   frameRate: 12,
+    //   repeat:    0,
+    // }, 'shaman_totem');
 
     // =====================
     // TANK ANIMATIONS
     // =====================
-    // Idle: 1536x1024 sheet, 4 cols x 3 rows = 12 frames at 256x256
+    // Idle: 1536x1024 sheet, 4 cols x 3 rows = 12 frames at 384x384
     this._safeCreateAnim({
       key:       'tank_idle',
       frames:    anims.generateFrameNumbers('tank_idle', { start: 0, end: 11 }),
@@ -236,12 +239,12 @@ export default class GameScene extends Phaser.Scene {
     }, 'druid_idle');
 
     // Casting: 1024x768, 4x3 = 12 frames, plays once then returns to idle
-    this._safeCreateAnim({
-      key:       'druid_casting',
-      frames:    anims.generateFrameNumbers('druid_casting', { start: 0, end: 11 }),
-      frameRate: 12,
-      repeat:    0,
-    }, 'druid_casting');
+    // this._safeCreateAnim({
+    //   key:       'druid_casting',
+    //   frames:    anims.generateFrameNumbers('druid_casting', { start: 0, end: 11 }),
+    //   frameRate: 12,
+    //   repeat:    0,
+    // }, 'druid_casting');
 
     // Hit: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
     this._safeCreateAnim({
@@ -257,13 +260,13 @@ export default class GameScene extends Phaser.Scene {
     // Totems - shared, not level-specific
     // totem_earth: 512x384, 4x3 = 12 frames at 128x128
     // Other totems uncommented as their sheets become available
-    this._safeCreateAnim({
-      key:       'totem_earth_pulse',
-      frames:    anims.generateFrameNumbers('totem_earth', { start: 0, end: 11 }),
-      frameRate: 8,
-      repeat:    -1,
-      yoyo:      true,
-    }, 'totem_earth');
+    // this._safeCreateAnim({
+    //   key:       'totem_earth_pulse',
+    //   frames:    anims.generateFrameNumbers('totem_earth', { start: 0, end: 11 }),
+    //   frameRate: 8,
+    //   repeat:    -1,
+    //   yoyo:      true,
+    // }, 'totem_earth');
     // this._safeCreateAnim({ key: 'totem_fire_pulse',  frames: anims.generateFrameNumbers('totem_fire',  { start: 0, end: 11 }), frameRate: 8, repeat: -1, yoyo: true }, 'totem_fire');
     // this._safeCreateAnim({ key: 'totem_air_pulse',   frames: anims.generateFrameNumbers('totem_air',   { start: 0, end: 11 }), frameRate: 8, repeat: -1, yoyo: true }, 'totem_air');
     // this._safeCreateAnim({ key: 'totem_water_pulse', frames: anims.generateFrameNumbers('totem_water', { start: 0, end: 11 }), frameRate: 8, repeat: -1, yoyo: true }, 'totem_water');
@@ -271,8 +274,8 @@ export default class GameScene extends Phaser.Scene {
     // =====================
     // DEFEAT ANIMATIONS
     // =====================
-    // All defeat sheets: 4x4 = 16 frames at 256x256, plays once
-    ['shaman_defeated', 'druid_defeated', 'tank_defeated', 'ragnaros_defeated'].forEach(key => {
+    // Character defeat sheets - always preloaded by PreloadScene
+    ['shaman_defeated', 'druid_defeated', 'tank_defeated'].forEach(key => {
       this._safeCreateAnim({
         key:       key,
         frames:    anims.generateFrameNumbers(key, { start: 0, end: 15 }),
@@ -280,6 +283,21 @@ export default class GameScene extends Phaser.Scene {
         repeat:    0,
       }, key);
     });
+
+    // Boss defeated animation - key is injected by BossLoadingScene from the catalog.
+    // Each boss has its own defeated spritesheet so we register it here from levelData.
+    const bossDefeatedAnim = this.levelData?.boss?.animations?.defeated;
+    if (bossDefeatedAnim?.key && this.textures.exists(bossDefeatedAnim.key)) {
+      this._safeCreateAnim({
+        key:       bossDefeatedAnim.key,
+        frames:    anims.generateFrameNumbers(bossDefeatedAnim.key, {
+          start: bossDefeatedAnim.startFrame ?? 0,
+          end:   bossDefeatedAnim.endFrame   ?? 15,
+        }),
+        frameRate: bossDefeatedAnim.frameRate ?? 10,
+        repeat:    0,
+      }, bossDefeatedAnim.key);
+    }
 
     // =====================
     // BOSS ANIMATIONS
@@ -353,35 +371,39 @@ export default class GameScene extends Phaser.Scene {
   // Boss slot
   // =========
   _buildBossSlot(zone) {
-    const cx = zone.x + zone.w / 2;
-    const cy = zone.y + zone.h / 2;
-
-    const glow = this.add.graphics();
-    glow.fillStyle(0xff2200, 0.15);
-    glow.fillEllipse(cx, cy + zone.h * 0.35, zone.w * 0.9, zone.h * 0.35);
+    const cx = ((zone.x + zone.w / 2) + 160);
+    const cy = ((zone.y + zone.h / 2) + 200);
 
     // All boss sprite config comes from the JSON
     const bossData   = this.levelData?.boss;
     const requestedSpriteKey = bossData?.spriteKey;
-    const spriteKey  = (requestedSpriteKey && this.textures.exists(requestedSpriteKey))
-      ? requestedSpriteKey
-      : (this.textures.exists('ragnaros_idle') ? 'ragnaros_idle' : (requestedSpriteKey || 'ragnaros'));
-    const spriteScale = bossData?.spriteScale || 2.2;
-    const idleAnimKey = bossData ? bossData.id + '_idle' : 'ragnaros_idle';
+    const spriteKey  = requestedSpriteKey;
+    const spriteScale = bossData?.spriteScale || 3;
+    const idleAnimKey = bossData ? bossData.id + '_idle' : 'default_idle';
 
     const panelW = 600;
     const panelH = 80;
-    const panelY = zone.y + 10;
+    const panelY = zone.y + 90;
+
+    const nameText = this.add.text(cx, zone.y + zone.h - 550, bossData?.name || '???', {
+      fontFamily: 'monospace', fontSize: '56px', color: '#ff6644',
+    }).setOrigin(0.5, 1);
+
+    nameText.updateText();  // force Phaser to measure the text immediately
+    console.log(">>>> nameText:", nameText)
+    console.log(">>>> nameText.width:", nameText.width)
+
+    const padding = 24;
+    const textW = nameText.width + padding * 2;
+    const textH = nameText.height + padding;
 
     const titlePanel = this.add.graphics();
     titlePanel.fillStyle(0x000000, 0.65);
-    titlePanel.fillRect(cx - panelW / 2, panelY - 200, panelW, panelH);
-    titlePanel.lineStyle(3, 0x88cc44, 1.0);
-    titlePanel.strokeRect(cx - panelW / 2, panelY - 200, panelW, panelH);
+    titlePanel.fillRect(cx - textW / 2, nameText.y - nameText.height - padding / 2, textW, textH);
+    titlePanel.lineStyle(3, 0x6622a6, 1.0);
+    titlePanel.strokeRect(cx - textW / 2, nameText.y - nameText.height - padding / 2, textW, textH);
 
-    const nameText = this.add.text(cx, zone.y + zone.h - 900, '???', {
-      fontFamily: 'monospace', fontSize: '56px', color: '#ff6644',
-    }).setOrigin(0.5, 1);
+    nameText.setDepth(1);
 
     const bossSprite = this.add.sprite(cx, cy, spriteKey, 0)
       .setScale(spriteScale)
@@ -402,9 +424,11 @@ export default class GameScene extends Phaser.Scene {
       delay:    500,
     });
 
-    const hpBar = this._buildBossHealthBar(cx, zone.y + zone.h - 875, panelW, 48, 0xff3300);
+    // const hpBar = this._buildBossHealthBar(cx, zone.y + zone.h - 875, panelW, 48, 0xff3300);
+    const hpBar = this._buildBossHealthBar(cx, nameText.y + 40, panelW, 48, 0xff3300);
 
-    this.entitySlots.boss = { sprite: bossSprite, nameText, hpBar, glow };
+
+    this.entitySlots.boss = { sprite: bossSprite, nameText, hpBar };
   }
 
   // ===========
@@ -414,7 +438,7 @@ export default class GameScene extends Phaser.Scene {
     const cx = zone.x + zone.w / 2;
     const cy = zone.y + zone.h - 80;
 
-    const sprite = this.add.sprite(cx, cy, 'shaman_idle', 0)
+    const sprite = this.add.sprite(cx, cy + 140, 'shaman_idle', 0)
       .setScale(1.5)
       .setOrigin(0.5, 1);
 
@@ -470,7 +494,7 @@ export default class GameScene extends Phaser.Scene {
   // its sheet is ready).
   _buildCharacterSlot(id, zone, tintColor, label, spriteKey = null, idleAnim = null) {
     const cx = zone.x + zone.w / 2;
-    const cy = zone.y + zone.h - 80;
+    const cy = ((zone.y + zone.h - 80) + 145);
 
     let sprite;
 
@@ -1066,7 +1090,9 @@ export default class GameScene extends Phaser.Scene {
   // Show the boss opening dialogue sequence on level load.
   // openingDialogue in the JSON can be a string or an array of strings.
   _showBossDialogue() {
-    const raw   = this.levelData?.boss?.openingDialogue || 'YOU DARE CHALLENGE ME?!';
+    const raw   = this.levelData?.boss?.dialog?.intro
+                  || this.levelData?.boss?.openingDialogue
+                  || 'YOU DARE CHALLENGE ME?!';
     const fadeMs = 350;
     const lines = Array.isArray(raw) ? raw : [raw];
     const holdMs = this.levelData?.boss?.audioDuration ?? 6000;
@@ -1252,32 +1278,33 @@ export default class GameScene extends Phaser.Scene {
 
     this._playSound(bossData?.deathSound);
 
-    const raw   = bossData?.deathDialogue || 'I AM... DEFEATED.';
+    const raw   = bossData?.dialog?.defeat
+                  || bossData?.deathDialogue
+                  || 'I AM... DEFEATED.';
     const lines = Array.isArray(raw) ? raw : [raw];
     this.showDialogueSequence(lines, '#aaaaaa');
 
     const slot = this.entitySlots.boss;
     if (slot?.sprite) {
-      const deathKey = this._getBossAnimKey('death');
+      // Try animations.defeated.key first (injected by BossLoadingScene from catalog),
+      // then fall back to the legacy _getBossAnimKey('death') lookup
+      const defeatedKey = this.levelData?.boss?.animations?.defeated?.key;
+      const deathKey    = (defeatedKey && this.anims.exists(defeatedKey))
+                          ? defeatedKey
+                          : this._getBossAnimKey('death');
+
       if (deathKey && this.anims.exists(deathKey)) {
-        // JSON-defined death animation (future bosses)
         slot.sprite.play(deathKey);
         slot.sprite.once('animationcomplete', () => {
           this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 800 });
         });
-      } else if (this.anims.exists('ragnaros_defeated')) {
-        // Ragnaros-specific defeat sheet
-        slot.sprite.play('ragnaros_defeated');
-        slot.sprite.once('animationcomplete', () => {
-          this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 800 });
-        });
       } else {
-        // Fallback fade if no sheet loaded
+        // Fallback fade if no defeat sheet loaded yet for this boss
         this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 1500 });
       }
     }
 
-    this.stopGame();
+    this._onBossDefeated();
   }
 
   // ================
@@ -1669,8 +1696,8 @@ export default class GameScene extends Phaser.Scene {
     // If the player dies, end the game
     if (characterId === 'player') {
       this.time.delayedCall(2000, () => {
-        this.showPopup('DEFEAT', '#ff2222', 4000);
-        this.stopGame();
+        this.showPopup('DEFEAT', '#ff2222', 3000);
+        this._onPartyWiped();
       });
     }
   }
@@ -2707,6 +2734,65 @@ export default class GameScene extends Phaser.Scene {
   // ============
   // STOPS GAME
   // ============
+  // ============================================================
+  // Encounter outcome handlers
+  // ============================================================
+
+  // Called when the boss reaches 0 HP.
+  // Records the boss defeat in save data and returns to boss select.
+  _onBossDefeated() {
+    this.stopGame();
+
+    const saveData     = loadSaveData();
+    const selectedRaidId = this.registry.get('selectedRaidId') || 'the_churning_core';
+    const selectedBossId = this.registry.get('selectedBossId') || 'ragnaros';
+
+    const updatedSave = recordBossDefeat(saveData, selectedRaidId, selectedBossId);
+    this.registry.set('saveData', updatedSave);
+
+    console.log('[GameScene] Boss defeated:', selectedBossId, 'in', selectedRaidId);
+
+    // Play victory sound if defined in level data
+    const victorySound = this.levelData?.boss?.sounds?.victory;
+    if (victorySound) this._playSound(victorySound);
+
+    // Fade to boss select after a short pause so the defeat animation plays
+    this.time.delayedCall(4000, () => {
+      if (this.scene.isActive('UIScene')) this.scene.stop('UIScene');
+      this.cameras.main.fadeOut(600, 0, 0, 0);
+      this.time.delayedCall(650, () => {
+        this.scene.start('RaidBossSelectScene');
+      });
+    });
+  }
+
+  // Called when the player character dies with no Rebirth available.
+  // Decrements one wipe token and returns to boss select.
+  _onPartyWiped() {
+    this.stopGame();
+
+    const saveData = loadSaveData();
+
+    // Deduct one wipe token (floor at 0)
+    const updatedSave = {
+      ...saveData,
+      raidWipeTokensLeft: Math.max(0, (saveData.raidWipeTokensLeft || 0) - 1),
+    };
+    saveSaveData(updatedSave);
+    this.registry.set('saveData', updatedSave);
+
+    console.log('[GameScene] Party wiped. Wipe tokens left:', updatedSave.raidWipeTokensLeft);
+
+    // Return to boss select after the defeat popup fades
+    this.time.delayedCall(3500, () => {
+      if (this.scene.isActive('UIScene')) this.scene.stop('UIScene');
+      this.cameras.main.fadeOut(600, 0, 0, 0);
+      this.time.delayedCall(650, () => {
+        this.scene.start('RaidBossSelectScene');
+      });
+    });
+  }
+
   stopGame() {
     this.gameRunning = false;
     if (this.tickTimer) this.tickTimer.remove();

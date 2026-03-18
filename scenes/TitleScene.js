@@ -4,6 +4,8 @@
  * Entry point scene for Raid Night.
  * Shows the title screen and routes to raid selection.
  */
+const Phaser = window.Phaser; // Phaser is loaded via <script> in index.html
+
 import { loadSaveData, resetSaveData, saveSaveData } from '../utils/saveData.js';
 
 export default class TitleScene extends Phaser.Scene {
@@ -12,18 +14,18 @@ export default class TitleScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('bg_raidnight', 'sprites/bg_raidnight.png');
+    // bg_raidnight is loaded by PreloadScene - nothing to do here
   }
 
   create() {
-  const { WIDTH, HEIGHT, TICK_MS } = window.GAME_CONFIG;
-  this._drawBackground('screen_title', WIDTH, HEIGHT);
-  this.add.image(0, 0, 'bg_raidnight').setOrigin(0, 0);
+    const { WIDTH, HEIGHT, TICK_MS } = window.GAME_CONFIG;
+    this._drawBackground('screen_title', WIDTH, HEIGHT);
+    this.add.image(0, 0, 'bg_raidnight').setOrigin(0, 0);
 
-  const saveData = loadSaveData();
-  this.registry.set('saveData', saveData);
+    const saveData = loadSaveData();
+    this.registry.set('saveData', saveData);
 
-  this._createMenuButton(WIDTH / 2, HEIGHT * 0.62, 620, 160, 'New Raid Night!', () => {
+    this._createMenuButton(WIDTH / 2, HEIGHT * 0.62, 620, 160, 'New Raid Night!', () => {
     const newSave = resetSaveData();
     this.registry.set('saveData', newSave);
     this._goToRaidSelect(0);
