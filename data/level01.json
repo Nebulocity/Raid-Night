@@ -104,8 +104,8 @@
       "idle": {
         "key": "ragnaros_idle",
         "startFrame": 0,
-        "endFrame": 11,
-        "frameRate": 6,
+        "endFrame": 15,
+        "frameRate": 10,
         "repeat": -1,
         "yoyo": false
       },
