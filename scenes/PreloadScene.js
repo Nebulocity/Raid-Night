@@ -74,30 +74,30 @@ export default class PreloadScene extends Phaser.Scene {
     // ---- Shaman (player) ----
     // idle: 1024x512, 4x2 = 8 frames, 256x256 each
     this.load.spritesheet('shaman_idle',     'assets/characters/shaman/character_shaman_idle.png',     { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('shaman_attack',   'assets/characters/shaman/character_shaman_attack.png',   { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('shaman_casting',  'assets/characters/shaman/character_shaman_casting.png',  { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('shaman_hit',      'assets/characters/shaman/character_shaman_hit.png',      { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('shaman_might_of_earth_totem',    'assets/characters/shaman/character_shaman_might_of_earth_totem.png',    { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('shaman_tempest_totem',    'assets/characters/shaman/character_shaman_tempest_totem.png',    { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('shaman_totem_of_fury',    'assets/characters/shaman/character_shaman_totem_of_fury.png',    { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('shaman_wrath_of_storms_totem',    'assets/characters/shaman/character_shaman_wrath_of_storms_totem.png',    { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('shaman_defeated', 'assets/characters/shaman/character_shaman_defeated.png', { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_attack',   'assets/characters/shaman/character_shaman_attack.png',   { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_casting',  'assets/characters/shaman/character_shaman_casting.png',  { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_hit',      'assets/characters/shaman/character_shaman_hit.png',      { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_might_of_earth_totem',    'assets/characters/shaman/character_shaman_might_of_earth_totem.png',    { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_tempest_totem',    'assets/characters/shaman/character_shaman_tempest_totem.png',    { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_totem_of_fury',    'assets/characters/shaman/character_shaman_totem_of_fury.png',    { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_wrath_of_storms_totem',    'assets/characters/shaman/character_shaman_wrath_of_storms_totem.png',    { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_defeated', 'assets/characters/shaman/character_shaman_defeated.png', { frameWidth: 384, frameHeight: 384 });
 
     // Static burst / arc lightning cast sheets (fall back to casting if not yet produced)
-    this.load.spritesheet('shaman_static_burst', 'assets/characters/shaman/character_shaman_static_burst.png', { frameWidth: 512, frameHeight: 512 });
-    this.load.spritesheet('shaman_chain_lightning',     'assets/characters/shaman/character_shaman_arc_lightning.png',     { frameWidth: 384, frameHeight: 512 });
+    // this.load.spritesheet('shaman_static_burst', 'assets/characters/shaman/character_shaman_static_burst.png', { frameWidth: 512, frameHeight: 512 });
+    // this.load.spritesheet('shaman_arc_lightning',     'assets/characters/shaman/character_shaman_arc_lightning.png',     { frameWidth: 384, frameHeight: 512 });
 
     // ---- Tank ----
     this.load.spritesheet('tank_idle',     'assets/characters/tank/character_tank_idle.png',     { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('tank_attack',   'assets/characters/tank/character_tank_attack.png',   { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('tank_hit',      'assets/characters/tank/character_tank_hit.png',      { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('tank_defeated', 'assets/characters/tank/character_tank_defeated.png', { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('tank_attack',   'assets/characters/tank/character_tank_attack.png',   { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('tank_hit',      'assets/characters/tank/character_tank_hit.png',      { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('tank_defeated', 'assets/characters/tank/character_tank_defeated.png', { frameWidth: 384, frameHeight: 384 });
 
     // ---- Healer ----
     this.load.spritesheet('druid_idle',     'assets/characters/healer/character_healer_idle.png',     { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('druid_casting',  'assets/characters/healer/character_healer_casting.png',  { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('druid_hit',      'assets/characters/healer/character_healer_hit.png',      { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('druid_defeated', 'assets/characters/healer/character_healer_defeated.png', { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('druid_casting',  'assets/characters/healer/character_healer_casting.png',  { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('druid_hit',      'assets/characters/healer/character_healer_hit.png',      { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('druid_defeated', 'assets/characters/healer/character_healer_defeated.png', { frameWidth: 384, frameHeight: 384 });
 
     // ---- Totems ----
     // Might of Earth: 512x384, 4x3 = 12 frames, 128x128 each
