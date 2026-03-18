@@ -101,10 +101,25 @@ export default class RaidSelectScene extends Phaser.Scene {
     panel.on('pointerout', () => panel.setStrokeStyle(4, 0xd79f4e, 1));
     panel.on('pointerdown', () => {
       this.tweens.add({ targets: panel, scaleX: 0.98, scaleY: 0.98, duration: 90, yoyo: true });
+      
       const nextSave = { ...saveData, lastSelectedRaidId: raid.id };
       saveSaveData(nextSave);
+      
       this.registry.set('saveData', nextSave);
       this.registry.set('selectedRaidId', raid.id);
+
+      const flash = this.add.rectangle(x, y, width, height, 0xffffff, 0)
+        .setOrigin(0.5)
+        .setDepth(9999);
+      
+      this.tweens.add({
+        targets: flash,
+        alpha: { from: 0, to: 0.6 },
+        duration: 80,
+        yoyo: true,
+        onComplete: () => flash.destroy()
+      });
+
       this.cameras.main.fadeOut(450, 0, 0, 0);
       this.time.delayedCall(500, () => {
         this.scene.start('RaidBossSelectScene');
