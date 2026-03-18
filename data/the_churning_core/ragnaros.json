@@ -14,20 +14,20 @@
       {
         "key": "boss_ragnaros_idle",
         "path": "assets/raids/the_churning_core/bosses/idle/boss_ragnaros_idle.png",
-        "frameWidth": 384,
-        "frameHeight": 384
+        "frameWidth": 256,
+        "frameHeight": 256
       },
       {
         "key": "boss_ragnaros_attacking",
         "path": "assets/raids/the_churning_core/bosses/attacking/boss_ragnaros_attacking.png",
-        "frameWidth": 384,
-        "frameHeight": 384
+        "frameWidth": 256,
+        "frameHeight": 256
       },
       {
         "key": "boss_ragnaros_defeated",
         "path": "assets/raids/the_churning_core/bosses/defeated/boss_ragnaros_defeated.png",
-        "frameWidth": 384,
-        "frameHeight": 384
+        "frameWidth": 256,
+        "frameHeight": 256
       }
     ]
   },
