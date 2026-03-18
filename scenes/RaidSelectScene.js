@@ -22,13 +22,9 @@ export default class RaidSelectScene extends Phaser.Scene {
       .setDisplaySize(WIDTH, HEIGHT)
       .setOrigin(0.5);
 
-    // this.add.image(WIDTH / 2, HEIGHT / 2, 'screen_raid_select')
-    //   .setDisplaySize(WIDTH, HEIGHT)
-    //   .setOrigin(0.5);
-
     this.add.text(WIDTH / 2, HEIGHT * 0.08, 'Choose Your Raid!', {
       fontFamily: 'monospace',
-      fontSize: '52px',
+      fontSize: '64px',
       color: '#fff1c7',
       stroke: '#000000',
       strokeThickness: 8,
@@ -65,11 +61,12 @@ export default class RaidSelectScene extends Phaser.Scene {
     this.add.image(x, y - 20, raid.buttonKey)
       .setDisplaySize(180, 180)
       .setOrigin(0.5)
-      .setAlpha(alpha);
+      .setAlpha(alpha)
+      .setScale(2);
 
     this.add.text(x, y + 98, raid.name, {
       fontFamily: 'monospace',
-      fontSize: '28px',
+      fontSize: '42px',
       color: unlocked ? '#fff0c9' : '#999999',
       stroke: '#000000',
       strokeThickness: 5,
@@ -111,7 +108,7 @@ export default class RaidSelectScene extends Phaser.Scene {
 
     this.add.text(WIDTH / 2, HEIGHT * 0.95, 'Raid Wipe Tokens Left: ' + saveData.raidWipeTokensLeft, {
       fontFamily: 'monospace',
-      fontSize: '34px',
+      fontSize: '52px',
       color: '#f3e6c2',
       stroke: '#000000',
       strokeThickness: 6,
