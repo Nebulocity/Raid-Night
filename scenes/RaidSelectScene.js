@@ -71,7 +71,7 @@ export default class RaidSelectScene extends Phaser.Scene {
       .setAlpha(alpha)
       .setScale(0.5);
 
-    Show locked/unlocked
+    // Show locked/unlocked
     Disabled for now for debugging.
     if (!unlocked) {
       this.add.text(x, y + icon.displayHeight * 0.5 + 16, 'Locked', {
