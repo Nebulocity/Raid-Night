@@ -55,7 +55,7 @@ export default class BossLoadingScene extends Phaser.Scene {
 
     // Boss name above the sprite
     const nameY = bossSprite
-      ? bossY - (bossSprite.height / 2) - 24
+      ? bossY - (bossSprite.height / 2) - 50
       : HEIGHT * 0.20;
 
     this.add.text(cx, nameY, bossName, {
@@ -69,7 +69,7 @@ export default class BossLoadingScene extends Phaser.Scene {
     // Loading bar (mirroring PreloadScene style)
     const barW  = 500;
     const barH  = 16;
-    const barY  = HEIGHT * 0.5;
+    const barY  = HEIGHT * 0.25;
     const barX  = cx - barW / 2;
     console.log('cx: ', cx, 'barW: ',barW, 'barX: ', barX);
 
