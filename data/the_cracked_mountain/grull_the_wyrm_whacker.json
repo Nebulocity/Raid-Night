@@ -104,6 +104,7 @@
         "startFrame": 0,
         "endFrame": 8,
         "frameRate": 8,
+        "skipMissedFrames": false,
         "repeat": -1
       },
       "attack": {
