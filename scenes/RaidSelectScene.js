@@ -43,7 +43,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     const newBottomY = bottomY - 100;
     const newTopY = newBottomY - 350;
 
-    // Banners be big so...weird spacing fix
+    // Button spacing
     const centers = [
       { x: WIDTH * 0.70, y: newTopY - 90   },  // spookspire_keep - aligned to the right
       { x: WIDTH * 0.30, y: newBottomY - 125 }, // the_cracked_mountain - aligned to the left
@@ -60,6 +60,10 @@ export default class RaidSelectScene extends Phaser.Scene {
   }
 
   _createRaidButton(x, y, raid, unlocked, saveData) {
+
+    // Only for testing, remove later.
+    unlocked = true;
+    
     const alpha = unlocked ? 1 : 0.42;
 
     const icon = this.add.image(x, y, raid.buttonKey)
@@ -67,18 +71,18 @@ export default class RaidSelectScene extends Phaser.Scene {
       .setAlpha(alpha)
       .setScale(0.5);
 
-    // Show locked/unlocked
-    // Disabled for now for debugging.
-    // if (!unlocked) {
-    //   this.add.text(x, y + icon.displayHeight * 0.5 + 16, 'Locked', {
-    //     fontFamily: 'monospace',
-    //     fontSize: '20px',
-    //     color: '#bbbbbb',
-    //     stroke: '#000000',
-    //     strokeThickness: 4,
-    //   }).setOrigin(0.5);
-    //   return;
-    // }
+    Show locked/unlocked
+    Disabled for now for debugging.
+    if (!unlocked) {
+      this.add.text(x, y + icon.displayHeight * 0.5 + 16, 'Locked', {
+        fontFamily: 'monospace',
+        fontSize: '20px',
+        color: '#bbbbbb',
+        stroke: '#000000',
+        strokeThickness: 4,
+      }).setOrigin(0.5);
+      return;
+    }
 
     icon.setInteractive({ useHandCursor: true });
 
