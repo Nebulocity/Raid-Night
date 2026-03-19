@@ -163,7 +163,7 @@ const SPOOKSPIRE_KEEP = {
   bosses: [
     {
       id:                       'sir_trotsalot_and_nighttime',
-      name:                     'Sir Trotsalot & Nighttime',
+      name:                     'Sir Trotsalot',
       buttonKey:                'button_boss_sir_trotsalot',
       buttonPath:               raidAssetPath('spookspire_keep', 'buttons/button_boss_sir_trotsalot.webp'),
       splashKey:                'splash_sir_trotsalot',
