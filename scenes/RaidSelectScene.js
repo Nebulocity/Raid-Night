@@ -42,11 +42,12 @@ export default class RaidSelectScene extends Phaser.Scene {
     
     const newBottomY = bottomY - 100;
     const newTopY = newBottomY - 350;
-    
+
+    // Banners be big so...weird spacing fix
     const centers = [
-      { x: WIDTH * 0.70, y: newTopY - 90   },  // spookspire_keep - centered
-      { x: WIDTH * 0.30, y: newBottomY - 125 }, // the_cracked_mountain - aligned with basement demon
-      { x: WIDTH * 0.70, y: newBottomY + 130 }, // the_basement_demon
+      { x: WIDTH * 0.70, y: newTopY - 90   },  // spookspire_keep - aligned to the right
+      { x: WIDTH * 0.30, y: newBottomY - 125 }, // the_cracked_mountain - aligned to the left
+      { x: WIDTH * 0.70, y: newBottomY + 130 }, // the_basement_demon - aligned to the right
     ];
 
     RAID_ORDER.forEach((raidId, index) => {
@@ -67,16 +68,17 @@ export default class RaidSelectScene extends Phaser.Scene {
       .setScale(0.5);
 
     // Show locked/unlocked
-    if (!unlocked) {
-      this.add.text(x, y + icon.displayHeight * 0.5 + 16, 'Locked', {
-        fontFamily: 'monospace',
-        fontSize: '20px',
-        color: '#bbbbbb',
-        stroke: '#000000',
-        strokeThickness: 4,
-      }).setOrigin(0.5);
-      return;
-    }
+    // Disabled for now for debugging.
+    // if (!unlocked) {
+    //   this.add.text(x, y + icon.displayHeight * 0.5 + 16, 'Locked', {
+    //     fontFamily: 'monospace',
+    //     fontSize: '20px',
+    //     color: '#bbbbbb',
+    //     stroke: '#000000',
+    //     strokeThickness: 4,
+    //   }).setOrigin(0.5);
+    //   return;
+    // }
 
     icon.setInteractive({ useHandCursor: true });
 
