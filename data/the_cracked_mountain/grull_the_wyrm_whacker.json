@@ -102,7 +102,7 @@
       "idle": {
         "key": "boss_grull_the_wyrm_whacker_idle",
         "startFrame": 0,
-        "endFrame": 11,
+        "endFrame": 10,
         "frameRate": 6,
         "repeat": -1
       },
