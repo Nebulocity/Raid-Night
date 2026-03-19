@@ -3,12 +3,8 @@
  *
  * Loads the selected boss level JSON and its boss-specific assets,
  * then starts GameScene and UIScene for the encounter.
- *
- * It also injects the correct asset paths into the level data using
- * the boss metadata from raidCatalog (so every boss JSON stays
- * generic and the catalog is the single source of asset paths).
  */
-const Phaser = window.Phaser; // Phaser is loaded via <script> in index.html
+const Phaser = window.Phaser;
 
 import { RAID_CATALOG } from '../data/raidCatalog.js';
 
@@ -25,8 +21,8 @@ export default class BossLoadingScene extends Phaser.Scene {
     const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot_and_nighttime';
 
     const raid = RAID_CATALOG[selectedRaidId] || RAID_CATALOG.spookspire_keep;
-    this.raidMeta       = raid;
-    this.bossMeta       = raid.bosses.find(b => b.id === selectedBossId) || raid.bosses[0];
+    this.raidMeta        = raid;
+    this.bossMeta        = raid.bosses.find(b => b.id === selectedBossId) || raid.bosses[0];
     this.loadedLevelData = null;
   }
 
@@ -34,10 +30,88 @@ export default class BossLoadingScene extends Phaser.Scene {
   // preload - load level JSON, then queue boss-specific assets
   // ============================================================
   preload() {
+    const { WIDTH, HEIGHT } = window.GAME_CONFIG;
+    const cx = WIDTH / 2;
+
+    // ── Dark background ──────────────────────────────────────
+    this.add.rectangle(cx, HEIGHT / 2, WIDTH, HEIGHT, 0x0a0a0a);
+
+    // ── Boss idle sprite, just above center ──────────────────
+    const idleKey  = this.bossMeta?.idleKey;
+    const bossName = this.bossMeta?.name || 'Unknown Boss';
+    const bossY    = HEIGHT * 0.42;
+
+    let bossSprite = null;
+    if (idleKey && this.textures.exists(idleKey)) {
+      bossSprite = this.add.sprite(cx, bossY, idleKey).setOrigin(0.5);
+
+      const animKey = 'bossloading_idle_' + idleKey;
+      if (!this.anims.exists(animKey)) {
+        this.anims.create({
+          key:       animKey,
+          frames:    this.anims.generateFrameNumbers(idleKey, { start: 0, end: 11 }),
+          frameRate: 6,
+          repeat:    -1,
+        });
+      }
+      bossSprite.play(animKey);
+    }
+
+    // ── Boss name above the sprite ───────────────────────────
+    const nameY = bossSprite
+      ? bossY - (bossSprite.height / 2) - 24
+      : HEIGHT * 0.20;
+
+    this.add.text(cx, nameY, bossName, {
+      fontFamily: 'monospace',
+      fontSize:   '64px',
+      color:      '#fff1c7',
+      stroke:     '#000000',
+      strokeThickness: 8,
+    }).setOrigin(0.5);
+
+    // ── Loading bar (mirroring PreloadScene style) ───────────
+    const barW  = 500;
+    const barH  = 16;
+    const barY  = HEIGHT * 0.78;
+    const barX  = cx - barW / 2;
+
+    this.add.text(cx, barY - 44, 'Preparing encounter...', {
+      fontFamily: 'monospace', fontSize: '28px',
+      color: '#c8a96e', align: 'center',
+    }).setOrigin(0.5);
+
+    this.add.rectangle(cx, barY + barH / 2, barW + 8, barH + 8, 0x222222).setOrigin(0.5);
+
+    this._barFill    = this.add.rectangle(barX, barY, 0, barH, 0xc8a96e).setOrigin(0, 0);
+    this._barShimmer = this.add.rectangle(barX, barY, 0, 3,  0xffd700).setOrigin(0, 0).setAlpha(0.6);
+
+    this._statusText = this.add.text(cx, barY + 44, 'Loading...', {
+      fontFamily: 'monospace', fontSize: '22px', color: '#555555', align: 'center',
+    }).setOrigin(0.5);
+
+    // ── Wire up loader events ────────────────────────────────
+    this.load.on('progress', (value) => {
+      if (this._barFill) {
+        this._barFill.width    = barW * value;
+        this._barShimmer.width = barW * value;
+      }
+    });
+
+    this.load.on('fileprogress', (file) => {
+      if (this._statusText) this._statusText.setText('Loading: ' + file.key);
+    });
+
+    this.load.on('complete', () => {
+      if (this._barFill)    this._barFill.width    = barW;
+      if (this._barShimmer) this._barShimmer.width = barW;
+      if (this._statusText) this._statusText.setText('Ready!');
+    });
+
+    // ── Queue the level JSON ─────────────────────────────────
     const { levelKey, levelPath } = this.bossMeta;
     if (!levelKey || !levelPath) return;
 
-    // Once the JSON is in cache, inject asset paths and queue the sprites/audio
     this.load.on('filecomplete-json-' + levelKey, (key, type, levelData) => {
       this.loadedLevelData = this._injectBossAssets(levelData);
       this._loadLevelAssets(this.loadedLevelData);
@@ -47,41 +121,11 @@ export default class BossLoadingScene extends Phaser.Scene {
   }
 
   // ============================================================
-  // create - show loading splash, then launch gameplay
+  // create - assets ready; fade in then launch after 2000ms
   // ============================================================
   create() {
-    const { WIDTH, HEIGHT } = window.GAME_CONFIG;
-
     const levelData = this.loadedLevelData
       || this._injectBossAssets(this.cache.json.get(this.bossMeta?.levelKey));
-
-    // Raid background with dark overlay
-    this.add.image(WIDTH / 2, HEIGHT / 2, this.raidMeta.backgroundKey || 'bg_spookspire_keep')
-      .setDisplaySize(WIDTH, HEIGHT)
-      .setOrigin(0.5);
-    this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.30)
-      .setOrigin(0.5);
-
-    // Boss splash image
-    // const splashKey = this.bossMeta?.splashKey || this.bossMeta?.buttonKey || 'splash_sir_trotsalot';
-    // this.add.image(WIDTH / 2, HEIGHT * 0.40, splashKey)
-    //   .setDisplaySize(Math.min(WIDTH * 0.55, 600), Math.min(HEIGHT * 0.45, 600))
-    //   .setOrigin(0.5);
-
-    // Loading panel
-    this.add.rectangle(WIDTH / 2, HEIGHT * 0.87, 820, 160, 0x000000, 0.58)
-      .setStrokeStyle(3, 0xd7a44a, 1)
-      .setOrigin(0.5);
-
-    this.add.text(WIDTH / 2, HEIGHT * 0.84, 'Preparing encounter...', {
-      fontFamily: 'monospace', fontSize: '40px',
-      color: '#fff1c7', stroke: '#000000', strokeThickness: 6,
-    }).setOrigin(0.5);
-
-    this.add.text(WIDTH / 2, HEIGHT * 0.90, this.bossMeta?.name || 'Unknown Boss', {
-      fontFamily: 'monospace', fontSize: '30px',
-      color: '#ffd37a', stroke: '#000000', strokeThickness: 5,
-    }).setOrigin(0.5);
 
     if (!levelData) {
       console.warn('[BossLoadingScene] No level data found for boss:', this.bossMeta?.id);
@@ -89,23 +133,18 @@ export default class BossLoadingScene extends Phaser.Scene {
 
     this.registry.set('levelData', levelData || this.cache.json.get('level01'));
 
-    // Stop any running UIScene before relaunching for this encounter
-    this.time.delayedCall(1500, () => {
-      if (this.scene.isActive('UIScene')) {
-        this.scene.stop('UIScene');
-      }
-      this.scene.start('GameScene');
-      this.scene.launch('UIScene');
+    this.time.delayedCall(2000, () => {
+      this.cameras.main.fadeOut(2000, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        if (this.scene.isActive('UIScene')) this.scene.stop('UIScene');
+        this.scene.start('GameScene');
+        this.scene.launch('UIScene');
+      });
     });
   }
 
   // ============================================================
   // _injectBossAssets
-  //
-  // Merges the boss catalog metadata (asset paths, animation keys)
-  // into the level JSON so GameScene always receives complete data.
-  // The JSON files stay generic; the catalog is the single source
-  // of asset paths.
   // ============================================================
   _injectBossAssets(levelData) {
     if (!levelData || !this.bossMeta) return levelData;
@@ -114,16 +153,13 @@ export default class BossLoadingScene extends Phaser.Scene {
     const boss   = result.boss || {};
     const assets = result.assets || {};
 
-    // Background
     assets.background = {
       key:  this.bossMeta.encounterBackgroundKey,
       path: this.bossMeta.encounterBackgroundPath,
     };
 
-    // Spritesheets are loaded upfront by PreloadScene - no injection needed here.
     result.assets = assets;
 
-    // Inject catalog animation keys into boss data
     result.boss = {
       ...boss,
       spriteKey: this.bossMeta.idleKey,
@@ -160,18 +196,17 @@ export default class BossLoadingScene extends Phaser.Scene {
   }
 
   // ============================================================
-  // _loadLevelAssets - queue everything the level JSON references
+  // _loadLevelAssets
   // ============================================================
   _loadLevelAssets(levelData) {
     if (!levelData?.assets) return;
 
-    const { background, spritesheets } = levelData.assets;
+    const { background } = levelData.assets;
 
     if (background?.key && background?.path && !this.textures.exists(background.key)) {
       this.load.image(background.key, background.path);
     }
 
-    // Boss spritesheets are already loaded by PreloadScene.
     this._loadSounds(levelData);
   }
 
@@ -186,17 +221,14 @@ export default class BossLoadingScene extends Phaser.Scene {
       this.load.audio(key, path);
     };
 
-    // Boss-level sounds (legacy fields)
     const boss = levelData?.boss;
     if (boss) {
       queueIfNew(boss.openingSound);
       queueIfNew(boss.attackSound);
       queueIfNew(boss.deathSound);
-      // New format sounds block
       Object.values(boss.sounds || {}).forEach(queueIfNew);
     }
 
-    // Ability sounds
     Object.values(levelData?.abilities || {}).forEach(ability => {
       queueIfNew(ability.sound);
     });
