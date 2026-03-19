@@ -35,7 +35,7 @@ export default class BossLoadingScene extends Phaser.Scene {
     // Boss idle sprite just above center
     const idleKey  = this.bossMeta?.idleKey;
     const bossName = this.bossMeta?.name || 'Unknown Boss';
-    const bossY    = HEIGHT * 0.42;
+    const bossY    = HEIGHT * 0.75;
 
     let bossSprite = null;
     if (idleKey && this.textures.exists(idleKey)) {
