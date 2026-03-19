@@ -13,9 +13,7 @@ export default class BossLoadingScene extends Phaser.Scene {
     super({ key: 'BossLoadingScene' });
   }
 
-  // ============================================================
   // init - resolve which boss we're loading
-  // ============================================================
   init() {
     const selectedRaidId = this.registry.get('selectedRaidId') || 'spookspire_keep';
     const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot_and_nighttime';
@@ -26,17 +24,15 @@ export default class BossLoadingScene extends Phaser.Scene {
     this.loadedLevelData = null;
   }
 
-  // ============================================================
   // preload - load level JSON, then queue boss-specific assets
-  // ============================================================
   preload() {
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
     const cx = WIDTH / 2;
 
-    // ── Dark background ──────────────────────────────────────
+    // Dark background
     this.add.rectangle(cx, HEIGHT / 2, WIDTH, HEIGHT, 0x0a0a0a);
 
-    // ── Boss idle sprite, just above center ──────────────────
+    // Boss idle sprite just above center
     const idleKey  = this.bossMeta?.idleKey;
     const bossName = this.bossMeta?.name || 'Unknown Boss';
     const bossY    = HEIGHT * 0.42;
@@ -57,7 +53,7 @@ export default class BossLoadingScene extends Phaser.Scene {
       bossSprite.play(animKey);
     }
 
-    // ── Boss name above the sprite ───────────────────────────
+    // Boss name above the sprite
     const nameY = bossSprite
       ? bossY - (bossSprite.height / 2) - 24
       : HEIGHT * 0.20;
@@ -70,11 +66,12 @@ export default class BossLoadingScene extends Phaser.Scene {
       strokeThickness: 8,
     }).setOrigin(0.5);
 
-    // ── Loading bar (mirroring PreloadScene style) ───────────
+    // Loading bar (mirroring PreloadScene style)
     const barW  = 500;
     const barH  = 16;
     const barY  = HEIGHT * 0.78;
     const barX  = cx - barW / 2;
+    console.log('cx: ', cx, 'barW: ',barW, 'barX: ', barX);
 
     this.add.text(cx, barY - 44, 'Preparing encounter...', {
       fontFamily: 'monospace', fontSize: '28px',
