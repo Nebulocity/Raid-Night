@@ -2744,8 +2744,8 @@ export default class GameScene extends Phaser.Scene {
     this.stopGame();
 
     const saveData     = loadSaveData();
-    const selectedRaidId = this.registry.get('selectedRaidId') || 'the_churning_core';
-    const selectedBossId = this.registry.get('selectedBossId') || 'ragnaros';
+    const selectedRaidId = this.registry.get('selectedRaidId') || 'spookspire_keep';
+    const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot_and_nighttime';
 
     const updatedSave = recordBossDefeat(saveData, selectedRaidId, selectedBossId);
     this.registry.set('saveData', updatedSave);

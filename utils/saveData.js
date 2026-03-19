@@ -25,8 +25,7 @@ const STARTING_WIPE_TOKENS = 3;
 
 // These raids are accessible from the start
 const DEFAULT_UNLOCKED_RAID_IDS = [
-  'the_churning_core',
-  'the_demon_basement',
+  'the_basement_demon',
   'the_cracked_mountain',
   'spookspire_keep',
 ];
@@ -41,13 +40,12 @@ export function createDefaultSaveData() {
     unlockedRaidIds:     [...DEFAULT_UNLOCKED_RAID_IDS],
     // Tracks which bosses the player has defeated, keyed by raid id
     defeatedBossIds:     {
-      the_churning_core:     [],
-      the_demon_basement:    [],
+      the_basement_demon:    [],
       the_cracked_mountain:  [],
       spookspire_keep:       [],
     },
-    lastSelectedRaidId:  'the_churning_core',
-    lastSelectedBossId:  'ragnaros',
+    lastSelectedRaidId:  'spookspire_keep',
+    lastSelectedBossId:  'sir_trotsalot_and_nighttime',
   };
 }
 

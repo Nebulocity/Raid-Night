@@ -73,38 +73,38 @@ export default class PreloadScene extends Phaser.Scene {
 
     // ---- Shaman (player) ----
     // idle: 1024x512, 4x2 = 8 frames, 256x256 each
-    this.load.spritesheet('shaman_idle',     'assets/characters/shaman/character_shaman_idle.png',     { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('shaman_attack',   'assets/characters/shaman/character_shaman_attack.png',   { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('shaman_casting',  'assets/characters/shaman/character_shaman_casting.png',  { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('shaman_hit',      'assets/characters/shaman/character_shaman_hit.png',      { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('shaman_might_of_earth_totem',    'assets/characters/shaman/character_shaman_might_of_earth_totem.png',    { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('shaman_tempest_totem',    'assets/characters/shaman/character_shaman_tempest_totem.png',    { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('shaman_totem_of_fury',    'assets/characters/shaman/character_shaman_totem_of_fury.png',    { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('shaman_wrath_of_storms_totem',    'assets/characters/shaman/character_shaman_wrath_of_storms_totem.png',    { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('shaman_defeated', 'assets/characters/shaman/character_shaman_defeated.png', { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('shaman_idle',     'assets/characters/shaman/character_shaman_idle.webp',     { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_attack',   'assets/characters/shaman/character_shaman_attack.webp',   { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_casting',  'assets/characters/shaman/character_shaman_casting.webp',  { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_hit',      'assets/characters/shaman/character_shaman_hit.webp',      { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_might_of_earth_totem',    'assets/characters/shaman/character_shaman_might_of_earth_totem.webp',    { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_tempest_totem',    'assets/characters/shaman/character_shaman_tempest_totem.webp',    { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_totem_of_fury',    'assets/characters/shaman/character_shaman_totem_of_fury.webp',    { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_wrath_of_storms_totem',    'assets/characters/shaman/character_shaman_wrath_of_storms_totem.webp',    { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('shaman_defeated', 'assets/characters/shaman/character_shaman_defeated.webp', { frameWidth: 384, frameHeight: 384 });
 
     // Static burst / arc lightning cast sheets (fall back to casting if not yet produced)
-    // this.load.spritesheet('shaman_static_burst', 'assets/characters/shaman/character_shaman_static_burst.png', { frameWidth: 512, frameHeight: 512 });
-    // this.load.spritesheet('shaman_arc_lightning',     'assets/characters/shaman/character_shaman_arc_lightning.png',     { frameWidth: 384, frameHeight: 512 });
+    // this.load.spritesheet('shaman_static_burst', 'assets/characters/shaman/character_shaman_static_burst.webp', { frameWidth: 512, frameHeight: 512 });
+    // this.load.spritesheet('shaman_arc_lightning',     'assets/characters/shaman/character_shaman_arc_lightning.webp',     { frameWidth: 384, frameHeight: 512 });
 
     // ---- Tank ----
-    this.load.spritesheet('tank_idle',     'assets/characters/tank/character_tank_idle.png',     { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('tank_attack',   'assets/characters/tank/character_tank_attack.png',   { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('tank_hit',      'assets/characters/tank/character_tank_hit.png',      { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('tank_defeated', 'assets/characters/tank/character_tank_defeated.png', { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('tank_idle',     'assets/characters/tank/character_tank_idle.webp',     { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('tank_attack',   'assets/characters/tank/character_tank_attack.webp',   { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('tank_hit',      'assets/characters/tank/character_tank_hit.webp',      { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('tank_defeated', 'assets/characters/tank/character_tank_defeated.webp', { frameWidth: 384, frameHeight: 384 });
 
     // ---- Healer ----
-    this.load.spritesheet('druid_idle',     'assets/characters/healer/character_healer_idle.png',     { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('druid_casting',  'assets/characters/healer/character_healer_casting.png',  { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('druid_hit',      'assets/characters/healer/character_healer_hit.png',      { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('druid_defeated', 'assets/characters/healer/character_healer_defeated.png', { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('druid_idle',     'assets/characters/healer/character_healer_idle.webp',     { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('druid_casting',  'assets/characters/healer/character_healer_casting.webp',  { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('druid_hit',      'assets/characters/healer/character_healer_hit.webp',      { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('druid_defeated', 'assets/characters/healer/character_healer_defeated.webp', { frameWidth: 384, frameHeight: 384 });
 
     // ---- Totems ----
     // Might of Earth: 512x384, 4x3 = 12 frames, 128x128 each
-    // this.load.spritesheet('might_of_earth_totem', 'assets/characters/shaman/might_of_earth_totem.png', { frameWidth: 128, frameHeight: 128 });
+    // this.load.spritesheet('might_of_earth_totem', 'assets/characters/shaman/might_of_earth_totem.webp', { frameWidth: 128, frameHeight: 128 });
 
     // ---- Title screen background ----
-    this.load.image('bg_raidnight', 'assets/bg_raid_night.png');
+    this.load.image('bg_raidnight', 'assets/bg_raid_night.webp');
   }
 
   // ============================================================
@@ -114,46 +114,41 @@ export default class PreloadScene extends Phaser.Scene {
   // ============================================================
   _loadBossSprites() {
 
-    // ---- The Churning Core ----
-    this.load.spritesheet('boss_ragnaros_idle',      'assets/raids/the_churning_core/bosses/idle/boss_ragnaros_idle.png',           { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_ragnaros_attacking', 'assets/raids/the_churning_core/bosses/attacking/boss_ragnaros_attacking.png',  { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_ragnaros_defeated',  'assets/raids/the_churning_core/bosses/defeated/boss_ragnaros_defeated.png',   { frameWidth: 384, frameHeight: 384 });
-
-    // ---- The Demon Basement ----
-    this.load.spritesheet('boss_magtheridax_idle',      'assets/raids/the_demon_basement/bosses/idle/boss_magtheridax_idle.png',           { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('boss_magtheridax_attacking', 'assets/raids/the_demon_basement/bosses/attacking/boss_magtheridax_attacking.png',  { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('boss_magtheridax_defeated',  'assets/raids/the_demon_basement/bosses/defeated/boss_magtheridax_defeated.png',   { frameWidth: 384, frameHeight: 384 });
+    // ---- The Basement Demon ----
+    this.load.spritesheet('boss_magtheridax_idle',      'assets/raids/the_basement_demon/bosses/idle/boss_magtheridax_idle.webp',           { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('boss_magtheridax_attacking', 'assets/raids/the_basement_demon/bosses/attacking/boss_magtheridax_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('boss_magtheridax_defeated',  'assets/raids/the_basement_demon/bosses/defeated/boss_magtheridax_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
 
     // ---- The Cracked Mountain ----
-    this.load.spritesheet('boss_high_chief_bonkgar_idle',      'assets/raids/the_cracked_mountain/bosses/idle/boss_high_chief_bonkgar_idle.png',           { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('boss_high_chief_bonkgar_attacking', 'assets/raids/the_cracked_mountain/bosses/attacking/boss_high_chief_bonkgar_attacking.png',  { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('boss_high_chief_bonkgar_defeated',  'assets/raids/the_cracked_mountain/bosses/defeated/boss_high_chief_bonkgar_defeated.png',   { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_grull_idle',      'assets/raids/the_cracked_mountain/bosses/idle/boss_grull_the_wyrm_whacker_idle.png',           { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('boss_grull_attacking', 'assets/raids/the_cracked_mountain/bosses/attacking/boss_grull_the_wyrm_whacker_attacking.png',  { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('boss_grull_defeated',  'assets/raids/the_cracked_mountain/bosses/defeated/boss_grull_the_wyrm_whacker_defeated.png',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_high_chief_bonkgar_idle',      'assets/raids/the_cracked_mountain/bosses/idle/boss_high_chief_bonkgar_idle.webp',           { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('boss_high_chief_bonkgar_attacking', 'assets/raids/the_cracked_mountain/bosses/attacking/boss_high_chief_bonkgar_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('boss_high_chief_bonkgar_defeated',  'assets/raids/the_cracked_mountain/bosses/defeated/boss_high_chief_bonkgar_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_grull_idle',      'assets/raids/the_cracked_mountain/bosses/idle/boss_grull_the_wyrm_whacker_idle.webp',           { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('boss_grull_attacking', 'assets/raids/the_cracked_mountain/bosses/attacking/boss_grull_the_wyrm_whacker_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
+    // this.load.spritesheet('boss_grull_defeated',  'assets/raids/the_cracked_mountain/bosses/defeated/boss_grull_the_wyrm_whacker_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
 
     // ---- Spookspire Keep ----
-    this.load.spritesheet('boss_sir_trotsalot_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_sir_trotsalot_idle.png',           { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_sir_trotsalot_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_sir_trotsalot_attacking.png',  { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_sir_trotsalot_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_sir_trotsalot_defeated.png',   { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_mortimer_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_mortimer_idle.png',           { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_mortimer_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_mortimer_attacking.png',  { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_mortimer_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_mortimer_defeated.png',   { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_malvestian_doomhoof_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_malvestian_doomhoof_idle.png',           { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_malvestian_doomhoof_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_malvestian_doomhoof_attacking.png',  { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_malvestian_doomhoof_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_malvestian_doomhoof_defeated.png',   { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_phantom_magister_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_phatnom_magister_idle.png',           { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_phantom_magister_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_phatnom_magister_attacking.png',  { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_phantom_magister_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_phatnom_magister_defeated.png',   { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_aether_drake_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_aether_drake_idle.png',           { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_aether_drake_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_aether_drake_attacking.png',  { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_aether_drake_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_aether_drake_defeated.png',   { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_prince_malarkey_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_prince_malarkey_idle.png',           { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_prince_malarkey_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_prince_malarkey_attacking.png',  { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_prince_malarkey_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_prince_malarkey_defeated.png',   { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_dreadwing_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_dreadwing_idle.png',           { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_dreadwing_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_dreadwing_attacking.png',  { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_dreadwing_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_dreadwing_defeated.png',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_sir_trotsalot_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_sir_trotsalot_idle.webp',           { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_sir_trotsalot_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_sir_trotsalot_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_sir_trotsalot_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_sir_trotsalot_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_mortimer_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_mortimer_idle.webp',           { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_mortimer_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_mortimer_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_mortimer_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_mortimer_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_malvestian_doomhoof_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_malvestian_doomhoof_idle.webp',           { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_malvestian_doomhoof_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_malvestian_doomhoof_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_malvestian_doomhoof_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_malvestian_doomhoof_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_phantom_magister_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_phatnom_magister_idle.webp',           { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_phantom_magister_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_phatnom_magister_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_phantom_magister_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_phatnom_magister_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_aether_drake_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_aether_drake_idle.webp',           { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_aether_drake_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_aether_drake_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_aether_drake_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_aether_drake_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_prince_malarkey_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_prince_malarkey_idle.webp',           { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_prince_malarkey_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_prince_malarkey_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_prince_malarkey_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_prince_malarkey_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_dreadwing_idle',      'assets/raids/spookspire_keep/bosses/idle/boss_dreadwing_idle.webp',           { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_dreadwing_attacking', 'assets/raids/spookspire_keep/bosses/attacking/boss_dreadwing_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_dreadwing_defeated',  'assets/raids/spookspire_keep/bosses/defeated/boss_dreadwing_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
   }
 
   // ============================================================
@@ -219,10 +214,9 @@ export default class PreloadScene extends Phaser.Scene {
     // Full-screen backgrounds
     this._makeFallbackScreen('screen_title',              WIDTH, HEIGHT, 0x140b07, 0x3b1708, 'RAID NIGHT');
     this._makeFallbackScreen('screen_raid_select',        WIDTH, HEIGHT, 0x120d0b, 0x22160d, 'SELECT RAID');
-    this._makeFallbackScreen('bg_the_churning_core',      WIDTH, HEIGHT, 0x180804, 0x5a1b09, 'MC');
     this._makeFallbackScreen('bg_spookspire_keep',        WIDTH, HEIGHT, 0x100c18, 0x28153a, 'KZ');
     this._makeFallbackScreen('bg_the_cracked_mountain',   WIDTH, HEIGHT, 0x1a120a, 0x4d3115, 'CM');
-    this._makeFallbackScreen('bg_the_demon_basement',     WIDTH, HEIGHT, 0x12070b, 0x4c0f1f, 'DB');
+    this._makeFallbackScreen('bg_the_basement_demon',     WIDTH, HEIGHT, 0x12070b, 0x4c0f1f, 'DB');
 
     // All raid + boss buttons / splash images
     Object.values(RAID_CATALOG).forEach(raid => {

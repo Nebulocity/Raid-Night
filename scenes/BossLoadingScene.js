@@ -21,10 +21,10 @@ export default class BossLoadingScene extends Phaser.Scene {
   // init - resolve which boss we're loading
   // ============================================================
   init() {
-    const selectedRaidId = this.registry.get('selectedRaidId') || 'the_churning_core';
-    const selectedBossId = this.registry.get('selectedBossId') || 'ragnaros';
+    const selectedRaidId = this.registry.get('selectedRaidId') || 'spookspire_keep';
+    const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot_and_nighttime';
 
-    const raid = RAID_CATALOG[selectedRaidId] || RAID_CATALOG.the_churning_core;
+    const raid = RAID_CATALOG[selectedRaidId] || RAID_CATALOG.spookspire_keep;
     this.raidMeta       = raid;
     this.bossMeta       = raid.bosses.find(b => b.id === selectedBossId) || raid.bosses[0];
     this.loadedLevelData = null;
@@ -56,14 +56,14 @@ export default class BossLoadingScene extends Phaser.Scene {
       || this._injectBossAssets(this.cache.json.get(this.bossMeta?.levelKey));
 
     // Raid background with dark overlay
-    this.add.image(WIDTH / 2, HEIGHT / 2, this.raidMeta.backgroundKey || 'bg_the_churning_core')
+    this.add.image(WIDTH / 2, HEIGHT / 2, this.raidMeta.backgroundKey || 'bg_spookspire_keep')
       .setDisplaySize(WIDTH, HEIGHT)
       .setOrigin(0.5);
     this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.30)
       .setOrigin(0.5);
 
     // Boss splash image
-    const splashKey = this.bossMeta?.splashKey || this.bossMeta?.buttonKey || 'splash_ragnaros';
+    const splashKey = this.bossMeta?.splashKey || this.bossMeta?.buttonKey || 'splash_sir_trotsalot';
     this.add.image(WIDTH / 2, HEIGHT * 0.40, splashKey)
       .setDisplaySize(Math.min(WIDTH * 0.55, 600), Math.min(HEIGHT * 0.45, 600))
       .setOrigin(0.5);

@@ -27,8 +27,8 @@ export default class RaidBossSelectScene extends Phaser.Scene {
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
 
     const saveData       = loadSaveData();
-    const selectedRaidId = this.registry.get('selectedRaidId') || saveData.lastSelectedRaidId || 'the_churning_core';
-    const raid           = RAID_CATALOG[selectedRaidId] || RAID_CATALOG.the_churning_core;
+    const selectedRaidId = this.registry.get('selectedRaidId') || saveData.lastSelectedRaidId || 'spookspire_keep';
+    const raid           = RAID_CATALOG[selectedRaidId] || RAID_CATALOG.spookspire_keep;
 
     this.registry.set('saveData', saveData);
     this.registry.set('selectedRaidId', raid.id);

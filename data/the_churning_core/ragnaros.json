@@ -8,24 +8,24 @@
   "assets": {
     "background": {
       "key": "bg_encounter_ragnaros",
-      "path": "assets/raids/the_churning_core/backgrounds/bg_ragnaros.png"
+      "path": "assets/raids/the_churning_core/backgrounds/bg_ragnaros.webp"
     },
     "spritesheets": [
       {
         "key": "boss_ragnaros_idle",
-        "path": "assets/raids/the_churning_core/bosses/idle/boss_ragnaros_idle.png",
+        "path": "assets/raids/the_churning_core/bosses/idle/boss_ragnaros_idle.webp",
         "frameWidth": 256,
         "frameHeight": 256
       },
       {
         "key": "boss_ragnaros_attacking",
-        "path": "assets/raids/the_churning_core/bosses/attacking/boss_ragnaros_attacking.png",
+        "path": "assets/raids/the_churning_core/bosses/attacking/boss_ragnaros_attacking.webp",
         "frameWidth": 256,
         "frameHeight": 256
       },
       {
         "key": "boss_ragnaros_defeated",
-        "path": "assets/raids/the_churning_core/bosses/defeated/boss_ragnaros_defeated.png",
+        "path": "assets/raids/the_churning_core/bosses/defeated/boss_ragnaros_defeated.webp",
         "frameWidth": 256,
         "frameHeight": 256
       }

@@ -1,31 +1,31 @@
 {
   "level": {
-    "id": "the_demon_basement_magtheridax",
+    "id": "the_basement_demon_magtheridax",
     "name": "Magtheridax the Frustrated",
-    "raidId": "the_demon_basement",
+    "raidId": "the_basement_demon",
     "bossId": "magtheridax"
   },
   "assets": {
     "background": {
       "key": "bg_encounter_magtheridax",
-      "path": "assets/raids/the_demon_basement/backgrounds/bg_the_demon_basement.png"
+      "path": "assets/raids/the_basement_demon/backgrounds/bg_the_basement_demon.webp"
     },
     "spritesheets": [
       {
         "key": "boss_magtheridax_idle",
-        "path": "assets/raids/the_demon_basement/bosses/idle/boss_magtheridax_idle.png",
+        "path": "assets/raids/the_basement_demon/bosses/idle/boss_magtheridax_idle.webp",
         "frameWidth": 384,
         "frameHeight": 384
       },
       {
         "key": "boss_magtheridax_attacking",
-        "path": "assets/raids/the_demon_basement/bosses/attacking/boss_magtheridax_attacking.png",
+        "path": "assets/raids/the_basement_demon/bosses/attacking/boss_magtheridax_attacking.webp",
         "frameWidth": 384,
         "frameHeight": 384
       },
       {
         "key": "boss_magtheridax_defeated",
-        "path": "assets/raids/the_demon_basement/bosses/defeated/boss_magtheridax_defeated.png",
+        "path": "assets/raids/the_basement_demon/bosses/defeated/boss_magtheridax_defeated.webp",
         "frameWidth": 384,
         "frameHeight": 384
       }
@@ -85,11 +85,11 @@
       ]
     },
     "sounds": {
-      "intro": "assets/raids/the_demon_basement/sounds/sound_intro_magtheridax.ogg",
-      "attack": "assets/raids/the_demon_basement/sounds/sound_attack_magtheridax.ogg",
-      "hit": "assets/raids/the_demon_basement/sounds/sound_hit_magtheridax.ogg",
-      "defeat": "assets/raids/the_demon_basement/sounds/sound_defeat_magtheridax.ogg",
-      "victory": "assets/raids/the_demon_basement/sounds/sound_victory.ogg"
+      "intro": "assets/raids/the_basement_demon/sounds/sound_intro_magtheridax.ogg",
+      "attack": "assets/raids/the_basement_demon/sounds/sound_attack_magtheridax.ogg",
+      "hit": "assets/raids/the_basement_demon/sounds/sound_hit_magtheridax.ogg",
+      "defeat": "assets/raids/the_basement_demon/sounds/sound_defeat_magtheridax.ogg",
+      "victory": "assets/raids/the_basement_demon/sounds/sound_victory.ogg"
     },
     "threatTable": {
       "player": 0,
