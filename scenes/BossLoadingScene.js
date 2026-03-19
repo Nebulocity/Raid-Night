@@ -63,10 +63,10 @@ export default class BossLoadingScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     // Boss splash image
-    const splashKey = this.bossMeta?.splashKey || this.bossMeta?.buttonKey || 'splash_sir_trotsalot';
-    this.add.image(WIDTH / 2, HEIGHT * 0.40, splashKey)
-      .setDisplaySize(Math.min(WIDTH * 0.55, 600), Math.min(HEIGHT * 0.45, 600))
-      .setOrigin(0.5);
+    // const splashKey = this.bossMeta?.splashKey || this.bossMeta?.buttonKey || 'splash_sir_trotsalot';
+    // this.add.image(WIDTH / 2, HEIGHT * 0.40, splashKey)
+    //   .setDisplaySize(Math.min(WIDTH * 0.55, 600), Math.min(HEIGHT * 0.45, 600))
+    //   .setOrigin(0.5);
 
     // Loading panel
     this.add.rectangle(WIDTH / 2, HEIGHT * 0.87, 820, 160, 0x000000, 0.58)
