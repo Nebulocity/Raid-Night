@@ -1427,25 +1427,6 @@ export default class GameScene extends Phaser.Scene {
       this.bossSubmerged = true;
       this.playBossSubmerge();
 
-      // AoE tick damage while submerged
-      const ticks    = ability.duration ?? 20;
-      let   ticksFired = 0;
-      const subTimer = this.time.addEvent({
-        delay:    TICK_MS,
-        loop:     true,
-        callback: () => {
-          ticksFired++;
-          const dmg = Phaser.Math.Between(ability.tickMin ?? 300, ability.tickMax ?? 600);
-          ['player', 'tank', 'healer'].forEach(id => this._applyDamageToCharacter(id, dmg, 'icon_submerge'));
-          console.log('[Boss] Submerge tick', ticksFired, '- AoE', dmg);
-          if (ticksFired >= ticks || !this.gameRunning) {
-            subTimer.remove();
-            this.bossSubmerged = false;
-            this.playBossEmerge();
-            console.log('[Boss] Ragnaros emerges!');
-          }
-        },
-      });
       // Register for all targets so death/rebirth clears it
       ['player', 'tank', 'healer'].forEach(id => this._registerDot(id, subTimer));
       return;
