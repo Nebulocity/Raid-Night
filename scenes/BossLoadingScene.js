@@ -178,7 +178,7 @@ export default class BossLoadingScene extends Phaser.Scene {
           repeat:     -1,
         },
         attack: {
-          ...(boss.animations?.attack || {}),
+          ...(boss.animations?.attacking || {}),
           key:        this.bossMeta.attackingKey,
           startFrame: 0,
           endFrame:   11,
