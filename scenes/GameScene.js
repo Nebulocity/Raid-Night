@@ -1154,7 +1154,7 @@ export default class GameScene extends Phaser.Scene {
 
       const text = this.add.text(cx, cy - 250, line, {
         fontFamily: 'monospace',
-        fontSize:   '32px',
+        fontSize:   '42px',
         color:      color,
         align:      'center',
         wordWrap:   { width: zone.w - 48 },
