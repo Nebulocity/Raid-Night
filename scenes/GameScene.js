@@ -1408,11 +1408,6 @@ export default class GameScene extends Phaser.Scene {
       console.log('[Boss]', bossName, 'uses', abilityName, 'on', singleTargetName + '!');
     }
 
-      // Register for all targets so death/rebirth clears it
-      ['player', 'tank', 'healer'].forEach(id => this._registerDot(id, subTimer));
-      return;
-    }
-
     // ========================
     // Generic boss ability handling
     // ========================
