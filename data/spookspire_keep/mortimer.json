@@ -18,7 +18,7 @@
         1500,
         2500
       ],
-      "attackSpeed": 3,
+      "attackSpeed": 1,
       "armor": 15000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
