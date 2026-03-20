@@ -85,7 +85,7 @@ export default class BossLoadingScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '22px', color: '#555555', align: 'center',
     }).setOrigin(0.5);
 
-    // ── Wire up loader events ────────────────────────────────
+    // - Wire up loader events -------------------------------
     this.load.on('progress', (value) => {
       if (this._barFill) {
         this._barFill.width    = barW * value;
@@ -103,7 +103,7 @@ export default class BossLoadingScene extends Phaser.Scene {
       if (this._statusText) this._statusText.setText('Ready!');
     });
 
-    // ── Queue the level JSON ─────────────────────────────────
+    // - Queue the level JSON -------------------------------─
     const { levelKey, levelPath } = this.bossMeta;
     if (!levelKey || !levelPath) return;
 
