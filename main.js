@@ -1,6 +1,6 @@
 /**
  * main.js - Phaser 3 game configuration and boot
- *
+ * 
  * RAID NIGHT
  * Target Resolution:   1080 x 2400 (portrait, FHD+ Android)
  * Browser:  auto-scales to fit viewport while keeping aspect ratio
