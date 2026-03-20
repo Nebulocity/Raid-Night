@@ -229,7 +229,7 @@ export default class GameScene extends Phaser.Scene {
     // =====================
     // Idle: 1024x768, 4x3 = 12 frames at 256x256
     this._safeCreateAnim({
-      key:       'druid_idle',
+      key:       'healer_idle',
       frames:    anims.generateFrameNumbers('druid_idle', { start: 0, end: 11 }),
       frameRate: 10,
       repeat:    -1,
@@ -237,7 +237,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Druid attack
     this._safeCreateAnim({
-      key:       'druid_attack',
+      key:       'healer_attack',
       frames:    anims.generateFrameNumbers('druid_attack', { start: 0, end: 15 }),
       frameRate: 12,
       repeat:    0,
@@ -245,7 +245,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Casting: 1024x768, 4x3 = 12 frames, plays once then returns to idle
     this._safeCreateAnim({
-      key:       'druid_casting',
+      key:       'healer_casting',
       frames:    anims.generateFrameNumbers('druid_casting', { start: 0, end: 11 }),
       frameRate: 12,
       repeat:    0,
@@ -253,7 +253,7 @@ export default class GameScene extends Phaser.Scene {
 
     // // Hit: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
     this._safeCreateAnim({
-      key:       'druid_hit',
+      key:       'healer_hit',
       frames:    anims.generateFrameNumbers('druid_hit', { start: 0, end: 15 }),
       frameRate: 12,
       repeat:    0,
@@ -2391,39 +2391,7 @@ export default class GameScene extends Phaser.Scene {
     slot.sprite.once('animationcomplete', () => {
       if (this.anims.exists('druid_idle')) slot.sprite.play('druid_idle');
     });
-  }
-
-  // ================================
-  // Boss special ability: Wrath of Ragnaros
-  // ================================
-  // Called by combat system when Ragnaros uses Wrath of Ragnaros.
-  // Plays the wrath animation, shows dialogue, plays sound,
-  // then returns to idle.
-  playBossWrath() {
-    const slot    = this.entitySlots.boss;
-    const animKey = this._getBossAnimKey('wrath');
-    if (!slot?.sprite || !animKey) return;
-
-    // Do not interrupt wrath already in progress
-    const current = slot.sprite.anims.currentAnim;
-    if (current && current.key === animKey && slot.sprite.anims.isPlaying) return;
-
-    const idleKey = this._getBossAnimKey('idle');
-    slot.sprite.play(animKey);
-    slot.sprite.once('animationcomplete', () => {
-      if (idleKey && this.anims.exists(idleKey)) slot.sprite.play(idleKey);
-    });
-
-    // Dialogue and sound from JSON
-    this.showAbilityDialogue('wrath_of_ragnaros');
-
-    // Badge on boss
-    const uiForWrath = this.scene.get('UIScene');
-    if (uiForWrath?.spawnAbilityBadge) {
-      const name = this.levelData?.abilities?.['wrath_of_ragnaros']?.name ?? 'Wrath of Ragnaros';
-      uiForWrath.spawnAbilityBadge(window.GAME_CONFIG.ZONES.BOSS, 'wrath_of_ragnaros', name);
-    }
-  }
+  } 
 
   // ====================
   // Tank auto-attack
@@ -2469,6 +2437,50 @@ export default class GameScene extends Phaser.Scene {
     // console.log('[Tank] Auto-attack for', damage, '-> threat', Math.round(damage * TANK_THREAT_MULTIPLIER));
   }
 
+  // ====================
+  // Healer auto-attack
+  // ====================
+  // Fires playHealerAutoAttack() every <attackSpeed> ticks as defined
+  // in the player JSON data. attackSpeed: 2 = every 2 ticks, etc.
+  _tickHealerAutoAttack() {
+    const healerData = this.entitySlots.healer?._data;
+    if (!healerData) return;
+    if ((this.entitySlots.healer?.currentHealth ?? 0) <= 0) return;
+
+    const attackSpeed = Math.round(healerData.stats?.attackSpeed ?? 2);
+    if (this.tickCount % attackSpeed === 0) {
+      console.log('[Healer] Auto-attack tick', this.tickCount, 'speed', attackSpeed);
+      this.playHealerAutoAttack();
+    }
+  }
+
+  playHealerAutoAttack() {
+    const slot = this.entitySlots.healer;
+    if (!slot?.sprite) return;
+
+    // Do not interrupt a cast or attack already in progress
+    const current = slot.sprite.anims.currentAnim;
+    if (current && current.key !== 'healer_idle' && slot.sprite.anims.isPlaying) return;
+
+    if (!this.anims.exists('healer_attack')) return;
+
+    slot.sprite.play('healer_attack');
+    slot.sprite.once('animationcomplete', () => {
+      if (this.anims.exists('healer_idle')) slot.sprite.play('healer_idle');
+    });
+
+    // Deal damage to boss and generate threat
+    // Healers generate 1.5x threat from physical attacks (WoW taunt mechanic)
+    const healerData    = slot._data;
+    const damageRange = healerData?.stats?.damageRange ?? [100, 200];
+    const damage      = Phaser.Math.Between(damageRange[0], damageRange[1]);
+    
+    this._applyDamageToBoss(damage, 'icon_autoAttack');
+    this.addThreat('healer', damage);
+    this._updateThreatMeters();
+    console.log('[Healer] Auto-attack for', damage, '-> threat', Math.round(damage * TANK_THREAT_MULTIPLIER));
+  }
+  
   // ====================
   // Tank AI
   // ====================
