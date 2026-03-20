@@ -113,6 +113,11 @@ export default class BossLoadingScene extends Phaser.Scene {
     });
 
     this.load.json(levelKey, levelPath);
+
+    // Load default party data (later: coalesce with save data in create)
+    if (!this.cache.json.exists('party')) {
+      this.load.json('party', 'data/party.json');
+    }
   }
 
   // ============================================================
@@ -125,6 +130,10 @@ export default class BossLoadingScene extends Phaser.Scene {
     if (!levelData) {
       console.warn('[BossLoadingScene] No level data found for boss:', this.bossMeta?.id);
     }
+
+    // TODO: coalesce with save data once save system exists
+    const partyData = this.cache.json.get('party');
+    if (levelData && partyData) levelData.characters = partyData;
 
     this.registry.set('levelData', levelData || this.cache.json.get('level01'));
 
