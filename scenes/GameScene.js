@@ -2325,7 +2325,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (!this.anims.exists('shaman_attack')) return;
 
-    slot.sprite.play('shaman_attack');
+    slot.sprite.play('shaman_attack').setScale(2);
     slot.sprite.once('animationcomplete', () => {
       if (this.anims.exists('shaman_idle')) slot.sprite.play('shaman_idle');
     });
