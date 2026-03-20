@@ -91,7 +91,7 @@
       "recastTimer": 10,
       "targetType": "highest_threat",
       "dialogue": "Mortimer flicks a dagger from the table setting!",
-      "sound": "audio/ragnaros_attack.ogg",
+      "sound": "",
       "audioDuration": 2000,
       "iconId": "magma_blast"
     },
@@ -116,7 +116,7 @@
       "recastTimer": 16,
       "targetType": "all_allies",
       "dialogue": "A filthy napkin blinds the room.",
-      "sound": "audio/ragnaros_attack.ogg",
+      "sound": "",
       "audioDuration": 2000,
       "iconId": "wrath_of_ragnaros"
     },
@@ -141,7 +141,7 @@
       "recastTimer": 22,
       "targetType": "random_ally",
       "dialogue": "Mortimer picks a victim for special service.",
-      "sound": "audio/ragnaros_attack.ogg",
+      "sound": "",
       "audioDuration": 2000,
       "iconId": "magma_blast"
     }
