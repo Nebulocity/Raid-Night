@@ -1414,35 +1414,6 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // ========================
-    // Magma Blast - single target immediate + DoT
-    // ========================
-    if (abilityId === 'magma_blast') {
-      this.showAbilityDialogue(abilityId);
-      const targetId = this.getHighestThreatTarget();
-      // Immediate hit
-      const immDmg = Phaser.Math.Between(ability.immediateMin ?? 3000, ability.immediateMax ?? 5000);
-      this._applyDamageToCharacter(targetId, immDmg, 'icon_magma_blast');
-      console.log('[Boss] Magma Blast hits', targetId, 'for', immDmg);
-      // DoT ticks - same target, roll once
-      if (ability.duration > 0 && ability.tickMin) {
-        const tickDmg = Phaser.Math.Between(ability.tickMin, ability.tickMax);
-        let ticks = 0;
-        const dotTimer = this.time.addEvent({
-          delay:    TICK_MS,
-          loop:     true,
-          callback: () => {
-            ticks++;
-            this._applyDamageToCharacter(targetId, tickDmg, 'icon_magma_blast');
-            if (ticks >= ability.duration || !this.gameRunning) dotTimer.remove();
-          },
-        });
-        this._registerDot(targetId, dotTimer);
-      }
-      return;
-    }
-
-
-    // ========================
     // Generic boss ability handling
     // ========================
     const resolveTargets = () => {
