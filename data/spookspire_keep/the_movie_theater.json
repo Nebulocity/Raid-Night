@@ -59,82 +59,16 @@
       ]
     },
     "sounds": {
-      "intro": "assets/raids/spookspire_keep/sounds/sound_intro_the_movie_theater.ogg",
-      "attack": "assets/raids/spookspire_keep/sounds/sound_attack_the_movie_theater.ogg",
-      "hit": "assets/raids/spookspire_keep/sounds/sound_hit_the_movie_theater.ogg",
-      "defeat": "assets/raids/spookspire_keep/sounds/sound_defeat_the_movie_theater.ogg",
-      "victory": "assets/raids/spookspire_keep/sounds/sound_victory.ogg"
-    },
+      "intro": "",
+      "attack": "",
+      "hit": "",
+      "defeat": "",
+      "victory": ""
+    }
     "threatTable": {
       "player": 0,
       "tank": 0,
       "healer": 0
-    }
-  },
-  "characters": {
-    "player": {
-      "id": "player",
-      "name": "Earth Mother's Favorite",
-      "abilityIds": [],
-      "stats": {
-        "health": 8010,
-        "maxHealth": 8010,
-        "mana": 8963,
-        "maxMana": 8963,
-        "armor": 3500,
-        "attackHit": 75,
-        "spellHit": 85,
-        "attackSpeed": 3,
-        "damageRange": [
-          400,
-          650
-        ],
-        "actionInterval": 1,
-        "missChance": 5
-      }
-    },
-    "tank": {
-      "id": "tank",
-      "name": "Tanky McTankface",
-      "abilityIds": [],
-      "stats": {
-        "health": 12067,
-        "maxHealth": 12067,
-        "mana": 5418,
-        "maxMana": 5418,
-        "armor": 14817,
-        "attackHit": 88,
-        "spellHit": 80,
-        "attackSpeed": 2,
-        "damageRange": [
-          107,
-          212
-        ],
-        "actionInterval": 2,
-        "blockChance": 15,
-        "missChance": 5
-      }
-    },
-    "healer": {
-      "id": "healer",
-      "name": "Healer McHealface",
-      "abilityIds": [],
-      "stats": {
-        "health": 7497,
-        "maxHealth": 7497,
-        "mana": 9303,
-        "maxMana": 9303,
-        "armor": 2200,
-        "attackHit": 60,
-        "spellHit": 85,
-        "attackSpeed": 3,
-        "damageRange": [
-          80,
-          150
-        ],
-        "actionInterval": 1,
-        "missChance": 5
-      }
     }
   },
   "abilities": {
