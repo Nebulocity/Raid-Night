@@ -21,6 +21,8 @@
  *   - Chain Lightning: 6-second cooldown after use (reads recastTimer from JSON)
  *   - Totems: no cooldown on the button itself (one totem per element at a time)
  */
+const Phaser = window.Phaser; // Phaser is loaded via <script> in index.html
+
 export default class UIScene extends Phaser.Scene {
   constructor() {
     super({ key: 'UIScene' });

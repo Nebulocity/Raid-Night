@@ -2,8 +2,10 @@
  * BossLoadingScene.js
  *
  * Loads the selected boss level JSON and its boss-specific assets,
- * then hands off to the existing gameplay scenes.
+ * then starts GameScene and UIScene for the encounter.
  */
+const Phaser = window.Phaser;
+
 import { RAID_CATALOG } from '../data/raidCatalog.js';
 
 export default class BossLoadingScene extends Phaser.Scene {
@@ -11,232 +13,228 @@ export default class BossLoadingScene extends Phaser.Scene {
     super({ key: 'BossLoadingScene' });
   }
 
+  // init - resolve which boss we're loading
   init() {
-    this.selectedRaidId = this.registry.get('selectedRaidId') || 'the_churning_core';
-    this.selectedBossId = this.registry.get('selectedBossId') || 'ragnaros';
-    const raid = RAID_CATALOG[this.selectedRaidId] || RAID_CATALOG.the_churning_core;
-    this.selectedBoss = raid.bosses.find(boss => boss.id === this.selectedBossId) || raid.bosses[0];
+    const selectedRaidId = this.registry.get('selectedRaidId') || 'spookspire_keep';
+    const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot_and_nighttime';
+
+    const raid = RAID_CATALOG[selectedRaidId] || RAID_CATALOG.spookspire_keep;
+    this.raidMeta        = raid;
+    this.bossMeta        = raid.bosses.find(b => b.id === selectedBossId) || raid.bosses[0];
     this.loadedLevelData = null;
   }
 
+  // preload - load level JSON, then queue boss-specific assets
   preload() {
-    const levelKey = this.selectedBoss?.levelKey;
-    const levelPath = this.selectedBoss?.levelPath;
+    const { WIDTH, HEIGHT } = window.GAME_CONFIG;
+    const cx = WIDTH / 2;
 
-    if (levelKey && levelPath) {
-      this.load.on('filecomplete-json-' + levelKey, (key, type, levelData) => {
-        this.loadedLevelData = this._applyBossAssetConventions(levelData);
-        this._loadLevelAssets(this.loadedLevelData);
-      });
+    // Dark background
+    this.add.rectangle(cx, HEIGHT / 2, WIDTH, HEIGHT, 0x0a0a0a);
 
-      this.load.json(levelKey, levelPath);
-    }
-  }
+    // Boss idle sprite just above center
+    const idleKey  = this.bossMeta?.idleKey;
+    const bossName = this.bossMeta?.name || 'Unknown Boss';
+    const bossY    = HEIGHT * 0.42;
 
-  create() {
-    const { WIDTH, HEIGHT, TICK_MS } = window.GAME_CONFIG;
-    const raid = RAID_CATALOG[this.selectedRaidId] || RAID_CATALOG.the_churning_core;
-    const levelKey = this.selectedBoss?.levelKey;
-    const cachedLevelData = this.loadedLevelData || this._applyBossAssetConventions(this.cache.json.get(levelKey));
+    let bossSprite = null;
+    if (idleKey && this.textures.exists(idleKey)) {
+      bossSprite = this.add.sprite(cx, bossY, idleKey).setOrigin(0.5).setScale(2);
 
-    this.add.image(WIDTH / 2, HEIGHT / 2, raid.backgroundKey || 'bg_the_churning_core')
-      .setDisplaySize(WIDTH, HEIGHT)
-      .setOrigin(0.5);
-
-    this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.28).setOrigin(0.5);
-
-    this.add.image(WIDTH / 2, HEIGHT * 0.42, this.selectedBoss?.loadingKey || this.selectedBoss?.buttonKey || 'loading_ragnaros')
-      .setDisplaySize(Math.min(WIDTH * 0.42, 820), Math.min(HEIGHT * 0.42, 820))
-      .setOrigin(0.5);
-
-    this.add.rectangle(WIDTH / 2, HEIGHT * 0.88, 780, 160, 0x000000, 0.55)
-      .setStrokeStyle(3, 0xd7a44a, 1)
-      .setOrigin(0.5);
-
-    this.add.text(WIDTH / 2, HEIGHT * 0.86, 'Preparing encounter...', {
-      fontFamily: 'monospace',
-      fontSize: '40px',
-      color: '#fff1c7',
-      stroke: '#000000',
-      strokeThickness: 6,
-    }).setOrigin(0.5);
-
-    this.add.text(WIDTH / 2, HEIGHT * 0.91, this.selectedBoss?.name || 'Ragnaros', {
-      fontFamily: 'monospace',
-      fontSize: '30px',
-      color: '#ffd37a',
-      stroke: '#000000',
-      strokeThickness: 5,
-    }).setOrigin(0.5);
-
-    if (!cachedLevelData) {
-      console.warn('[BossLoadingScene] Missing level data for selected boss. Falling back to level01.');
-    }
-
-    this.registry.set('levelData', cachedLevelData || this.cache.json.get('level01'));
-
-    this.time.delayedCall(100, () => {
-      if (this.scene.isActive('UIScene')) {
-        this.scene.stop('UIScene');
-      }
-
-      this.scene.start('GameScene');
-      this.scene.launch('UIScene');
-    });
-  }
-
-
-
-  _applyBossAssetConventions(levelData) {
-    if (!levelData || !this.selectedBoss) {
-      return levelData;
-    }
-
-    const next = structuredClone(levelData);
-    const boss = next.boss || {};
-    const assets = next.assets || {};
-
-    next.assets = assets;
-    assets.background = {
-      key: this.selectedBoss.encounterBackgroundKey,
-      path: this.selectedBoss.encounterBackgroundPath,
-    };
-
-    const existingSheets = Array.isArray(assets.spritesheets) ? assets.spritesheets.slice() : [];
-    const byKey = new Map(existingSheets.map((sheet) => [sheet.key, sheet]));
-
-    [
-      {
-        key: this.selectedBoss.idleSheetKey,
-        path: this.selectedBoss.idlePath,
-        frameWidth: 256,
-        frameHeight: 256,
-      },
-      {
-        key: this.selectedBoss.attackSheetKey,
-        path: this.selectedBoss.attackPath,
-        frameWidth: 256,
-        frameHeight: 256,
-      },
-      {
-        key: this.selectedBoss.defeatedSheetKey,
-        path: this.selectedBoss.defeatedPath,
-        frameWidth: 256,
-        frameHeight: 256,
-      },
-    ].forEach((sheet) => {
-      byKey.set(sheet.key, { ...byKey.get(sheet.key), ...sheet });
-    });
-
-    assets.spritesheets = Array.from(byKey.values());
-
-    next.level = {
-      ...(next.level || {}),
-      background: this.selectedBoss.encounterBackgroundKey,
-    };
-
-    next.boss = {
-      ...boss,
-      spriteKey: this.selectedBoss.idleSheetKey,
-      animations: {
-        ...(boss.animations || {}),
-        idle: {
-          key: this.selectedBoss.idleSheetKey,
-          startFrame: 0,
-          endFrame: 5,
+      const animKey = 'bossloading_idle_' + idleKey;
+      if (!this.anims.exists(animKey)) {
+        this.anims.create({
+          key:       animKey,
+          frames:    this.anims.generateFrameNumbers(idleKey, { start: 0, end: 11 }),
           frameRate: 6,
-          repeat: -1,
-          yoyo: false,
+          repeat:    -1,
+        });
+      }
+      bossSprite.play(animKey);
+    }
+
+    // Boss name above the sprite
+    const nameY = bossSprite ? bossY - (bossSprite.height / 2) - 100 : HEIGHT * 0.20;
+
+    this.add.text(cx, nameY, bossName, {
+      fontFamily: 'monospace',
+      fontSize:   '64px',
+      color:      '#fff1c7',
+      stroke:     '#000000',
+      strokeThickness: 8,
+    }).setOrigin(0.5);
+
+    // Loading bar (mirroring PreloadScene style)
+    const barW  = 500;
+    const barH  = 16;
+    const barY  = HEIGHT * 0.75;
+    const barX  = cx - barW / 2;
+    console.log('cx: ', cx, 'barW: ',barW, 'barX: ', barX);
+
+    this.add.text(cx, barY - 44, 'Preparing encounter...', {
+      fontFamily: 'monospace', fontSize: '28px',
+      color: '#c8a96e', align: 'center',
+    }).setOrigin(0.5);
+
+    this.add.rectangle(cx, barY + barH / 2, barW + 8, barH + 8, 0x222222).setOrigin(0.5);
+
+    this._barFill    = this.add.rectangle(barX, barY, 0, barH, 0xc8a96e).setOrigin(0, 0);
+    this._barShimmer = this.add.rectangle(barX, barY, 0, 3,  0xffd700).setOrigin(0, 0).setAlpha(0.6);
+
+    this._statusText = this.add.text(cx, barY + 44, 'Loading...', {
+      fontFamily: 'monospace', fontSize: '22px', color: '#555555', align: 'center',
+    }).setOrigin(0.5);
+
+    // - Wire up loader events -------------------------------
+    this.load.on('progress', (value) => {
+      if (this._barFill) {
+        this._barFill.width    = barW * value;
+        this._barShimmer.width = barW * value;
+      }
+    });
+
+    this.load.on('fileprogress', (file) => {
+      if (this._statusText) this._statusText.setText('Loading: ' + file.key);
+    });
+
+    this.load.on('complete', () => {
+      if (this._barFill)    this._barFill.width    = barW;
+      if (this._barShimmer) this._barShimmer.width = barW;
+      if (this._statusText) this._statusText.setText('Ready!');
+    });
+
+    // - Queue the level JSON -------------------------------─
+    const { levelKey, levelPath } = this.bossMeta;
+    if (!levelKey || !levelPath) return;
+
+    this.load.on('filecomplete-json-' + levelKey, (key, type, levelData) => {
+      this.loadedLevelData = this._injectBossAssets(levelData);
+      this._loadLevelAssets(this.loadedLevelData);
+    });
+
+    this.load.json(levelKey, levelPath);
+
+    // Load default party data (later: coalesce with save data in create)
+    if (!this.cache.json.exists('party')) {
+      this.load.json('party', 'data/party/party.json');
+    }
+  }
+
+  // ============================================================
+  // create - assets ready; fade in then launch after 2000ms
+  // ============================================================
+  create() {
+    const levelData = this.loadedLevelData
+      || this._injectBossAssets(this.cache.json.get(this.bossMeta?.levelKey));
+
+    if (!levelData) {
+      console.warn('[BossLoadingScene] No level data found for boss:', this.bossMeta?.id);
+    }
+
+    // TODO: coalesce with save data once save system exists
+    const partyData = this.cache.json.get('party');
+    if (levelData && partyData) levelData.characters = partyData;
+
+    this.registry.set('levelData', levelData || this.cache.json.get('level01'));
+
+    this.time.delayedCall(2000, () => {
+      this.cameras.main.fadeOut(2000, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        if (this.scene.isActive('UIScene')) this.scene.stop('UIScene');
+        this.scene.start('GameScene');
+        this.scene.launch('UIScene');
+      });
+    });
+  }
+
+  // ============================================================
+  // _injectBossAssets
+  // ============================================================
+  _injectBossAssets(levelData) {
+    if (!levelData || !this.bossMeta) return levelData;
+
+    const result = structuredClone(levelData);
+    const boss   = result.boss || {};
+    const assets = result.assets || {};
+
+    assets.background = {
+      key:  this.bossMeta.encounterBackgroundKey,
+      path: this.bossMeta.encounterBackgroundPath,
+    };
+
+    result.assets = assets;
+
+    result.boss = {
+      ...boss,
+      spriteKey: this.bossMeta.idleKey,
+      animations: {
+        ...boss.animations,
+        idle: {
           ...(boss.animations?.idle || {}),
-        },
-        attack: {
-          key: this.selectedBoss.attackSheetKey,
+          key:        this.bossMeta.idleKey,
           startFrame: 0,
-          endFrame: 5,
-          frameRate: 8,
-          repeat: 0,
-          yoyo: false,
-          ...(boss.animations?.attack || {}),
+          endFrame:   10,
+          frameRate:  6,
+          repeat:     -1,
         },
-        wrath: {
-          key: this.selectedBoss.attackSheetKey,
+        attacking: {
+          ...(boss.animations?.attacking || {}),
+          key:        this.bossMeta.attackingKey,
           startFrame: 0,
-          endFrame: 5,
-          frameRate: 8,
-          repeat: 0,
-          yoyo: false,
-          ...(boss.animations?.wrath || {}),
+          endFrame:   11,
+          frameRate:  12,
+          repeat:     0,
         },
-        death: {
-          key: this.selectedBoss.defeatedSheetKey,
+        defeated: {
+          ...(boss.animations?.defeated || {}),
+          key:        this.bossMeta.defeatedKey,
           startFrame: 0,
-          endFrame: 5,
-          frameRate: 8,
-          repeat: 0,
-          yoyo: false,
-          ...(boss.animations?.death || {}),
+          endFrame:   11,
+          frameRate:  10,
+          repeat:     0,
         },
       },
     };
 
-    return next;
+    return result;
   }
 
+  // ============================================================
+  // _loadLevelAssets
+  // ============================================================
   _loadLevelAssets(levelData) {
-    const assets = levelData?.assets;
-    if (!assets) {
-      console.warn('[BossLoadingScene] No assets block found in level data.');
-      return;
+    if (!levelData?.assets) return;
+
+    const { background } = levelData.assets;
+
+    if (background?.key && background?.path && !this.textures.exists(background.key)) {
+      this.load.image(background.key, background.path);
     }
 
-    if (assets.background && !this.textures.exists(assets.background.key)) {
-      this.load.image(assets.background.key, assets.background.path);
-    }
-
-    if (Array.isArray(assets.spritesheets)) {
-      assets.spritesheets.forEach((sheet) => {
-        if (!sheet.key || !sheet.path || !sheet.frameWidth || !sheet.frameHeight) {
-          console.warn('[BossLoadingScene] Skipping malformed spritesheet entry:', sheet);
-          return;
-        }
-
-        if (this.textures.exists(sheet.key)) {
-          return;
-        }
-
-        this.load.spritesheet(sheet.key, sheet.path, {
-          frameWidth: sheet.frameWidth,
-          frameHeight: sheet.frameHeight,
-        });
-      });
-    }
-
-    this._collectAndLoadSounds(levelData);
+    this._loadSounds(levelData);
   }
 
-  _collectAndLoadSounds(levelData) {
+  _loadSounds(levelData) {
     const seen = new Set();
 
-    const loadIfNew = (path) => {
+    const queueIfNew = (path) => {
       if (!path || seen.has(path)) return;
       seen.add(path);
-      const key = path.replace(/^.*[/]/, '').replace(/[.][^.]+$/, '');
+      const key = path.replace(/^.*\//, '').replace(/\.[^.]+$/, '');
       if (this.cache.audio.exists(key)) return;
       this.load.audio(key, path);
     };
 
     const boss = levelData?.boss;
     if (boss) {
-      loadIfNew(boss.openingSound);
-      loadIfNew(boss.attackSound);
-      loadIfNew(boss.deathSound);
+      queueIfNew(boss.openingSound);
+      queueIfNew(boss.attackSound);
+      queueIfNew(boss.deathSound);
+      Object.values(boss.sounds || {}).forEach(queueIfNew);
     }
 
-    const abilities = levelData?.abilities;
-    if (abilities) {
-      Object.values(abilities).forEach((ability) => {
-        loadIfNew(ability.sound);
-      });
-    }
+    Object.values(levelData?.abilities || {}).forEach(ability => {
+      queueIfNew(ability.sound);
+    });
   }
 }

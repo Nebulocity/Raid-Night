@@ -1,0 +1,142 @@
+{
+  "level": {
+    "id": "spookspire_keep_the_movie_theater",
+    "name": "The Movie Theater",
+    "raidId": "spookspire_keep",
+    "bossId": "the_movie_theater"
+  },
+  "boss": {
+    "id": "the_movie_theater",
+    "name": "The Movie Theater",
+    "stats": {
+      "health": 500000,
+      "maxHealth": 500000,
+      "mana": 100000,
+      "maxMana": 100000,
+      "usesMana": false,
+      "damageRange": [
+        1500,
+        2500
+      ],
+      "attackSpeed": 3,
+      "armor": 15000,
+      "attackHitChance": 90,
+      "abilityHitChance": 90,
+      "resistList": {
+        "fire": 0,
+        "water": 0,
+        "nature": 0,
+        "holy": 0,
+        "shadow": 0,
+        "arcane": 0
+      }
+    },
+    "phases": [
+      {
+        "id": "phase_1",
+        "label": "Phase 1",
+        "trigger": {
+          "type": "health_percent",
+          "value": 100
+        },
+        "abilityIds": [
+          "now_showing",
+          "intermission",
+          "final_feature"
+        ]
+      }
+    ],
+    "dialog": {
+      "intro": [
+        "Welcome to Spookspire's Grand Picture House. Enjoy the show.",
+        "There are no refunds. There is no exit."
+      ],
+      "defeat": [
+        "...credits roll. The theater is silent. You made it."
+      ],
+      "victory": [
+        "THERE WILL BE NO ENCORE. The lights go out. Forever."
+      ]
+    },
+    "sounds": {
+      "intro": "",
+      "attack": "",
+      "hit": "",
+      "defeat": "",
+      "victory": ""
+    }
+    "threatTable": {
+      "player": 0,
+      "tank": 0,
+      "healer": 0
+    }
+  },
+  "abilities": {
+    "now_showing": {
+      "id": "now_showing",
+      "name": "Now Showing",
+      "type": "boss_mechanic",
+      "manaCost": 0,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "damage",
+        "damageType": "arcane"
+      },
+      "immediateMin": 2000,
+      "immediateMax": 3500,
+      "duration": 0,
+      "tickEffect": null,
+      "tickMin": 0,
+      "tickMax": 0,
+      "threatPerDamage": 0,
+      "recastTimer": 14,
+      "targetType": "all_allies",
+      "dialogue": "The projector BLINDS you with light!"
+    },
+    "intermission": {
+      "id": "intermission",
+      "name": "Intermission",
+      "type": "boss_mechanic",
+      "manaCost": 0,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "damage",
+        "damageType": "arcane"
+      },
+      "immediateMin": 1200,
+      "immediateMax": 2000,
+      "duration": 4,
+      "tickEffect": {
+        "type": "damage",
+        "damageType": "arcane"
+      },
+      "tickMin": 300,
+      "tickMax": 500,
+      "threatPerDamage": 0,
+      "recastTimer": 20,
+      "targetType": "all_allies",
+      "dialogue": "The film reel SCREECHES at full volume!"
+    },
+    "final_feature": {
+      "id": "final_feature",
+      "name": "Final Feature",
+      "type": "boss_mechanic",
+      "manaCost": 0,
+      "immediateFlag": true,
+      "immediateEffect": {
+        "type": "damage",
+        "damageType": "arcane"
+      },
+      "immediateMin": 4500,
+      "immediateMax": 7000,
+      "duration": 0,
+      "tickEffect": null,
+      "tickMin": 0,
+      "tickMax": 0,
+      "threatPerDamage": 0,
+      "recastTimer": 35,
+      "targetType": "highest_threat",
+      "dialogue": "THE HOUSE LIGHTS GO OUT. Something approaches from the dark."
+    }
+  }
+}

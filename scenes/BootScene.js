@@ -10,6 +10,9 @@
  *
  * Nothing gameplay-related lives here.
  */
+
+const Phaser = window.Phaser; // Phaser is loaded via <script> in index.html
+
 export default class BootScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BootScene' });

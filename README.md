@@ -1,7 +1,7 @@
 # Raid Night
 
 A Phaser 3 browser game inspired by World of Warcraft TBC Classic.
-Play as a Shaman (for now), and summon totems, cast lightning, and take down raid bosses alongside your tank and healer.
+Play as a Shaman (for now), fight alongside your two companions, and defeat raid bosses for loot and glory!  (or, maybe just the loot...)
 Built for 1080×2400 (FHD+ Android portrait), playable in any desktop browser.
 
 ---
@@ -23,6 +23,6 @@ npm run build
 
 ## Tech Stack
 
-- [Phaser 3](https://phaser.io/) — game engine (loaded via CDN)
+- [Phaser 3](https://phaser.io/) — game engine (loaded via /phaser/phaser.min.js)
 - Vanilla JS — no build step required for development
 - [Capacitor](https://capacitorjs.com/) — Android packaging (later)

@@ -14,7 +14,7 @@
   "encounters": [
     {
       "id": "nighttime_trotsalot",
-      "name": "Nighttime & Sir Trotsalot the Damned",
+      "name": "Sir Trotsalot the Damned",
       "sourceEncounter": "Attumen the Huntsman / Midnight",
       "wing": "The Stables",
       "actors": [

@@ -7,7 +7,9 @@
  * are read from levelData (the JSON). No boss-specific strings are
  * hardcoded here. Adding a new boss means writing a new JSON file only.
  */
-import Phaser from 'phaser';
+const Phaser = window.Phaser; // Phaser is loaded via <script> in index.html;
+
+import { loadSaveData, saveSaveData, recordBossDefeat } from '../utils/saveData.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -24,9 +26,6 @@ export default class GameScene extends Phaser.Scene {
     this.gameRunning        = false;
     // Tracks last cast timestamp per character for mana regen idle window
     this.lastCastTime = { player: 0, tank: 0, healer: 0 };
-
-    // True while Ragnaros is submerged - blocks auto-attacks and abilities
-    this.bossSubmerged = false;
 
     // Tracks active boss DoT timers per character so they can be cancelled
     // on death or Rebirth: { player: [timer,...], tank: [...], healer: [...] }
@@ -63,7 +62,7 @@ export default class GameScene extends Phaser.Scene {
     this._buildBossSlot(ZONES.BOSS);
     this._buildPlayerSlot(ZONES.PLAYER);
     this._buildCharacterSlot('tank',   ZONES.TANK, 0xff88cc, 'Tank', 'tank_idle', 'tank_idle');
-    this._buildCharacterSlot('healer', ZONES.HEALER, 0xa0ff69, 'Healer', 'druid_idle', 'druid_idle');
+    this._buildCharacterSlot('healer', ZONES.HEALER, 0xa0ff69, 'Healer', 'healer_idle', 'healer_idle');
     this._buildTotemSlots(ZONES.TOTEMS);
 
     if (this.levelData) {
@@ -89,7 +88,7 @@ export default class GameScene extends Phaser.Scene {
     // Initialize threat table - tank starts with high threat so
     // boss targets it by default before any combat actions occur.
     this._initThreatTable();
-    this.addThreat('tank', 5000);
+    
     // Defer threat meter update until after slots are built
     this.time.delayedCall(100, () => this._updateThreatMeters());
 
@@ -118,6 +117,7 @@ export default class GameScene extends Phaser.Scene {
       console.warn('[GameScene] Skipping animation "' + config.key + '" -- texture not loaded:', textureKey);
       return;
     }
+
     this.anims.create(config);
   }
 
@@ -127,35 +127,35 @@ export default class GameScene extends Phaser.Scene {
     // =====================
     // PLAYER ANIMATIONS
     // =====================
-    // Sheet: 4x3 grid, 12 frames each 256x256 - all idle
+    // Sheet: 3x4 grid, 12 frames each 256x256 - all idle
     this._safeCreateAnim({
       key:       'shaman_idle',
-      frames:    anims.generateFrameNumbers('shaman_idle', { start: 0, end: 5 }),
+      frames:    anims.generateFrameNumbers('shaman_idle', { start: 0, end: 10 }),
       frameRate: 10,
       repeat:    -1,
     }, 'shaman_idle');
 
-    this._safeCreateAnim({
-      key:       'shaman_cast_lightning',
-      frames:    anims.generateFrameNumbers('shaman_lightning', { start: 0, end: 2 }),
-      frameRate: 10,
-      repeat:    0,
-    }, 'shaman_lightning');
-
-    this._safeCreateAnim({
-      key:       'shaman_cast_chain',
-      frames:    anims.generateFrameNumbers('shaman_chain', { start: 0, end: 3 }),
-      frameRate: 10,
-      repeat:    0,
-    }, 'shaman_chain');
-
     // Auto-attack: 1024x768, 4x3 = 11 frames (last row has 3), plays once
     this._safeCreateAnim({
       key:       'shaman_attack',
-      frames:    anims.generateFrameNumbers('shaman_attack', { start: 0, end: 10 }),
+      frames:    anims.generateFrameNumbers('shaman_attack', { start: 0, end: 11 }),
       frameRate: 10,
       repeat:    0,
     }, 'shaman_attack');
+
+    // this._safeCreateAnim({
+    //   key:       'shaman_cast_static_burst',
+    //   frames:    anims.generateFrameNumbers('shaman_lightning', { start: 0, end: 2 }),
+    //   frameRate: 10,
+    //   repeat:    0,
+    // }, 'shaman_lightning');
+
+    // this._safeCreateAnim({
+    //   key:       'shaman_cast_arc_lightning',
+    //   frames:    anims.generateFrameNumbers('shaman_chain', { start: 0, end: 3 }),
+    //   frameRate: 10,
+    //   repeat:    0,
+    // }, 'shaman_chain');  
 
     // Casting: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
     this._safeCreateAnim({
@@ -173,26 +173,26 @@ export default class GameScene extends Phaser.Scene {
       repeat:    0,
     }, 'shaman_hit');
 
-    // Totem placement: 1024x768, 4x3 = 12 frames, plays once then returns to idle
-    this._safeCreateAnim({
-      key:       'shaman_totem',
-      frames:    anims.generateFrameNumbers('shaman_totem', { start: 0, end: 11 }),
-      frameRate: 12,
-      repeat:    0,
-    }, 'shaman_totem');
+    // // Totem placement: 1024x768, 4x3 = 12 frames, plays once then returns to idle
+    // this._safeCreateAnim({
+    //   key:       'shaman_totem',
+    //   frames:    anims.generateFrameNumbers('shaman_totem', { start: 0, end: 11 }),
+    //   frameRate: 12,
+    //   repeat:    0,
+    // }, 'shaman_totem');
 
     // =====================
     // TANK ANIMATIONS
     // =====================
-    // Idle: 1536x1024 sheet, 4 cols x 3 rows = 12 frames at 256x256
+    // Idle: 1536x1024 sheet, 4 cols x 3 rows = 12 frames at 384x384
     this._safeCreateAnim({
       key:       'tank_idle',
-      frames:    anims.generateFrameNumbers('tank_idle', { start: 0, end: 11 }),
-      frameRate: 10,
+      frames:    anims.generateFrameNumbers('tank_idle', { start: 0, end: 7 }),
+      frameRate: 8,
       repeat:    -1,
     }, 'tank_idle');
     
-    // Attack: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
+    // // Attack: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
     this._safeCreateAnim({
       key:       'tank_attack',
       frames:    anims.generateFrameNumbers('tank_attack', { start: 0, end: 15 }),
@@ -200,7 +200,7 @@ export default class GameScene extends Phaser.Scene {
       repeat:    0,
     }, 'tank_attack');
 
-    // Hit: 1024x768, 4x3 = 12 frames, plays once then returns to idle
+    // // Hit: 1024x768, 4x3 = 12 frames, plays once then returns to idle
     this._safeCreateAnim({
       key:       'tank_hit',
       frames:    anims.generateFrameNumbers('tank_hit', { start: 0, end: 11 }),
@@ -209,47 +209,55 @@ export default class GameScene extends Phaser.Scene {
     }, 'tank_hit');
 
     // Judgement spell - uncomment when tank_judge.png is finalized
-    // this._safeCreateAnim({
-    //   key:       'tank_judge',
-    //   frames:    anims.generateFrameNumbers('tank_judge', { start: 0, end: 15 }),
-    //   frameRate: 12,
-    //   repeat:    0,
-    // }, 'tank_judge');
+    this._safeCreateAnim({
+      key:       'tank_judge',
+      frames:    anims.generateFrameNumbers('tank_judge', { start: 0, end: 15 }),
+      frameRate: 12,
+      repeat:    0,
+    }, 'tank_judge');
 
     // Consecration spell - uncomment when tank_consecrate.png is finalized
-    // this._safeCreateAnim({
-    //   key:       'tank_consecrate',
-    //   frames:    anims.generateFrameNumbers('tank_consecrate', { start: 0, end: 15 }),
-    //   frameRate: 8,
-    //   repeat:    0,
-    // }, 'tank_consecrate');
+    this._safeCreateAnim({
+      key:       'tank_consecrate',
+      frames:    anims.generateFrameNumbers('tank_consecrate', { start: 0, end: 15 }),
+      frameRate: 8,
+      repeat:    0,
+    }, 'tank_consecrate');
 
     // =====================
     // HEALER ANIMATIONS
     // =====================
     // Idle: 1024x768, 4x3 = 12 frames at 256x256
     this._safeCreateAnim({
-      key:       'druid_idle',
-      frames:    anims.generateFrameNumbers('druid_idle', { start: 0, end: 11 }),
+      key:       'healer_idle',
+      frames:    anims.generateFrameNumbers('healer_idle', { start: 0, end: 11 }),
       frameRate: 10,
       repeat:    -1,
-    }, 'druid_idle');
+    }, 'healer_idle');
+
+    // Healer attack
+    this._safeCreateAnim({
+      key:       'healer_attack',
+      frames:    anims.generateFrameNumbers('healer_attack', { start: 0, end: 15 }),
+      frameRate: 12,
+      repeat:    0,
+    }, 'healer_attack');
 
     // Casting: 1024x768, 4x3 = 12 frames, plays once then returns to idle
     this._safeCreateAnim({
-      key:       'druid_casting',
-      frames:    anims.generateFrameNumbers('druid_casting', { start: 0, end: 11 }),
+      key:       'healer_casting',
+      frames:    anims.generateFrameNumbers('healer_casting', { start: 0, end: 11 }),
       frameRate: 12,
       repeat:    0,
-    }, 'druid_casting');
+    }, 'healer_casting');
 
-    // Hit: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
+    // // Hit: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
     this._safeCreateAnim({
-      key:       'druid_hit',
-      frames:    anims.generateFrameNumbers('druid_hit', { start: 0, end: 15 }),
+      key:       'healer_hit',
+      frames:    anims.generateFrameNumbers('healer_hit', { start: 0, end: 15 }),
       frameRate: 12,
       repeat:    0,
-    }, 'druid_hit');
+    }, 'healer_hit');
 
     // =====================
     // TOTEM ANIMATIONS
@@ -257,13 +265,13 @@ export default class GameScene extends Phaser.Scene {
     // Totems - shared, not level-specific
     // totem_earth: 512x384, 4x3 = 12 frames at 128x128
     // Other totems uncommented as their sheets become available
-    this._safeCreateAnim({
-      key:       'totem_earth_pulse',
-      frames:    anims.generateFrameNumbers('totem_earth', { start: 0, end: 11 }),
-      frameRate: 8,
-      repeat:    -1,
-      yoyo:      true,
-    }, 'totem_earth');
+    // this._safeCreateAnim({
+    //   key:       'totem_earth_pulse',
+    //   frames:    anims.generateFrameNumbers('totem_earth', { start: 0, end: 11 }),
+    //   frameRate: 8,
+    //   repeat:    -1,
+    //   yoyo:      true,
+    // }, 'totem_earth');
     // this._safeCreateAnim({ key: 'totem_fire_pulse',  frames: anims.generateFrameNumbers('totem_fire',  { start: 0, end: 11 }), frameRate: 8, repeat: -1, yoyo: true }, 'totem_fire');
     // this._safeCreateAnim({ key: 'totem_air_pulse',   frames: anims.generateFrameNumbers('totem_air',   { start: 0, end: 11 }), frameRate: 8, repeat: -1, yoyo: true }, 'totem_air');
     // this._safeCreateAnim({ key: 'totem_water_pulse', frames: anims.generateFrameNumbers('totem_water', { start: 0, end: 11 }), frameRate: 8, repeat: -1, yoyo: true }, 'totem_water');
@@ -271,8 +279,8 @@ export default class GameScene extends Phaser.Scene {
     // =====================
     // DEFEAT ANIMATIONS
     // =====================
-    // All defeat sheets: 4x4 = 16 frames at 256x256, plays once
-    ['shaman_defeated', 'druid_defeated', 'tank_defeated', 'ragnaros_defeated'].forEach(key => {
+    // Character defeat sheets - always preloaded by PreloadScene
+    ['shaman_defeated', 'healer_defeated', 'tank_defeated'].forEach(key => {
       this._safeCreateAnim({
         key:       key,
         frames:    anims.generateFrameNumbers(key, { start: 0, end: 15 }),
@@ -280,6 +288,21 @@ export default class GameScene extends Phaser.Scene {
         repeat:    0,
       }, key);
     });
+
+    // Boss defeated animation - key is injected by BossLoadingScene from the catalog.
+    // Each boss has its own defeated spritesheet so we register it here from levelData.
+    const bossDefeatedAnim = this.levelData?.boss?.animations?.defeated;
+    if (bossDefeatedAnim?.key && this.textures.exists(bossDefeatedAnim.key)) {
+      this._safeCreateAnim({
+        key:       bossDefeatedAnim.key,
+        frames:    anims.generateFrameNumbers(bossDefeatedAnim.key, {
+          start: bossDefeatedAnim.startFrame ?? 0,
+          end:   bossDefeatedAnim.endFrame   ?? 15,
+        }),
+        frameRate: bossDefeatedAnim.frameRate ?? 10,
+        repeat:    0,
+      }, bossDefeatedAnim.key);
+    }
 
     // =====================
     // BOSS ANIMATIONS
@@ -353,35 +376,39 @@ export default class GameScene extends Phaser.Scene {
   // Boss slot
   // =========
   _buildBossSlot(zone) {
-    const cx = zone.x + zone.w / 2;
-    const cy = zone.y + zone.h / 2;
-
-    const glow = this.add.graphics();
-    glow.fillStyle(0xff2200, 0.15);
-    glow.fillEllipse(cx, cy + zone.h * 0.35, zone.w * 0.9, zone.h * 0.35);
+    const cx = ((zone.x + zone.w / 2) + 160);
+    const cy = ((zone.y + zone.h / 2) + 200);
 
     // All boss sprite config comes from the JSON
     const bossData   = this.levelData?.boss;
     const requestedSpriteKey = bossData?.spriteKey;
-    const spriteKey  = (requestedSpriteKey && this.textures.exists(requestedSpriteKey))
-      ? requestedSpriteKey
-      : (this.textures.exists('ragnaros_idle') ? 'ragnaros_idle' : (requestedSpriteKey || 'ragnaros'));
-    const spriteScale = bossData?.spriteScale || 2.2;
-    const idleAnimKey = bossData ? bossData.id + '_idle' : 'ragnaros_idle';
+    const spriteKey  = requestedSpriteKey;
+    const spriteScale = bossData?.spriteScale || 3;
+    const idleAnimKey = bossData ? bossData.id + '_idle' : 'default_idle';
 
     const panelW = 600;
     const panelH = 80;
-    const panelY = zone.y + 10;
+    const panelY = zone.y + 90;
+
+    const nameText = this.add.text(cx, zone.y + zone.h - 550, bossData?.name || '???', {
+      fontFamily: 'monospace', fontSize: '56px', color: '#ff6644',
+    }).setOrigin(0.5, 1);
+
+    nameText.updateText();  // force Phaser to measure the text immediately
+    console.log(">>>> nameText:", nameText)
+    console.log(">>>> nameText.width:", nameText.width)
+
+    const padding = 24;
+    const textW = nameText.width + padding * 2;
+    const textH = nameText.height + padding;
 
     const titlePanel = this.add.graphics();
     titlePanel.fillStyle(0x000000, 0.65);
-    titlePanel.fillRect(cx - panelW / 2, panelY - 200, panelW, panelH);
-    titlePanel.lineStyle(3, 0x88cc44, 1.0);
-    titlePanel.strokeRect(cx - panelW / 2, panelY - 200, panelW, panelH);
+    titlePanel.fillRect(cx - textW / 2, nameText.y - nameText.height - padding / 2, textW, textH);
+    titlePanel.lineStyle(3, 0x6622a6, 1.0);
+    titlePanel.strokeRect(cx - textW / 2, nameText.y - nameText.height - padding / 2, textW, textH);
 
-    const nameText = this.add.text(cx, zone.y + zone.h - 900, '???', {
-      fontFamily: 'monospace', fontSize: '56px', color: '#ff6644',
-    }).setOrigin(0.5, 1);
+    nameText.setDepth(1);
 
     const bossSprite = this.add.sprite(cx, cy, spriteKey, 0)
       .setScale(spriteScale)
@@ -402,9 +429,11 @@ export default class GameScene extends Phaser.Scene {
       delay:    500,
     });
 
-    const hpBar = this._buildBossHealthBar(cx, zone.y + zone.h - 875, panelW, 48, 0xff3300);
+    // const hpBar = this._buildBossHealthBar(cx, zone.y + zone.h - 875, panelW, 48, 0xff3300);
+    const hpBar = this._buildBossHealthBar(cx, nameText.y + 40, panelW, 48, 0xff3300);
 
-    this.entitySlots.boss = { sprite: bossSprite, nameText, hpBar, glow };
+
+    this.entitySlots.boss = { sprite: bossSprite, nameText, hpBar };
   }
 
   // ===========
@@ -414,8 +443,8 @@ export default class GameScene extends Phaser.Scene {
     const cx = zone.x + zone.w / 2;
     const cy = zone.y + zone.h - 80;
 
-    const sprite = this.add.sprite(cx, cy, 'shaman_idle', 0)
-      .setScale(1.5)
+    const sprite = this.add.sprite(cx, cy + 90, 'shaman_idle', 0)
+      .setScale(1.25)
       .setOrigin(0.5, 1);
 
     if (this.anims.exists('shaman_idle')) sprite.play('shaman_idle');
@@ -470,12 +499,12 @@ export default class GameScene extends Phaser.Scene {
   // its sheet is ready).
   _buildCharacterSlot(id, zone, tintColor, label, spriteKey = null, idleAnim = null) {
     const cx = zone.x + zone.w / 2;
-    const cy = zone.y + zone.h - 80;
+    const cy = ((zone.y + zone.h - 80) + 145);
 
     let sprite;
 
     sprite = this.add.sprite(cx, cy, spriteKey, 0)
-      .setScale(1.5)
+      .setScale(1.25)
       .setOrigin(0.5, 1);
 
     if (idleAnim && this.anims.exists(idleAnim)) {
@@ -813,7 +842,7 @@ export default class GameScene extends Phaser.Scene {
 
   playBossAttack() {
     const slot    = this.entitySlots.boss;
-    const animKey = this._getBossAnimKey('attack');
+    const animKey = this._getBossAnimKey('attacking');
     if (!slot?.sprite || !animKey) return;
 
     const current = slot.sprite.anims.currentAnim;
@@ -956,48 +985,6 @@ export default class GameScene extends Phaser.Scene {
     if (targetId === 'healer') this.playHealerHit();
   }
 
-  playBossSubmerge(onComplete) {
-    const slot        = this.entitySlots.boss;
-    const submergeKey = this._getBossAnimKey('submerge');
-    const lavaKey     = this._getBossAnimKey('lavapool');
-    if (!slot?.sprite) return;
-
-    if (submergeKey) {
-      slot.sprite.play(submergeKey);
-      slot.sprite.once('animationcomplete', () => {
-        if (lavaKey) slot.sprite.play(lavaKey);
-        if (onComplete) onComplete();
-      });
-    } else {
-      // Fallback fade-out if no submerge anim defined
-      this.tweens.add({
-        targets: slot.sprite, alpha: 0, duration: 800,
-        onComplete: () => { if (onComplete) onComplete(); },
-      });
-    }
-  }
-
-  playBossEmerge(onComplete) {
-    const slot      = this.entitySlots.boss;
-    const emergeKey = this._getBossAnimKey('emerge');
-    const idleKey   = this._getBossAnimKey('idle');
-    if (!slot?.sprite) return;
-
-    if (emergeKey) {
-      slot.sprite.play(emergeKey);
-      slot.sprite.once('animationcomplete', () => {
-        if (idleKey) slot.sprite.play(idleKey);
-        if (onComplete) onComplete();
-      });
-    } else {
-      // Fallback fade-in if no emerge anim defined
-      this.tweens.add({
-        targets: slot.sprite, alpha: 1, duration: 800,
-        onComplete: () => { if (onComplete) onComplete(); },
-      });
-    }
-  }
-
   // ====================
   // AUDIO UNLOCK OVERLAY
   // ====================
@@ -1066,7 +1053,9 @@ export default class GameScene extends Phaser.Scene {
   // Show the boss opening dialogue sequence on level load.
   // openingDialogue in the JSON can be a string or an array of strings.
   _showBossDialogue() {
-    const raw   = this.levelData?.boss?.openingDialogue || 'YOU DARE CHALLENGE ME?!';
+    const raw   = this.levelData?.boss?.dialog?.intro
+                  || this.levelData?.boss?.openingDialogue
+                  || 'YOU DARE CHALLENGE ME?!';
     const fadeMs = 350;
     const lines = Array.isArray(raw) ? raw : [raw];
     const holdMs = this.levelData?.boss?.audioDuration ?? 6000;
@@ -1077,11 +1066,11 @@ export default class GameScene extends Phaser.Scene {
 
     // Pass an onComplete callback so the ticker starts only after
     // the last intro line finishes - guaranteeing no overlap.
-    this.showDialogueSequence(lines, '#ff9944', holdPerLine, 350, () => {
-      const delay = window.GAME_CONFIG.TICK_MS;
-      console.log('[GameScene] Intro finished - starting ticker, delay:', delay, 'ms');
-      this._startTicker(delay);
-    });
+    // this.showDialogueSequence(lines, '#ff9944', holdPerLine, 350, () => {
+    //   const delay = window.GAME_CONFIG.TICK_MS;
+    //   console.log('[GameScene] Intro finished - starting ticker, delay:', delay, 'ms');
+    //   this._startTicker(delay);
+    // });
 
   }
 
@@ -1165,7 +1154,7 @@ export default class GameScene extends Phaser.Scene {
 
       const text = this.add.text(cx, cy - 250, line, {
         fontFamily: 'monospace',
-        fontSize:   '32px',
+        fontSize:   '42px',
         color:      color,
         align:      'center',
         wordWrap:   { width: zone.w - 48 },
@@ -1252,32 +1241,33 @@ export default class GameScene extends Phaser.Scene {
 
     this._playSound(bossData?.deathSound);
 
-    const raw   = bossData?.deathDialogue || 'I AM... DEFEATED.';
+    const raw   = bossData?.dialog?.defeat
+                  || bossData?.deathDialogue
+                  || 'I AM... DEFEATED.';
     const lines = Array.isArray(raw) ? raw : [raw];
     this.showDialogueSequence(lines, '#aaaaaa');
 
     const slot = this.entitySlots.boss;
     if (slot?.sprite) {
-      const deathKey = this._getBossAnimKey('death');
+      // Try animations.defeated.key first (injected by BossLoadingScene from catalog),
+      // then fall back to the legacy _getBossAnimKey('death') lookup
+      const defeatedKey = this.levelData?.boss?.animations?.defeated?.key;
+      const deathKey    = (defeatedKey && this.anims.exists(defeatedKey))
+                          ? defeatedKey
+                          : this._getBossAnimKey('death');
+
       if (deathKey && this.anims.exists(deathKey)) {
-        // JSON-defined death animation (future bosses)
         slot.sprite.play(deathKey);
         slot.sprite.once('animationcomplete', () => {
           this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 800 });
         });
-      } else if (this.anims.exists('ragnaros_defeated')) {
-        // Ragnaros-specific defeat sheet
-        slot.sprite.play('ragnaros_defeated');
-        slot.sprite.once('animationcomplete', () => {
-          this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 800 });
-        });
       } else {
-        // Fallback fade if no sheet loaded
+        // Fallback fade if no defeat sheet loaded yet for this boss
         this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 1500 });
       }
     }
 
-    this.stopGame();
+    this._onBossDefeated();
   }
 
   // ================
@@ -1322,8 +1312,8 @@ export default class GameScene extends Phaser.Scene {
   // Fires playBossAttack() every <attackSpeed> ticks as defined in the JSON.
   // attackSpeed: 1 = every tick, 2 = every 2 ticks, 3 = every 3 ticks, etc.
   _tickBossAutoAttack() {
+    console.log("[Boss] Attacking");
     if (this.bossDialoguePlaying) return;
-    if (this.bossSubmerged) return;
     if (Date.now() < this.bossAbilityLockoutUntil) return;
 
     const bossData = this.entitySlots.boss?._data;
@@ -1345,7 +1335,6 @@ export default class GameScene extends Phaser.Scene {
   // The boss uses abilities from the current phase abilityIds list.
   _tickBossAbilities() {
     if (this.bossDialoguePlaying) return;
-    if (this.bossSubmerged) return;
 
     // Grace period - no special abilities for the first 20 seconds of the fight
     const GRACE_PERIOD_MS = 20000;
@@ -1629,7 +1618,7 @@ export default class GameScene extends Phaser.Scene {
     // Play defeat animation, then fade out once it finishes
     const defeatKeyMap = {
       player: 'shaman_defeated',
-      healer: 'druid_defeated',
+      healer: 'healer_defeated',
       tank:   'tank_defeated',
     };
     const defeatKey = defeatKeyMap[characterId];
@@ -1650,8 +1639,8 @@ export default class GameScene extends Phaser.Scene {
     // If the player dies, end the game
     if (characterId === 'player') {
       this.time.delayedCall(2000, () => {
-        this.showPopup('DEFEAT', '#ff2222', 4000);
-        this.stopGame();
+        this.showPopup('DEFEAT', '#ff2222', 3000);
+        this._onPartyWiped();
       });
     }
   }
@@ -1765,7 +1754,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Do not interrupt a cast already playing
     const current = healerSlot.sprite?.anims?.currentAnim;
-    if (current && current.key === 'druid_casting' && healerSlot.sprite.anims.isPlaying) return;
+    if (current && current.key === 'healer_casting' && healerSlot.sprite.anims.isPlaying) return;
 
     const abilities     = this.levelData?.abilities ?? {};
     const healerMaxMana = healerSlot.manaBar?.maxValue ?? 1;
@@ -2010,13 +1999,13 @@ export default class GameScene extends Phaser.Scene {
       });
     }
 
-    // Threat - healing yourself generates no threat
-    if (targetId !== 'healer') {
-      const totalHeal = (ability.immediateHealMax ?? ability.immediateEffect?.value ?? 0)
-                      + (ability.tickHealMax ?? ability.tickEffect?.value ?? 0) * (ability.duration ?? 0);
-      this.addThreat('healer', Math.round(totalHeal * (ability.threatPerHealing ?? 0.1)));
-      this._updateThreatMeters();
-    }
+    // Threat - healing generates threat
+    const totalHeal = (ability.immediateHealMax ?? ability.immediateEffect?.value ?? 0)
+                    + (ability.tickHealMax ?? ability.tickEffect?.value ?? 0) * (ability.duration ?? 0);
+    this.addThreat('healer', Math.round(totalHeal * (ability.threatPerHealing ?? 0.1)));
+    
+    this._updateThreatMeters();
+    
     this.playHealerCast();
   }
 
@@ -2346,15 +2335,26 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // Returns the character id with the highest current threat.
+  // Returns the character id with the highest current threat,
+  // or a random character if all threat is zero.
   getHighestThreatTarget() {
     if (!this.threatTable) this._initThreatTable();
-    let highestId     = 'tank';
+    const alive = ['tank', 'player', 'healer'].filter(
+      id => (this.entitySlots[id]?.currentHealth ?? 0) > 0
+    );
+    if (!alive.length) return 'tank';
+  
+    // If all threat is zero, pick a random alive target
+    const total = alive.reduce((sum, id) => sum + (this.threatTable[id] ?? 0), 0);
+    if (total === 0) return alive[Phaser.Math.Between(0, alive.length - 1)];
+  
+    let highestId = alive[0];
     let highestAmount = -1;
-    for (const [id, amount] of Object.entries(this.threatTable)) {
+    for (const id of alive) {
+      const amount = this.threatTable[id] ?? 0;
       if (amount > highestAmount) {
         highestAmount = amount;
-        highestId     = id;
+        highestId = id;
       }
     }
     return highestId;
@@ -2389,6 +2389,7 @@ export default class GameScene extends Phaser.Scene {
   // Fires playPlayerAutoAttack() every <attackSpeed> ticks as defined
   // in the player JSON data. attackSpeed: 2 = every 2 ticks, etc.
   _tickPlayerAutoAttack() {
+    console.log("[Player] Attacking");
     const playerData = this.entitySlots.player?._data;
     if (!playerData) return;
     if ((this.entitySlots.player?.currentHealth ?? 0) <= 0) return;
@@ -2410,7 +2411,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (!this.anims.exists('shaman_attack')) return;
 
-    slot.sprite.play('shaman_attack');
+    slot.sprite.setScale(1.25).play('shaman_attack');
     slot.sprite.once('animationcomplete', () => {
       if (this.anims.exists('shaman_idle')) slot.sprite.play('shaman_idle');
     });
@@ -2454,12 +2455,12 @@ export default class GameScene extends Phaser.Scene {
 
   playHealerHit() {
     const slot = this.entitySlots.healer;
-    if (!slot?.sprite || !this.anims.exists('druid_hit')) return;
+    if (!slot?.sprite || !this.anims.exists('healer_hit')) return;
     const current = slot.sprite.anims.currentAnim;
-    if (current && current.key === 'druid_casting' && slot.sprite.anims.isPlaying) return;
-    slot.sprite.play('druid_hit');
+    if (current && current.key === 'healer_casting' && slot.sprite.anims.isPlaying) return;
+    slot.sprite.play('healer_hit');
     slot.sprite.once('animationcomplete', () => {
-      if (this.anims.exists('druid_idle')) slot.sprite.play('druid_idle');
+      if (this.anims.exists('healer_idle')) slot.sprite.play('healer_idle');
     });
   }
 
@@ -2469,46 +2470,14 @@ export default class GameScene extends Phaser.Scene {
   // Called by combat system when the healer casts a spell.
   playHealerCast() {
     const slot = this.entitySlots.healer;
-    if (!slot?.sprite || !this.anims.exists('druid_casting')) return;
+    if (!slot?.sprite || !this.anims.exists('healer_casting')) return;
     const current = slot.sprite.anims.currentAnim;
-    if (current && current.key === 'druid_casting' && slot.sprite.anims.isPlaying) return;
-    slot.sprite.play('druid_casting');
+    if (current && current.key === 'healer_casting' && slot.sprite.anims.isPlaying) return;
+    slot.sprite.play('healer_casting');
     slot.sprite.once('animationcomplete', () => {
-      if (this.anims.exists('druid_idle')) slot.sprite.play('druid_idle');
+      if (this.anims.exists('healer_idle')) slot.sprite.play('healer_idle');
     });
-  }
-
-  // ================================
-  // Boss special ability: Wrath of Ragnaros
-  // ================================
-  // Called by combat system when Ragnaros uses Wrath of Ragnaros.
-  // Plays the wrath animation, shows dialogue, plays sound,
-  // then returns to idle.
-  playBossWrath() {
-    const slot    = this.entitySlots.boss;
-    const animKey = this._getBossAnimKey('wrath');
-    if (!slot?.sprite || !animKey) return;
-
-    // Do not interrupt wrath already in progress
-    const current = slot.sprite.anims.currentAnim;
-    if (current && current.key === animKey && slot.sprite.anims.isPlaying) return;
-
-    const idleKey = this._getBossAnimKey('idle');
-    slot.sprite.play(animKey);
-    slot.sprite.once('animationcomplete', () => {
-      if (idleKey && this.anims.exists(idleKey)) slot.sprite.play(idleKey);
-    });
-
-    // Dialogue and sound from JSON
-    this.showAbilityDialogue('wrath_of_ragnaros');
-
-    // Badge on boss
-    const uiForWrath = this.scene.get('UIScene');
-    if (uiForWrath?.spawnAbilityBadge) {
-      const name = this.levelData?.abilities?.['wrath_of_ragnaros']?.name ?? 'Wrath of Ragnaros';
-      uiForWrath.spawnAbilityBadge(window.GAME_CONFIG.ZONES.BOSS, 'wrath_of_ragnaros', name);
-    }
-  }
+  } 
 
   // ====================
   // Tank auto-attack
@@ -2555,12 +2524,57 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // ====================
+  // Healer auto-attack
+  // ====================
+  // Fires playHealerAutoAttack() every <attackSpeed> ticks as defined
+  // in the player JSON data. attackSpeed: 2 = every 2 ticks, etc.
+  _tickHealerAutoAttack() {
+    const healerData = this.entitySlots.healer?._data;
+    if (!healerData) return;
+    if ((this.entitySlots.healer?.currentHealth ?? 0) <= 0) return;
+
+    const attackSpeed = Math.round(healerData.stats?.attackSpeed ?? 2);
+    if (this.tickCount % attackSpeed === 0) {
+      console.log('[Healer] Auto-attack tick', this.tickCount, 'speed', attackSpeed);
+      this.playHealerAutoAttack();
+    }
+  }
+
+  playHealerAutoAttack() {
+    const slot = this.entitySlots.healer;
+    if (!slot?.sprite) return;
+
+    // Do not interrupt a cast or attack already in progress
+    const current = slot.sprite.anims.currentAnim;
+    if (current && current.key !== 'healer_idle' && slot.sprite.anims.isPlaying) return;
+
+    if (!this.anims.exists('healer_attack')) return;
+
+    slot.sprite.play('healer_attack');
+    slot.sprite.once('animationcomplete', () => {
+      if (this.anims.exists('healer_idle')) slot.sprite.play('healer_idle');
+    });
+
+    // Deal damage to boss and generate threat
+    // Healers generate 1.5x threat from physical attacks (WoW taunt mechanic)
+    const healerData    = slot._data;
+    const damageRange = healerData?.stats?.damageRange ?? [100, 200];
+    const damage      = Phaser.Math.Between(damageRange[0], damageRange[1]);
+    
+    this._applyDamageToBoss(damage, 'icon_autoAttack');
+    this.addThreat('healer', damage);
+    this._updateThreatMeters();
+    console.log('[Healer] Auto-attack for', damage, '-> threat', Math.round(damage * TANK_THREAT_MULTIPLIER));
+  }
+  
+  // ====================
   // Tank AI
   // ====================
   // Fires tank abilities on actionInterval ticks.
   // Generates threat based on each ability's threatPerDamage from the JSON.
   // Priority: Consecration > Holy Shield > Judgement of Righteousness > Judgement of Wisdom
   _tickTankAbilities() {
+    console.log("[Tank] Attacking");
     const tankSlot = this.entitySlots.tank;
     if (!tankSlot?._data) return;
     if ((tankSlot.currentHealth ?? 0) <= 0) return;
@@ -2688,6 +2702,65 @@ export default class GameScene extends Phaser.Scene {
   // ============
   // STOPS GAME
   // ============
+  // ============================================================
+  // Encounter outcome handlers
+  // ============================================================
+
+  // Called when the boss reaches 0 HP.
+  // Records the boss defeat in save data and returns to boss select.
+  _onBossDefeated() {
+    this.stopGame();
+
+    const saveData     = loadSaveData();
+    const selectedRaidId = this.registry.get('selectedRaidId') || 'spookspire_keep';
+    const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot_and_nighttime';
+
+    const updatedSave = recordBossDefeat(saveData, selectedRaidId, selectedBossId);
+    this.registry.set('saveData', updatedSave);
+
+    console.log('[GameScene] Boss defeated:', selectedBossId, 'in', selectedRaidId);
+
+    // Play victory sound if defined in level data
+    const victorySound = this.levelData?.boss?.sounds?.victory;
+    if (victorySound) this._playSound(victorySound);
+
+    // Fade to boss select after a short pause so the defeat animation plays
+    this.time.delayedCall(4000, () => {
+      if (this.scene.isActive('UIScene')) this.scene.stop('UIScene');
+      this.cameras.main.fadeOut(600, 0, 0, 0);
+      this.time.delayedCall(650, () => {
+        this.scene.start('RaidBossSelectScene');
+      });
+    });
+  }
+
+  // Called when the player character dies with no Rebirth available.
+  // Decrements one wipe token and returns to boss select.
+  _onPartyWiped() {
+    this.stopGame();
+
+    const saveData = loadSaveData();
+
+    // Deduct one wipe token (floor at 0)
+    const updatedSave = {
+      ...saveData,
+      raidWipeTokensLeft: Math.max(0, (saveData.raidWipeTokensLeft || 0) - 1),
+    };
+    saveSaveData(updatedSave);
+    this.registry.set('saveData', updatedSave);
+
+    console.log('[GameScene] Party wiped. Wipe tokens left:', updatedSave.raidWipeTokensLeft);
+
+    // Return to boss select after the defeat popup fades
+    this.time.delayedCall(3500, () => {
+      if (this.scene.isActive('UIScene')) this.scene.stop('UIScene');
+      this.cameras.main.fadeOut(600, 0, 0, 0);
+      this.time.delayedCall(650, () => {
+        this.scene.start('RaidBossSelectScene');
+      });
+    });
+  }
+
   stopGame() {
     this.gameRunning = false;
     if (this.tickTimer) this.tickTimer.remove();
