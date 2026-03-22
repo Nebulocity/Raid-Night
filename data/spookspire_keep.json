@@ -328,12 +328,12 @@
       }
     },
     {
-      "id": "lady_properness",
-      "name": "Lady Properness",
+      "id": "virtuous_lady",
+      "name": "Virtuous Ladyness",
       "sourceEncounter": "Maiden of Virtue",
       "wing": "The Guest Quarters",
       "actors": [
-        "Lady Properness"
+        "Virtuous Ladyness"
       ],
       "bossStats": {
         "health": 235000,

@@ -1,12 +1,12 @@
 {
   "level": {
-    "id": "spookspire_nighttime_sir_trotsalot",
+    "id": "spookspire_sir_trotsalot",
     "name": "Spookspire Keep",
     "raidId": "spookspire_keep",
-    "bossId": "nighttime_sir_trotsalot"
+    "bossId": "sir_trotsalot"
   },
   "boss": {
-    "id": "nighttime_sir_trotsalot",
+    "id": "sir_trotsalot",
     "name": "Sir Trotsalot the Damned",
     "stats": {
       "health": 360000,

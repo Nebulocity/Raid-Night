@@ -81,7 +81,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     this._drawBackButton();
   }
 
-  // Draws one full-width raid button row centred on btnY.
+  // Draws one full-width raid button row centerd on btnY.
   // Layout: [thumb] [name + boss count] on a dark rounded panel.
   _createRaidButton(WIDTH, btnY, raid, unlocked, saveData) {
     const alpha    = unlocked ? 1.0 : 0.42;
@@ -125,13 +125,24 @@ export default class RaidSelectScene extends Phaser.Scene {
       wordWrap:        { width: textW },
     }).setOrigin(0, 0.5).setAlpha(alpha);
 
-    const bossCount = raid.bosses?.length ?? 0;
-    const bossLabel = bossCount === 1 ? '1 boss' : bossCount + ' bosses';
+    // const bossCount = raid.bosses?.length ?? 0;
+    // const bossLabel = bossCount === 1 ? '1 boss' : bossCount + ' bosses';
 
-    this.add.text(textX, btnY + 50, bossLabel, {
+    const totalBosses    = raid.bosses?.length ?? 0;
+    const defeatedBosses = saveData.defeatedBossIds?.[raid.id]?.length ?? 0;
+    const raidCleared    = defeatedBosses >= totalBosses;
+
+    const bossWord      = totalBosses === 1 ? 'boss' : 'bosses';
+    const progressLabel = raidCleared
+      ? 'Raid Cleared!'
+      : 'Defeated ' + defeatedBosses + ' of ' + totalBosses + ' ' + bossWord;
+
+    const progressColor  = raidCleared ? '#ffd700' : '#aaaaaa';
+
+    this.add.text(textX, btnY + 50, progressLabel, {
       fontFamily:      'monospace',
       fontSize:        '36px',
-      color:           '#aaaaaa',
+      color:           progressColor,
       stroke:          '#000000',
       strokeThickness: 4,
     }).setOrigin(0, 0.5).setAlpha(alpha);

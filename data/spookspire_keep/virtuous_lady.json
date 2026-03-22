@@ -1,13 +1,13 @@
 {
   "level": {
-    "id": "spookspire_lady_properness",
+    "id": "spookspire_virtuous_lady",
     "name": "Spookspire Keep",
     "raidId": "spookspire_keep",
-    "bossId": "lady_properness"
+    "bossId": "virtuous_lady"
   },
   "boss": {
-    "id": "lady_properness",
-    "name": "Lady Properness",
+    "id": "virtuous_lady",
+    "name": "Virtuous Ladyness",
     "stats": {
       "health": 330000,
       "maxHealth": 330000,
@@ -57,7 +57,7 @@
         "LADY PROPERNESS steps forward!"
       ],
       "defeat": [
-        "Lady Properness collapses in a heap of theatrical nonsense."
+        "Virtuous Ladyness collapses in a heap of theatrical nonsense."
       ],
       "victory": [
         "Victory."
@@ -115,7 +115,7 @@
       "threatPerDamage": 0,
       "recastTimer": 18,
       "targetType": "all_allies",
-      "dialogue": "Lady Properness rebukes the entire party.",
+      "dialogue": "Virtuous Ladyness rebukes the entire party.",
       "sound": "audio/ragnaros_attack.ogg",
       "audioDuration": 2000,
       "iconId": "wrath_of_ragnaros"

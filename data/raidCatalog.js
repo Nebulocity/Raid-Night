@@ -142,7 +142,7 @@ const THE_CRACKED_MOUNTAIN = {
 //
 //   [sir_trotsalot_and_nighttime]  <- always unlocked
 //          |           |
-//     [mortimer]  [lady_proper]
+//     [mortimer]  [virtuous_lady]
 //          |           
 //   [the_movie_theater]  [the_archivist]
 //          |                  |
@@ -178,7 +178,7 @@ const SPOOKSPIRE_KEEP = {
       defeatedKey:              'boss_sir_trotsalot_defeated',
       defeatedPath:             bossSpriteSheet('spookspire_keep', 'sir_trotsalot', 'boss_sir_trotsalot_mounted_defeated.webp'),
       levelKey:                 'level_sir_trotsalot',
-      levelPath:                'data/spookspire_keep/nighttime_sir_trotsalot.json',
+      levelPath:                'data/spookspire_keep/sir_trotsalot.json',
       unlockedBy:               [],
     },
     {
@@ -199,20 +199,20 @@ const SPOOKSPIRE_KEEP = {
       unlockedBy:               ['sir_trotsalot_and_nighttime'],
     },
     {
-      id:                       'lady_proper',
-      name:                     'Lady Proper',
-      buttonKey:                'button_boss_lady_proper',
-      buttonPath:               bossButtonPath('lady_proper.webp'),
-      encounterBackgroundKey:   'bg_encounter_lady_proper',
-      encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_lady_proper.webp'),
-      idleKey:                  'boss_lady_proper_idle',
-      idlePath:                 bossSpriteSheet('spookspire_keep', 'lady_proper', 'boss_lady_proper_idle.webp'),
-      attackingKey:             'boss_lady_proper_attacking',
-      attackingPath:            bossSpriteSheet('spookspire_keep', 'lady_proper', 'boss_lady_proper_attacking.webp'),
-      defeatedKey:              'boss_lady_proper_defeated',
-      defeatedPath:             bossSpriteSheet('spookspire_keep', 'lady_proper', 'boss_lady_proper_defeated.webp'),
-      levelKey:                 'level_lady_proper',
-      levelPath:                'data/spookspire_keep/lady_properness.json',
+      id:                       'virtuous_lady',
+      name:                     'Virtuous Lady',
+      buttonKey:                'button_boss_virtuous_lady',
+      buttonPath:               bossButtonPath('virtuous_lady.webp'),
+      encounterBackgroundKey:   'bg_encounter_virtuous_lady',
+      encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_virtuous_lady.webp'),
+      idleKey:                  'boss_virtuous_lady_idle',
+      idlePath:                 bossSpriteSheet('spookspire_keep', 'virtuous_lady', 'boss_virtuous_lady_idle.webp'),
+      attackingKey:             'boss_virtuous_lady_attacking',
+      attackingPath:            bossSpriteSheet('spookspire_keep', 'virtuous_lady', 'boss_virtuous_lady_attacking.webp'),
+      defeatedKey:              'boss_virtuous_lady_defeated',
+      defeatedPath:             bossSpriteSheet('spookspire_keep', 'virtuous_lady', 'boss_virtuous_lady_defeated.webp'),
+      levelKey:                 'level_virtuous_lady',
+      levelPath:                'data/spookspire_keep/virtuous_lady.json',
       unlockedBy:               ['sir_trotsalot_and_nighttime'],
     },
     {

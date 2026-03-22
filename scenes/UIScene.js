@@ -205,7 +205,7 @@ export default class UIScene extends Phaser.Scene {
       .setDepth(13)
       .setVisible(false);
 
-    // Cooldown countdown text - large and centred
+    // Cooldown countdown text - large and centerd
     const cdText = this.add.text(x, y, '', {
       fontFamily: 'monospace', fontSize: '48px', color: '#ffffff',
       stroke: '#000000', strokeThickness: 5,
