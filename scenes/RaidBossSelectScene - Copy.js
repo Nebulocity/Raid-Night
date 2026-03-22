@@ -138,7 +138,8 @@ export default class RaidBossSelectScene extends Phaser.Scene {
   // All corners are right-angles; the elbow runs at the midpoint Y between
   // the two rows so pipes from the same source share a clean horizontal bus.
   _drawUnlockPipes(raid, posMap) {
-    const halfH    = BUTTON_SIZE / 2;   // icon extends BUTTON_SIZE/2 above and below its centre
+    const panelH   = BUTTON_SIZE + 64;
+    const halfH    = panelH / 2;
     const PIPE_W   = 6;
     const PIPE_COL = 0xaaaaaa;
     const DOT_R    = 6;   // filled circle at junction points
@@ -189,88 +190,61 @@ export default class RaidBossSelectScene extends Phaser.Scene {
 
   _drawBossButton(x, y, boss, raid, saveData, unlocked) {
     const alpha     = unlocked ? 1.0 : 0.35;
+    const panelW    = BUTTON_SIZE + 20;
+    const panelH    = BUTTON_SIZE + 64;  // extra room below icon for name
     const shortName = BOSS_SHORT_NAMES[boss.id] ?? boss.name;
 
-    // Icon -- no panel, just the raw image
-    const icon = this.add.image(x, y, boss.buttonKey)
+    // Panel -- same style as TitleScene/RaidSelectScene buttons
+    const panel = this.add.rectangle(x, y, panelW, panelH, 0x000000)
+      .setStrokeStyle(2, 0xaaaaaa, 1)
+      .setAlpha(alpha * 0.85);
+
+    // Boss icon centred in the upper portion of the panel
+    const icon = this.add.image(x, y - 28, boss.buttonKey)
       .setDisplaySize(BUTTON_SIZE, BUTTON_SIZE)
       .setAlpha(alpha);
 
-    // Nameplate -- small dark strip below the icon
-    const plateW = BUTTON_SIZE + 20;
-    const plateH = 48;
-    const plateY = y + BUTTON_SIZE / 2 + plateH / 2 + 4;
-
-    const plate = this.add.rectangle(x, plateY, plateW, plateH, 0x000000)
-      .setStrokeStyle(1, 0x888888, 0.6)
-      .setAlpha(alpha * 0.85);
-
-    const nameText = this.add.text(x, plateY, shortName, {
+    // Boss name below the icon, inside the panel
+    const nameText = this.add.text(x, y + panelH / 2 - 28, shortName, {
       fontFamily:      'monospace',
-      fontSize:        '24px',
-      color:           unlocked ? '#fff1c7' : '#555555',
+      fontSize:        '26px',
+      color:           unlocked ? '#fff1c7' : '#666666',
       stroke:          '#000000',
       strokeThickness: 4,
       align:           'center',
-      wordWrap:        { width: plateW - 12 },
+      wordWrap:        { width: panelW - 12 },
     }).setOrigin(0.5);
 
     if (!unlocked) {
-      nameText.setText('Locked');
-      nameText.setColor('#444444');
+      this.add.text(x, y + panelH / 2 - 6, 'Locked', {
+        fontFamily:      'monospace',
+        fontSize:        '20px',
+        color:           '#555555',
+        stroke:          '#000000',
+        strokeThickness: 3,
+      }).setOrigin(0.5);
       return;
     }
 
-    // Hover: icon brightens, nameplate goes gold, text goes gold
-    // Uses Phaser tweens for a smooth scale-up on the icon
-    icon.setInteractive({ useHandCursor: true });
+    panel.setInteractive({ useHandCursor: true });
 
-    icon.on('pointerover', () => {
-      this.tweens.add({
-        targets:  icon,
-        scaleX:   (BUTTON_SIZE * 1.08) / icon.width,
-        scaleY:   (BUTTON_SIZE * 1.08) / icon.height,
-        duration: 120,
-        ease:     'Quad.easeOut',
-        onComplete: () => {
-          icon._hoverTween = this.tweens.add({
-            targets:  icon,
-            scaleX:   (BUTTON_SIZE * 1.04) / icon.width,
-            scaleY:   (BUTTON_SIZE * 1.04) / icon.height,
-            duration: 600,
-            yoyo:     true,
-            repeat:   -1,
-            ease:     'Sine.easeInOut',
-          });
-        },
-      });
-      plate.setStrokeStyle(2, 0xffd700, 1);
-      plate.setFillStyle(0x1a0e2a);
+    panel.on('pointerover', () => {
+      panel.setFillStyle(0x1a0e2a);
+      panel.setStrokeStyle(3, 0xffd700, 1);
       nameText.setColor('#ffd700');
     });
 
-    icon.on('pointerout', () => {
-      if (icon._hoverTween) {
-        icon._hoverTween.stop();
-        icon._hoverTween = null;
-      }
-      this.tweens.add({
-        targets:  icon,
-        scaleX:   BUTTON_SIZE / icon.width,
-        scaleY:   BUTTON_SIZE / icon.height,
-        duration: 120,
-        ease:     'Quad.easeOut',
-      });
-      plate.setStrokeStyle(1, 0x888888, 0.6);
-      plate.setFillStyle(0x000000);
+    panel.on('pointerout', () => {
+      panel.setFillStyle(0x000000);
+      panel.setStrokeStyle(2, 0xaaaaaa, 1);
       nameText.setColor('#fff1c7');
     });
 
-    icon.on('pointerdown', () => {
+    panel.on('pointerdown', () => {
       this.tweens.add({
-        targets:  icon,
-        scaleX:   (BUTTON_SIZE * 0.94) / icon.width,
-        scaleY:   (BUTTON_SIZE * 0.94) / icon.height,
+        targets:  [panel, icon],
+        scaleX:   0.96,
+        scaleY:   0.96,
         duration: 80,
         yoyo:     true,
         onComplete: () => this._selectBoss(boss, raid, saveData),

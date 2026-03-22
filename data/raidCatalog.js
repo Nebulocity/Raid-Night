@@ -1,7 +1,9 @@
 /**
  * raidCatalog.js
  *
-  * Each raid has:
+ * The single source of truth for all raids and bosses in the game.
+ *
+ * Each raid has:
  *   - id, name
  *   - buttonKey / buttonPath: image shown on the raid selection screen
  *   - backgroundKey / backgroundPath: background shown on the boss selection screen
@@ -34,6 +36,10 @@ function raidRootPath(filename) {
   return `assets/raids/${filename}`;
 }
 
+// Boss select screen buttons live flat under assets/buttons/
+function bossButtonPath(filename) {
+  return `assets/buttons/${filename}`;
+}
 // Boss spritesheets live at assets/raids/<raidId>/bosses/<bossId>/<filename>
 function bossSpriteSheet(raidId, bossId, filename) {
   return `assets/raids/${raidId}/bosses/${bossId}/${filename}`;
@@ -58,7 +64,7 @@ const the_basement_demon = {
       id:                       'magtheridax',
       name:                     'Magtheridax the Frustrated',
       buttonKey:                'button_boss_magtheridax',
-      buttonPath:               raidAssetPath('the_basement_demon', 'buttons/button_magtheridax.webp'),
+      buttonPath:               bossButtonPath('magtheridax.webp'),
       encounterBackgroundKey:   'bg_the_basement_demon',
       encounterBackgroundPath:  raidRootPath('bg_the_basement_demon.webp'),
       idleKey:                  'boss_magtheridax_idle',
@@ -95,7 +101,7 @@ const THE_CRACKED_MOUNTAIN = {
       id:                       'high_chief_bonkgar',
       name:                     'High Chief Bonkgar',
       buttonKey:                'button_boss_high_chief_bonkgar',
-      buttonPath:               raidAssetPath('the_cracked_mountain', 'buttons/high_chief_bonkgar.webp'),
+      buttonPath:               bossButtonPath('high_chief_bonkgar.webp'),
       encounterBackgroundKey:   'bg_encounter_high_chief_bonkgar',
       encounterBackgroundPath:  raidAssetPath('the_cracked_mountain', 'backgrounds/bg_high_chief_bonkgar.webp'),
       idleKey:                  'boss_high_chief_bonkgar_idle',
@@ -112,7 +118,7 @@ const THE_CRACKED_MOUNTAIN = {
       id:                       'grull_the_wyrm_whacker',
       name:                     'Grull the Wyrm Whacker',
       buttonKey:                'button_boss_grull',
-      buttonPath:               raidAssetPath('the_cracked_mountain', 'buttons/button_grull_the_wyrm_whacker.webp'),
+      buttonPath:               bossButtonPath('grull.webp'),
       encounterBackgroundKey:   'bg_encounter_grull',
       encounterBackgroundPath:  raidAssetPath('the_cracked_mountain', 'backgrounds/bg_grull_the_wyrm_whacker.webp'),
       idleKey:                  'boss_grull_idle',
@@ -162,7 +168,7 @@ const SPOOKSPIRE_KEEP = {
       id:                       'sir_trotsalot_and_nighttime',
       name:                     'Sir Trotsalot',
       buttonKey:                'button_boss_sir_trotsalot',
-      buttonPath:               raidAssetPath('spookspire_keep', 'buttons/button_boss_sir_trotsalot.webp'),
+      buttonPath:               bossButtonPath('sir_trotsalot.webp'),
       encounterBackgroundKey:   'bg_encounter_sir_trotsalot',
       encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_boss_sir_trotsalot.webp'),
       idleKey:                  'boss_sir_trotsalot_idle',
@@ -179,7 +185,7 @@ const SPOOKSPIRE_KEEP = {
       id:                       'mortimer',
       name:                     'Mortimer',
       buttonKey:                'button_boss_mortimer',
-      buttonPath:               raidAssetPath('spookspire_keep', 'buttons/button_boss_mortimer.webp'),
+      buttonPath:               bossButtonPath('mortimer.webp'),
       encounterBackgroundKey:   'bg_encounter_mortimer',
       encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_boss_mortimer.webp'),
       idleKey:                  'boss_mortimer_idle',
@@ -196,7 +202,7 @@ const SPOOKSPIRE_KEEP = {
       id:                       'lady_proper',
       name:                     'Lady Proper',
       buttonKey:                'button_boss_lady_proper',
-      buttonPath:               raidAssetPath('spookspire_keep', 'buttons/button_boss_lady_proper.webp'),
+      buttonPath:               bossButtonPath('lady_proper.webp'),
       encounterBackgroundKey:   'bg_encounter_lady_proper',
       encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_lady_proper.webp'),
       idleKey:                  'boss_lady_proper_idle',
@@ -213,7 +219,7 @@ const SPOOKSPIRE_KEEP = {
       id:                       'the_movie_theater',
       name:                     'The Movie Theater',
       buttonKey:                'button_boss_the_movie_theater',
-      buttonPath:               raidAssetPath('spookspire_keep', 'buttons/button_boss_the_movie_theater.webp'),
+      buttonPath:               bossButtonPath('the_movie_theater.webp'),
       encounterBackgroundKey:   'bg_encounter_the_movie_theater',
       encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_the_movie_theater_closed.webp'),
       idleKey:                  'boss_the_movie_theater_idle',
@@ -230,7 +236,7 @@ const SPOOKSPIRE_KEEP = {
       id:                       'the_archivist',
       name:                     'The Archivist',
       buttonKey:                'button_boss_the_archivist',
-      buttonPath:               raidAssetPath('spookspire_keep', 'buttons/button_boss_the_archivist.webp'),
+      buttonPath:               bossButtonPath('archivist.webp'),
       encounterBackgroundKey:   'bg_encounter_the_archivist',
       encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_the_archivist.webp'),
       idleKey:                  'boss_the_archivist_idle',
@@ -247,7 +253,7 @@ const SPOOKSPIRE_KEEP = {
       id:                       'aether_drake',
       name:                     'Aether Drake',
       buttonKey:                'button_boss_aether_drake',
-      buttonPath:               raidAssetPath('spookspire_keep', 'buttons/button_boss_aether_drake.webp'),
+      buttonPath:               bossButtonPath('aether_drake.webp'),
       encounterBackgroundKey:   'bg_encounter_aether_drake',
       encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_aether_drake.webp'),
       idleKey:                  'boss_aether_drake_idle',
@@ -264,7 +270,7 @@ const SPOOKSPIRE_KEEP = {
       id:                       'phantom_magister',
       name:                     'Phantom Magister',
       buttonKey:                'button_boss_phantom_magister',
-      buttonPath:               raidAssetPath('spookspire_keep', 'buttons/button_boss_phantom_magister.webp'),
+      buttonPath:               bossButtonPath('phantom_magister.webp'),
       encounterBackgroundKey:   'bg_encounter_phantom_magister',
       encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_phantom_magister.webp'),
       idleKey:                  'boss_phantom_magister_idle',
@@ -281,7 +287,7 @@ const SPOOKSPIRE_KEEP = {
       id:                       'malvestian_doomhoof_and_kilwretch',
       name:                     'Malvestian Doomhoof & Kilwretch',
       buttonKey:                'button_boss_malvestian_doomhoof',
-      buttonPath:               raidAssetPath('spookspire_keep', 'buttons/button_boss_malvestian_doomhoof.webp'),
+      buttonPath:               bossButtonPath('malvestian_doomhoof.webp'),
       encounterBackgroundKey:   'bg_encounter_malvestian_doomhoof',
       encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_malvestian_doomhoof.webp'),
       idleKey:                  'boss_malvestian_doomhoof_idle',
@@ -298,7 +304,7 @@ const SPOOKSPIRE_KEEP = {
       id:                       'prince_malarkey',
       name:                     'Prince Malarkey',
       buttonKey:                'button_boss_prince_malarkey',
-      buttonPath:               raidAssetPath('spookspire_keep', 'buttons/button_boss_prince_malarkey.webp'),
+      buttonPath:               bossButtonPath('prince_malarkey.webp'),
       encounterBackgroundKey:   'bg_encounter_prince_malarkey',
       encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_prince_malarkey.webp'),
       idleKey:                  'boss_prince_malarkey_idle',
@@ -315,7 +321,7 @@ const SPOOKSPIRE_KEEP = {
       id:                       'dreadwing',
       name:                     'Dreadwing',
       buttonKey:                'button_boss_dreadwing',
-      buttonPath:               raidAssetPath('spookspire_keep', 'buttons/button_boss_dreadwing.webp'),
+      buttonPath:               bossButtonPath('dreadwing.webp'),
       encounterBackgroundKey:   'bg_encounter_dreadwing',
       encounterBackgroundPath:  raidAssetPath('spookspire_keep', 'backgrounds/bg_dreadwing.webp'),
       idleKey:                  'boss_dreadwing_idle',

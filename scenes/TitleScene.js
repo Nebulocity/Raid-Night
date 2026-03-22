@@ -47,7 +47,7 @@ export default class TitleScene extends Phaser.Scene {
 
   _createMenuButton(x, y, width, height, label, onClick) {
     const bg = this.add.rectangle(x, y, width, height, 0x000000, 0.65)
-      .setStrokeStyle(3, 0x554422, 0.9)
+      .setStrokeStyle(3, 0xffd700, 1)
       .setInteractive({ useHandCursor: true });
 
     const text = this.add.text(x, y, label, {
@@ -61,13 +61,13 @@ export default class TitleScene extends Phaser.Scene {
     bg.on('pointerover', () => {
       bg.setFillStyle(0x1a0e2a, 1);
       bg.setStrokeStyle(4, 0xffd700, 1);
-      bg.setAlpha(0.65);
+      bg.setAlpha(0.75);
       text.setScale(1.03);
     });
 
     bg.on('pointerout', () => {
       bg.setFillStyle(0x000000, 0.65);
-      bg.setStrokeStyle(3, 0x554422, 0.9);
+      bg.setStrokeStyle(3, 0xffd700, 1);
       text.setScale(1);
     });
 

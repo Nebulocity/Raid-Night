@@ -16,7 +16,7 @@ export default class BossLoadingScene extends Phaser.Scene {
   // init - resolve which boss we're loading
   init() {
     const selectedRaidId = this.registry.get('selectedRaidId') || 'spookspire_keep';
-    const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot_and_nighttime';
+    const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot';
 
     const raid = RAID_CATALOG[selectedRaidId] || RAID_CATALOG.spookspire_keep;
     this.raidMeta        = raid;

@@ -45,7 +45,7 @@ export function createDefaultSaveData() {
       spookspire_keep:       [],
     },
     lastSelectedRaidId:  'spookspire_keep',
-    lastSelectedBossId:  'sir_trotsalot_and_nighttime',
+    lastSelectedBossId:  'sir_trotsalot',
   };
 }
 
