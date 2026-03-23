@@ -40,7 +40,7 @@ window.GAME_CONFIG = {
   },
 
   // Gameplay timing (2 seconds)
-  TICK_MS: 2000,
+  TICK_MS: 1000,
 
   // DEBUG SKIP INTRO
   DEBUG_SKIP_INTRO: true,

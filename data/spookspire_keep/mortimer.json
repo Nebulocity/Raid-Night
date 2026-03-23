@@ -11,139 +11,248 @@
     "stats": {
       "health": 300000,
       "maxHealth": 300000,
-      "mana": 100000,
-      "maxMana": 100000,
+      "mana": 0,
+      "maxMana": 0,
       "usesMana": false,
-      "damageRange": [
-        400,
-        700
-      ],
-      "attackSpeed": 1,
-      "armor": 15000,
+      "damageRange": [1200, 3200],
+      "attackSpeed": 2,
+      "armor": 13000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
       "resistList": {
-        "fire": 25,
-        "frost": 25,
-        "nature": 25,
-        "holy": 0,
-        "shadow": 25,
-        "arcane": 25
+        "fire": 0, "frost": 0, "nature": 0,
+        "holy": 0, "shadow": 25, "arcane": 0
       }
     },
     "phases": [
       {
         "id": "phase_1",
-        "label": "Phase 1",
-        "trigger": {
-          "type": "health_percent",
-          "value": 100
-        },
+        "label": "Dinner Service",
+        "trigger": { "type": "health_percent", "value": 100 },
         "abilityIds": [
-          "silverware_jab",
-          "napkin_snap",
-          "bowtie_strangulation"
+          "mortimer_vanish",
+          "mortimer_blind",
+          "mortimer_gouge",
+          "mortimer_berserk_dagger"
+        ]
+      },
+      {
+        "id": "phase_2",
+        "label": "No More Manners",
+        "trigger": { "type": "health_percent", "value": 30 },
+        "abilityIds": [
+          "mortimer_vanish",
+          "mortimer_blind",
+          "mortimer_gouge",
+          "mortimer_berserk_dagger"
+        ],
+        "onEnter": [
+          { "type": "dialogue", "lines": ["Oh, I've gone and made a mess..."] }
         ]
       }
     ],
-    "threatTable": {
-      "player": 0,
-      "tank": 0,
-      "healer": 0
+    "enrage": {
+      "trigger": { "type": "health_percent", "value": 30 },
+      "attackSpeedMultiplier": 0.5,
+      "damageMultiplier": 1.5
     },
+    "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": [
-        "MORTIMER steps forward!"
-      ],
-      "defeat": [
-        "Mortimer collapses in a heap of theatrical nonsense."
-      ],
-      "victory": [
-        "Victory."
-      ]
+      "intro": ["Hm, unannounced visitors. Preparations must be made..."],
+      "defeat": ["Time... never enough time."],
+      "victory": ["Victory!"]
     },
-    "sounds": {
-      "intro": "",
-      "attack": "",
-      "hit": "",
-      "defeat": "",
-      "victory": ""
+    "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
+  },
+  "secondActor": {
+    "id": "dinner_guests",
+    "name": "The Dinner Guests",
+    "spriteKey": "dinner_guests_idle",
+    "spriteScale": 2.5,
+    "stats": {
+      "health": 200000,
+      "maxHealth": 200000,
+      "mana": 0,
+      "maxMana": 0,
+      "usesMana": false,
+      "damageRange": [0, 0],
+      "attackSpeed": 0,
+      "armor": 10000,
+      "attackHitChance": 90,
+      "abilityHitChance": 90,
+      "resistList": {
+        "fire": 0, "frost": 0, "nature": 0,
+        "holy": 0, "shadow": 0, "arcane": 0
+      }
+    },
+    "abilityIds": [
+      "guest_mana_burn",
+      "guest_shadow_word_pain",
+      "guest_hammer_of_justice",
+      "guest_mortal_strike"
+    ],
+    "dialogue": {
+      "intro": ["The Dinner Guests rise to defend Mortimer!"]
+    },
+    "animations": {
+      "idle": {
+        "key": "dinner_guests_idle",
+        "startFrame": 0,
+        "endFrame": 15,
+        "frameRate": 8,
+        "repeat": -1
+      }
     }
   },
   "abilities": {
-    "silverware_jab": {
-      "id": "silverware_jab",
-      "name": "Silverware Jab",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
+    "mortimer_vanish": {
+      "id": "mortimer_vanish",
+      "name": "Vanish",
+      "immediateFlag": false,
+      "recastTimer": 40,
+      "targetType": "boss_self",
+      "applyBuff": {
+        "id": "vanished",
+        "durationTicks": 3,
+        "dispellable": false
       },
-      "immediateMin": 1600,
-      "immediateMax": 2400,
-      "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 10,
-      "targetType": "highest_threat",
-      "dialogue": "Mortimer flicks a dagger from the table setting!",
-      "sound": "",
-      "audioDuration": 2000,
-      "iconId": "magma_blast"
+      "dialogue": "Mortimer vanishes into the shadows!",
+      "audioDuration": 2000
     },
-    "napkin_snap": {
-      "id": "napkin_snap",
-      "name": "Napkin Snap",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 600,
-      "immediateMax": 900,
-      "duration": 3,
-      "tickEffect": {
-        "type": "damage"
-      },
-      "tickMin": 180,
-      "tickMax": 260,
-      "threatPerDamage": 0,
-      "recastTimer": 16,
-      "targetType": "all_allies",
-      "dialogue": "A filthy napkin blinds the room.",
-      "sound": "",
-      "audioDuration": 2000,
-      "iconId": "wrath_of_ragnaros"
-    },
-    "bowtie_strangulation": {
-      "id": "bowtie_strangulation",
-      "name": "Bowtie Strangulation",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 800,
-      "immediateMax": 1200,
-      "duration": 6,
-      "tickEffect": {
-        "type": "damage"
-      },
-      "tickMin": 260,
-      "tickMax": 420,
-      "threatPerDamage": 0,
-      "recastTimer": 22,
+    "mortimer_garrote": {
+      "id": "mortimer_garrote",
+      "name": "Garrote",
+      "damageType": "physical",
+      "immediateFlag": false,
+      "recastTimer": 4,
       "targetType": "random_ally",
-      "dialogue": "Mortimer picks a victim for special service.",
-      "sound": "",
-      "audioDuration": 2000,
-      "iconId": "magma_blast"
+      "applyDebuff": {
+        "id": "bleed",
+        "totalDamage": 25000,
+        "durationTicks": 10,
+        "dispellable": false
+      },
+      "dialogue": "Mortimer garrotes a victim from the shadows!",
+      "audioDuration": 2000
+    },
+    "mortimer_blind": {
+      "id": "mortimer_blind",
+      "name": "Blind",
+      "immediateFlag": false,
+      "recastTimer": 16,
+      "targetType": "random_ally",
+      "applyDebuff": {
+        "id": "blind",
+        "durationTicks": 8,
+        "dispellable": true,
+        "dispelType": "magic"
+      },
+      "dialogue": "Mortimer blinds a nearby target!",
+      "audioDuration": 2000
+    },
+    "mortimer_gouge": {
+      "id": "mortimer_gouge",
+      "name": "Gouge",
+      "immediateFlag": false,
+      "recastTimer": 20,
+      "targetType": "highest_threat",
+      "applyDebuff": {
+        "id": "gouge",
+        "durationTicks": 8,
+        "dispellable": false
+      },
+      "dialogue": "Mortimer gouges the tank! He turns to a new target!",
+      "audioDuration": 2000
+    },
+    "mortimer_berserk_dagger": {
+      "id": "mortimer_berserk_dagger",
+      "name": "Berserk",
+      "damageType": "physical",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 2000,
+      "immediateMax": 4000,
+      "duration": 0,
+      "recastTimer": 14,
+      "targetType": "random_ally",
+      "dialogue": "Mortimer berserks and hurls a dagger!",
+      "audioDuration": 1500
+    },
+    "guest_mana_burn": {
+      "id": "guest_mana_burn",
+      "name": "Mana Burn",
+      "immediateFlag": false,
+      "recastTimer": 12,
+      "targetType": "highest_mana",
+      "applyDebuff": {
+        "id": "mana_burn",
+        "manaBurnPercent": 2,
+        "manaBurnDamageMultiplier": 3,
+        "dispellable": false
+      },
+      "dialogue": "Baroness Silvania burns your mana!",
+      "audioDuration": 2000
+    },
+    "guest_shadow_word_pain": {
+      "id": "guest_shadow_word_pain",
+      "name": "Shadow Word: Pain",
+      "damageType": "shadow",
+      "immediateFlag": false,
+      "duration": 12,
+      "tickEffect": { "type": "damage" },
+      "tickMin": 1667,
+      "tickMax": 1667,
+      "recastTimer": 12,
+      "targetType": "random_ally",
+      "applyDebuff": {
+        "id": "shadow_word_pain",
+        "durationTicks": 12,
+        "dispellable": true,
+        "dispelType": "disease"
+      },
+      "dialogue": "Lady Caitlin afflicts you with Shadow Word: Pain!",
+      "audioDuration": 2000
+    },
+    "guest_hammer_of_justice": {
+      "id": "guest_hammer_of_justice",
+      "name": "Hammer of Justice",
+      "damageType": "physical",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 3500,
+      "immediateMax": 3500,
+      "duration": 0,
+      "recastTimer": 24,
+      "targetType": "second_highest_threat",
+      "applyDebuff": {
+        "id": "stun",
+        "durationTicks": 3,
+        "dispellable": false
+      },
+      "dialogue": "Baron Rolph Dragger stuns the tank!",
+      "audioDuration": 2000
+    },
+    "guest_mortal_strike": {
+      "id": "guest_mortal_strike",
+      "name": "Mortal Strike",
+      "damageType": "physical",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 6000,
+      "immediateMax": 6000,
+      "duration": 0,
+      "recastTimer": 24,
+      "targetType": "highest_threat",
+      "applyDebuff": {
+        "id": "wounded",
+        "healingReduction": 50,
+        "durationTicks": 10,
+        "dispellable": true,
+        "dispelType": "magic"
+      },
+      "dialogue": "Lord Darin Robbins lands a Mortal Strike! Healing is reduced!",
+      "audioDuration": 2000
     }
   }
 }

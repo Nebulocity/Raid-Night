@@ -11,161 +11,157 @@
     "stats": {
       "health": 420000,
       "maxHealth": 420000,
-      "mana": 100000,
-      "maxMana": 100000,
+      "mana": 0,
+      "maxMana": 0,
       "usesMana": false,
-      "damageRange": [
-        1500,
-        2500
-      ],
-      "attackSpeed": 3,
-      "armor": 15000,
+      "damageRange": [2000, 4000],
+      "attackSpeed": 2,
+      "armor": 14000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
       "resistList": {
-        "fire": 25,
-        "frost": 25,
-        "nature": 25,
-        "holy": 0,
-        "shadow": 25,
-        "arcane": 25
+        "fire": 0, "frost": 0, "nature": 0,
+        "holy": 0, "shadow": 50, "arcane": 0
       }
     },
     "phases": [
       {
         "id": "phase_1",
-        "label": "Phase 1",
-        "trigger": {
-          "type": "health_percent",
-          "value": 100
-        },
+        "label": "Royal Displeasure",
+        "trigger": { "type": "health_percent", "value": 100 },
         "abilityIds": [
-          "withering_insult",
-          "royal_tantrum",
-          "drop_the_chandelier",
-          "dual_inconveniences"
+          "void_word_pain",
+          "void_nova"
+        ]
+      },
+      {
+        "id": "phase_2",
+        "label": "Princely Fury",
+        "trigger": { "type": "health_percent", "value": 60 },
+        "abilityIds": [
+          "void_word_pain",
+          "void_nova",
+          "fury",
+          "break_armor"
+        ],
+        "onEnter": [
+          { "type": "dialogue", "lines": [] }
+        ]
+      },
+      {
+        "id": "phase_3",
+        "label": "Desperate Malarkey",
+        "trigger": { "type": "health_percent", "value": 30 },
+        "abilityIds": [
+          "void_word_pain",
+          "void_nova",
+          "axe_throw",
+          "pain_augment"
+        ],
+        "onEnter": [
+          { "type": "dialogue", "lines": [] }
         ]
       }
     ],
-    "threatTable": {
-      "player": 0,
-      "tank": 0,
-      "healer": 0
-    },
+    "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": [
-        "PRINCE MALARKEY steps forward!"
-      ],
-      "defeat": [
-        "Prince Malarkey collapses in a heap of theatrical nonsense."
-      ],
-      "victory": [
-        "Victory."
-      ]
+      "intro": [],
+      "defeat": ["Prince Malarkey collapses in a heap of theatrical nonsense."],
+      "victory": ["Victory."]
     },
-    "sounds": {
-      "intro": "",
-      "attack": "",
-      "hit": "",
-      "defeat": "",
-      "victory": ""
-    }
+    "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
   },
   "abilities": {
-    "withering_insult": {
-      "id": "withering_insult",
-      "name": "Withering Insult",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 800,
-      "immediateMax": 1200,
-      "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 14,
-      "targetType": "all_allies",
-      "dialogue": "The prince belittles the entire raid.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "wrath_of_ragnaros"
-    },
-    "royal_tantrum": {
-      "id": "royal_tantrum",
-      "name": "Royal Tantrum",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 1200,
-      "immediateMax": 1800,
-      "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 18,
-      "targetType": "all_allies",
-      "dialogue": "He throws a truly regal fit.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "wrath_of_ragnaros"
-    },
-    "drop_the_chandelier": {
-      "id": "drop_the_chandelier",
-      "name": "Drop the Chandelier",
-      "type": "boss_mechanic",
-      "manaCost": 0,
+    "void_word_pain": {
+      "id": "void_word_pain",
+      "name": "Void Word: Pain",
+      "damageType": "shadow",
       "immediateFlag": false,
-      "immediateEffect": null,
-      "immediateMin": 0,
-      "immediateMax": 0,
       "duration": 5,
-      "tickEffect": {
-        "type": "damage"
-      },
-      "tickMin": 260,
-      "tickMax": 360,
-      "threatPerDamage": 0,
-      "recastTimer": 24,
-      "targetType": "all_allies",
-      "dialogue": "Infernal d\u00e9cor crashes from the ceiling!",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "submerge"
+      "tickEffect": { "type": "damage" },
+      "tickMin": 2000,
+      "tickMax": 2000,
+      "recastTimer": 20,
+      "targetType": "highest_threat",
+      "dialogue": "Void Word: Pain!",
+      "audioDuration": 2000
     },
-    "dual_inconveniences": {
-      "id": "dual_inconveniences",
-      "name": "Dual Inconveniences",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": false,
-      "immediateEffect": null,
-      "immediateMin": 0,
-      "immediateMax": 0,
+    "void_nova": {
+      "id": "void_nova",
+      "name": "Void Nova",
+      "damageType": "shadow",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 5000,
+      "immediateMax": 5000,
       "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 28,
+      "castTimeTicks": 4,
+      "interruptible": true,
+      "recastTimer": 20,
+      "targetType": "all_allies",
+      "dialogue": "Prince Malarkey charges a Void Nova!",
+      "audioDuration": 2000
+    },
+    "fury": {
+      "id": "fury",
+      "name": "Fury",
+      "immediateFlag": false,
+      "recastTimer": 20,
       "targetType": "boss_self",
-      "dialogue": "Prince Malarkey arms himself with extra nonsense.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "wrath_of_ragnaros",
-      "selfBuff": {
-        "damageMultiplier": 2.0,
-        "duration": 12
-      }
+      "applyBuff": {
+        "id": "extra_auto_chance",
+        "chance": 50,
+        "durationTicks": 10,
+        "dispellable": false
+      },
+      "dialogue": "Prince Malarkey enrages!",
+      "audioDuration": 2000
+    },
+    "break_armor": {
+      "id": "break_armor",
+      "name": "Break Armor",
+      "immediateFlag": false,
+      "recastTimer": 20,
+      "targetType": "highest_threat",
+      "applyDebuff": {
+        "id": "armor_reduction",
+        "reductionPercent": 50,
+        "durationTicks": 10,
+        "dispellable": true,
+        "dispelType": "magic"
+      },
+      "dialogue": "Prince Malarkey shatters your armor!",
+      "audioDuration": 2000
+    },
+    "axe_throw": {
+      "id": "axe_throw",
+      "name": "Axe Throw",
+      "damageType": "physical",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 4000,
+      "immediateMax": 8000,
+      "duration": 0,
+      "recastTimer": 10,
+      "targetType": "random_ally",
+      "dialogue": "Prince Malarkey hurls his axe!",
+      "audioDuration": 1500
+    },
+    "pain_augment": {
+      "id": "pain_augment",
+      "name": "Pain Augment",
+      "immediateFlag": false,
+      "recastTimer": 20,
+      "targetType": "random_ally",
+      "applyDebuff": {
+        "id": "damage_taken_increase",
+        "increasePercent": 100,
+        "durationTicks": 5,
+        "dispellable": false
+      },
+      "dialogue": "Pain Augmentation! All damage taken is doubled!",
+      "audioDuration": 2000
     }
   }
 }

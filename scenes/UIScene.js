@@ -44,6 +44,9 @@ export default class UIScene extends Phaser.Scene {
     this.lbLocked        = false;
     // Buff bar slot objects per character: { player, tank, healer }
     this.buffBars        = {};
+    // Boss cast bar objects -- built once, shown/hidden as needed
+    this.bossCastBar     = null;
+    this.bossCastTween   = null;
   }
 
   // ======
@@ -98,7 +101,14 @@ export default class UIScene extends Phaser.Scene {
       gameScene.events.on('buff-update', ({ characterId, effects }) => {
         this.updateBuffBar(characterId, effects);
       });
+
+      gameScene.events.on('player-debuff-update', (debuffs) => {
+        const locked = !!(debuffs?.stun || debuffs?.silence);
+        this._setSpellButtonsLocked(locked);
+      });
     }
+
+    this._buildBossCastBar();
   }
 
   // ===================================
@@ -113,7 +123,7 @@ export default class UIScene extends Phaser.Scene {
     const btnSize   = 110;
     const btnPad    = 8;
     const btnY      = ab.y + ab.h / 2;
-    const startX    = ab.x + 16;   // left margin
+    const startX    = ab.x + 8;   // left margin
 
     // ========================
     // Left side: spell buttons
@@ -343,7 +353,8 @@ export default class UIScene extends Phaser.Scene {
 
       // Show remaining seconds
       if (cd.cdText) {
-        cd.cdText.setText(Math.ceil(remaining / 1000).toString());
+        const TICK_MS = window.GAME_CONFIG.TICK_MS;
+        cd.cdText.setText(Math.ceil(remaining / TICK_MS).toString());
       }
     });
   }
@@ -372,7 +383,7 @@ export default class UIScene extends Phaser.Scene {
     this.floatOffsets[zoneKey] = (offset + 52) % 156;  // 3 rows of 52px then reset
     const cy = zone.y + zone.h * 0.4 + offset;
 
-    const prefix = type === 'heal' ? '+' : type === 'miss' ? '' : '-';
+    const prefix = (type === 'heal' || type === 'mana') ? '+' : type === 'miss' ? '' : '-';
     const label  = type === 'miss' ? 'MISS' : prefix + value.toLocaleString();
     const isBossZone = zone === window.GAME_CONFIG.ZONES.BOSS;
     const fSize = type === 'crit' ? '64px' : isBossZone ? '64px' : '42px';
@@ -405,7 +416,7 @@ export default class UIScene extends Phaser.Scene {
 
     this.tweens.add({
       targets:  objects,
-      y:        '-=140',
+      y:        '+=140',
       alpha:    0,
       duration: 1400,
       ease:     'Sine.easeOut',
@@ -491,12 +502,12 @@ export default class UIScene extends Phaser.Scene {
     if (this.buffBars[characterId]) return;
 
     const MAX_SLOTS  = 6;
-    const ICON_SIZE  = 48;   // icon image size
-    const SLOT_SIZE  = 52;   // total slot footprint including border
-    const SLOT_PAD   = 8;
+    const ICON_SIZE  = 24;   // icon image size
+    const SLOT_SIZE  = 24;   // total slot footprint including border
+    const SLOT_PAD   = 6;
     const ROW_W      = MAX_SLOTS * (SLOT_SIZE + SLOT_PAD) - SLOT_PAD;
     // Align left edge of buff row to nameplate left edge (nameplate starts at zone.x - 10)
-    const startX     = zone.x - 10;
+    const startX     = zone.x + 30;
     // Row of icons sits just above the nameplate (nameplate at zone.y + 480)
     // Icons centered at rowY, ticks label sits 6px below the icon bottom
     const rowY       = zone.y + 435;
@@ -524,14 +535,14 @@ export default class UIScene extends Phaser.Scene {
 
       // Ticks remaining - small label BELOW the slot, not overlapping icon
       const durationText = this.add.text(sx, sy - SLOT_SIZE / 2 - 4, '', {
-        fontFamily: 'monospace', fontSize: '32px', color: '#ffffff',
-        stroke: '#000000', strokeThickness: 3,
+        fontFamily: 'monospace', fontSize: '18px', color: '#ffffff',
+        stroke: '#000000', strokeThickness: 2,
       }).setOrigin(0.5, 1).setDepth(DEPTH + 2).setVisible(false);
 
       // Stack badge (x2, x3) - bottom-right corner INSIDE the slot
-      const stackText = this.add.text(sx + SLOT_SIZE / 2 - 3, sy + SLOT_SIZE / 2 - 3, '', {
-        fontFamily: 'monospace', fontSize: '36px', color: '#ffdd00',
-        stroke: '#000000', strokeThickness: 3,
+      const stackText = this.add.text(sx + SLOT_SIZE / 2 - 2, sy + SLOT_SIZE / 2 - 2, '', {
+        fontFamily: 'monospace', fontSize: '18px', color: '#ffdd00',
+        stroke: '#000000', strokeThickness: 2,
       }).setOrigin(1, 1).setDepth(DEPTH + 2).setVisible(false);
 
       slots.push({ frame, icon, durationText, stackText });
@@ -581,6 +592,98 @@ export default class UIScene extends Phaser.Scene {
       } else {
         slot.stackText.setVisible(false);
       }
+    });
+  }
+
+  // Dims all spell buttons while the player is stunned or silenced,
+  // and restores them when the debuff expires.
+  _setSpellButtonsLocked(locked) {
+    this.abilityButtons.forEach(btn => {
+      if (!btn?.bg) return;
+      btn.bg.setAlpha(locked ? 0.35 : 1.0);
+      if (!locked && !this.cooldowns[btn.abilityId]) {
+        btn.bg.setStrokeStyle(3, 0x4466aa, 1.0);
+      }
+    });
+  }
+
+  // ===================================
+  // BOSS CAST BAR
+  // ===================================
+  // Built once at scene creation and reused throughout the encounter.
+  // Hidden by default. showBossCastBar() reveals and animates it.
+  _buildBossCastBar() {
+    const { WIDTH, ZONES } = window.GAME_CONFIG;
+    const bossZone = ZONES.BOSS;
+
+    const barW  = 600;
+    const barH  = 36;
+    const cx    = WIDTH / 2;
+    const cy    = bossZone.y + 30;
+
+    const track = this.add.rectangle(cx, cy, barW, barH, 0x111111)
+      .setStrokeStyle(2, 0x6622aa, 0.9)
+      .setDepth(70)
+      .setAlpha(0);
+
+    const fill = this.add.rectangle(cx - barW / 2, cy, 0, barH - 6, 0xcc3300)
+      .setOrigin(0, 0.5)
+      .setDepth(71)
+      .setAlpha(0);
+
+    const label = this.add.text(cx, cy, '', {
+      fontFamily: 'monospace', fontSize: '22px', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5, 0.5).setDepth(72).setAlpha(0);
+
+    this.bossCastBar = { track, fill, label, barW };
+  }
+
+  // Reveals the cast bar and animates it filling over durationMs.
+  // abilityName is displayed inside the bar.
+  showBossCastBar(abilityName, durationMs) {
+    const bar = this.bossCastBar;
+    if (!bar) return;
+
+    if (this.bossCastTween) {
+      this.bossCastTween.stop();
+      this.bossCastTween = null;
+    }
+
+    bar.fill.setDisplaySize(0, bar.fill.height);
+    bar.label.setText('CASTING: ' + abilityName.toUpperCase());
+    bar.track.setAlpha(1);
+    bar.fill.setAlpha(1);
+    bar.label.setAlpha(1);
+
+    this.bossCastTween = this.tweens.add({
+      targets:  bar.fill,
+      displayWidth: bar.barW - 4,
+      duration: durationMs,
+      ease:     'Linear',
+    });
+  }
+
+  // Hides the cast bar. Pass interrupted = true to flash red before hiding.
+  hideBossCastBar(interrupted = false) {
+    const bar = this.bossCastBar;
+    if (!bar) return;
+
+    if (this.bossCastTween) {
+      this.bossCastTween.stop();
+      this.bossCastTween = null;
+    }
+
+    if (interrupted) {
+      bar.fill.setFillStyle(0x884400);
+      bar.label.setText('INTERRUPTED');
+    }
+
+    this.tweens.add({
+      targets:  [bar.track, bar.fill, bar.label],
+      alpha:    0,
+      duration: 300,
+      delay:    interrupted ? 600 : 0,
     });
   }
 

@@ -134,11 +134,12 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.spritesheet('boss_sir_trotsalot_attacking', 'assets/raids/spookspire_keep/bosses/sir_trotsalot/boss_sir_trotsalot_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('boss_sir_trotsalot_defeated',  'assets/raids/spookspire_keep/bosses/sir_trotsalot/boss_sir_trotsalot_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
     
-    this.load.spritesheet('boss_mortimer_idle',      'assets/raids/spookspire_keep/bosses/mortimer/boss_mortimer_idle.webp',           { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_mortimer_attacking', 'assets/raids/spookspire_keep/bosses/mortimer/boss_mortimer_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_mortimer_defeated',  'assets/raids/spookspire_keep/bosses/mortimer/boss_mortimer_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_mortimer_idle',      'assets/raids/spookspire_keep/bosses/mortimer/boss_mortimer_idle.webp',      { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_mortimer_attacking', 'assets/raids/spookspire_keep/bosses/mortimer/boss_mortimer_attacking.webp', { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('boss_mortimer_defeated',  'assets/raids/spookspire_keep/bosses/mortimer/boss_mortimer_defeated.webp',  { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('dinner_guests_idle',      'assets/raids/spookspire_keep/bosses/mortimer/dinner_guests.webp',           { frameWidth: 384, frameHeight: 384 });
 
-    this.load.spritesheet('boss_virtuous_lady_idle',      'assets/raids/spookspire_keep/bosses/virtuous_lady/boss_virtuous_lady_idle.webp',           { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('virtuous_lady_idle',      'assets/raids/spookspire_keep/bosses/virtuous_lady/virtuous_lady_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('boss_virtuous_lady_attacking', 'assets/raids/spookspire_keep/bosses/virtuous_lady/boss_virtuous_lady_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('boss_virtuous_lady_defeated',  'assets/raids/spookspire_keep/bosses/virtuous_lady/boss_virtuous_lady_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
 
@@ -208,40 +209,39 @@ export default class PreloadScene extends Phaser.Scene {
 
   // ============================================================
   // Ability icons
-  // All icons live under assets/abilities/ as .jpg files
+  // All icons live under assets/abilities/ as .webp files.
+  // Cache key is 'icon_' + id, matching how GameScene and UIScene look them up.
   // ============================================================
   _loadAbilityIcons() {
     const icons = [
       // Healer
-      'spirit surge', 'renew', 'sustain', 'burgeon', 'quicken', 'awaken',
-      
+      'spirit_surge', 'renew', 'sustain', 'burgeon', 'quicken', 'awaken',
+
       // Tank
-      'verdict_of_righteousness', 'verdict_of_wisdom', 'verdict_of_prejudice', 'sanctify', 'sacred_bulwark', 'verdict_of_wisdom',
-      
+      'verdict_of_prejudice', 'verdict_of_righteousness', 'verdict_of_wisdom',
+      'sanctify', 'sacred_bulwark', 'provoke',
+
       // Shaman
-      'static_burst', 'arc_lightning', 'interject', 'ensnare', 'salve', 'earthfury',
+      'static_burst', 'arc_lightning', 'ensnare', 'salve', 'earthfury', 'interject',
 
       // Earth totems
-      'might_totem', 'shield_totem', 'waking_totem',
+      'totem_might', 'totem_shield', 'totem_waking',
 
       // Air totems
-      'tempest_totem', 'warding_totem', 'flurry_totem',
+      'totem_tempest', 'totem_warding', 'totem_flurry',
 
       // Fire totems
-      'blazing_totem', 'warmth_totem', 'wrath_totem',
+      'totem_blazing', 'totem_warmth', 'totem_wrath',
 
       // Water totems
-      'spring_totem', 'purify_totem', 'chill_totem',
-      
-      // Boss abilities (used by floating combat text)
-      // 'wrath_of_ragnaros', 'magma_blast', 'submerge',
-      
-      // Generic auto-attack
+      'totem_spring', 'totem_purify', 'totem_chill',
+
+      // Generic auto-attack fallback
       'autoAttack',
     ];
 
     icons.forEach(id => {
-      this.load.image('icon_' + id, 'assets/abilities/icon_' + id + '.jpg');
+      this.load.image('icon_' + id, 'assets/abilities/' + id + '.webp');
     });
   }
 

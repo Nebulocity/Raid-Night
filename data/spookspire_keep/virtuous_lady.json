@@ -7,141 +7,129 @@
   },
   "boss": {
     "id": "virtuous_lady",
-    "name": "Virtuous Ladyness",
+    "name": "Virtuous Lady",
     "stats": {
-      "health": 330000,
-      "maxHealth": 330000,
-      "mana": 100000,
-      "maxMana": 100000,
+      "health": 500000,
+      "maxHealth": 500000,
+      "mana": 0,
+      "maxMana": 0,
       "usesMana": false,
-      "damageRange": [
-        1500,
-        2500
-      ],
+      "damageRange": [2000, 4000],
       "attackSpeed": 3,
-      "armor": 15000,
+      "armor": 13000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
       "resistList": {
-        "fire": 25,
-        "frost": 25,
-        "nature": 25,
-        "holy": 0,
-        "shadow": 25,
-        "arcane": 25
+        "fire": 0, "frost": 0, "nature": 0,
+        "holy": 50, "shadow": 0, "arcane": 0
       }
     },
     "phases": [
       {
         "id": "phase_1",
-        "label": "Phase 1",
-        "trigger": {
-          "type": "health_percent",
-          "value": 100
-        },
+        "label": "Imprisonment",
+        "trigger": { "type": "health_percent", "value": 100 },
         "abilityIds": [
-          "scalding_scold",
-          "proper_rebuke",
-          "sanctified_floor_wax"
+          "virtuous_ground",
+          "virtuous_fire",
+          "virtuous_wrath",
+          "virtuous_repentance"
+        ]
+      },
+      {
+        "id": "phase_2",
+        "label": "Berserk",
+        "trigger": { "type": "health_percent", "value": 10 },
+        "abilityIds": [
+          "virtuous_ground",
+          "virtuous_fire",
+          "virtuous_wrath",
+          "virtuous_repentance"
+        ],
+        "onEnter": [
+          { "type": "dialogue", "lines": ["Virtuous Lady BERSERKS! All abilities deal double damage!"] }
         ]
       }
     ],
-    "threatTable": {
-      "player": 0,
-      "tank": 0,
-      "healer": 0
+    "enrage": {
+      "trigger": { "type": "health_percent", "value": 10 },
+      "damageMultiplier": 2.0,
+      "attackSpeedMultiplier": 1.0
     },
+    "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": [
-        "LADY PROPERNESS steps forward!"
-      ],
-      "defeat": [
-        "Virtuous Ladyness collapses in a heap of theatrical nonsense."
-      ],
-      "victory": [
-        "Victory."
-      ]
+      "intro": ["Virtuous Lady steps forward, eyes vacant and burning!"],
+      "defeat": ["The madness lifts. Virtuous Lady collapses in silence."],
+      "victory": ["Victory."]
     },
-    "sounds": {
-      "intro": "",
-      "attack": "",
-      "hit": "",
-      "defeat": "",
-      "victory": ""
-    }
+    "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
   },
   "abilities": {
-    "scalding_scold": {
-      "id": "scalding_scold",
-      "name": "Scalding Scold",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 1800,
-      "immediateMax": 2600,
-      "duration": 4,
-      "tickEffect": {
-        "type": "damage"
-      },
-      "tickMin": 220,
-      "tickMax": 300,
-      "threatPerDamage": 0,
-      "recastTimer": 14,
-      "targetType": "random_ally",
-      "dialogue": "That behavior is unacceptable.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "magma_blast"
-    },
-    "proper_rebuke": {
-      "id": "proper_rebuke",
-      "name": "Proper Rebuke",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 900,
-      "immediateMax": 1500,
-      "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 18,
-      "targetType": "all_allies",
-      "dialogue": "Virtuous Ladyness rebukes the entire party.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "wrath_of_ragnaros"
-    },
-    "sanctified_floor_wax": {
-      "id": "sanctified_floor_wax",
-      "name": "Sanctified Floor Wax",
-      "type": "boss_mechanic",
-      "manaCost": 0,
+    "virtuous_ground": {
+      "id": "virtuous_ground",
+      "name": "Virtuous Ground",
+      "damageType": "holy",
       "immediateFlag": false,
       "immediateEffect": null,
       "immediateMin": 0,
       "immediateMax": 0,
-      "duration": 5,
-      "tickEffect": {
-        "type": "damage"
-      },
-      "tickMin": 260,
-      "tickMax": 380,
-      "threatPerDamage": 0,
-      "recastTimer": 24,
+      "duration": 10,
+      "tickEffect": { "type": "damage" },
+      "tickMin": 300,
+      "tickMax": 500,
+      "recastTimer": 20,
       "targetType": "all_allies",
-      "dialogue": "The polished floor burns your boots.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "consecration"
+      "dialogue": "Holy fire scorches the ground beneath your feet.",
+      "audioDuration": 2000
+    },
+    "virtuous_fire": {
+      "id": "virtuous_fire",
+      "name": "Virtuous Fire",
+      "damageType": "fire",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 4000,
+      "immediateMax": 6000,
+      "duration": 6,
+      "tickEffect": { "type": "damage" },
+      "tickMin": 1500,
+      "tickMax": 1500,
+      "recastTimer": 12,
+      "targetType": "highest_threat",
+      "dialogue": "Virtuous Fire engulfs the target!",
+      "audioDuration": 2000
+    },
+    "virtuous_wrath": {
+      "id": "virtuous_wrath",
+      "name": "Virtuous Wrath",
+      "damageType": "holy",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 3000,
+      "immediateMax": 3000,
+      "duration": 0,
+      "recastTimer": 12,
+      "targetType": "all_allies",
+      "dialogue": "Virtuous Wrath strikes the party!",
+      "audioDuration": 2000
+    },
+    "virtuous_repentance": {
+      "id": "virtuous_repentance",
+      "name": "Virtuous Repentance",
+      "damageType": "holy",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 2000,
+      "immediateMax": 3000,
+      "duration": 8,
+      "tickEffect": { "type": "damage" },
+      "tickMin": 1000,
+      "tickMax": 1500,
+      "recastTimer": 40,
+      "targetType": "all_allies",
+      "dialogue": "Virtuous Repentance!",
+      "audioDuration": 2000
     }
   }
 }
