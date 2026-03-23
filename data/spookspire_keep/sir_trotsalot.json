@@ -8,6 +8,7 @@
   "boss": {
     "id": "nighttime",
     "name": "Nighttime",
+    "spriteKey": "boss_nighttime_idle",
     "stats": {
       "health": 220000,
       "maxHealth": 220000,
