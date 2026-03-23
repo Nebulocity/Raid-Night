@@ -196,7 +196,7 @@ const SPOOKSPIRE_KEEP = {
       defeatedPath:             bossSpriteSheet('spookspire_keep', 'mortimer', 'boss_mortimer_defeated.webp'),
       levelKey:                 'level_mortimer',
       levelPath:                'data/spookspire_keep/mortimer.json',
-      unlockedBy:               ['sir_trotsalot_and_nighttime'],
+      unlockedBy:               [],
     },
     {
       id:                       'virtuous_lady',
@@ -213,7 +213,7 @@ const SPOOKSPIRE_KEEP = {
       defeatedPath:             bossSpriteSheet('spookspire_keep', 'virtuous_lady', 'boss_virtuous_lady_defeated.webp'),
       levelKey:                 'level_virtuous_lady',
       levelPath:                'data/spookspire_keep/virtuous_lady.json',
-      unlockedBy:               ['sir_trotsalot_and_nighttime'],
+      unlockedBy:               [],
     },
     {
       id:                       'the_movie_theater',
