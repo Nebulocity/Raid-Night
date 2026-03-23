@@ -72,15 +72,6 @@ export default class GameScene extends Phaser.Scene {
     this.secondActorAbilityLockoutUntil = 0;
     this.secondActorResummonCooldownUntil = 0;
 
-    // Tracks which slot is the active damage target for all incoming player damage.
-    // Starts as 'boss'. Swap encounters change this to 'secondActor' then 'thirdActor'.
-    this.activeDamageTargetSlot = 'boss';
-
-    // Third actor state - populated if levelData.thirdActor is present.
-    this.thirdActorSpawned             = false;
-    this.thirdActorAbilityCooldowns    = {};
-    this.thirdActorAbilityLockoutUntil = 0;
-
     // Boss cast state. Set when an ability with castTimeTicks > 0 begins.
     // Cleared on completion or interrupt.
     this.bossIsCasting       = false;
@@ -133,7 +124,6 @@ export default class GameScene extends Phaser.Scene {
 
     this._buildBossSlot(ZONES.BOSS);
     this._buildSecondActorSlot(ZONES.BOSS);
-    this._buildThirdActorSlot(ZONES.BOSS);
     this._buildPlayerSlot(ZONES.PLAYER);
     this._buildCharacterSlot('tank',   ZONES.TANK, 0xff88cc, 'Tank', 'tank_idle', 'tank_idle');
     this._buildCharacterSlot('healer', ZONES.HEALER, 0xa0ff69, 'Healer', 'healer_idle', 'healer_idle');
@@ -421,26 +411,6 @@ export default class GameScene extends Phaser.Scene {
         }, def.key);
       });
     }
-
-    // =====================
-    // THIRD ACTOR ANIMATIONS
-    // =====================
-    const thirdActorData = this.levelData?.thirdActor;
-    if (thirdActorData?.animations) {
-      Object.entries(thirdActorData.animations).forEach(([animName, def]) => {
-        const animKey = thirdActorData.id + '_' + animName;
-        this._safeCreateAnim({
-          key:       animKey,
-          frames:    anims.generateFrameNumbers(def.key, {
-            start: def.startFrame,
-            end:   def.endFrame,
-          }),
-          frameRate: def.frameRate,
-          repeat:    def.repeat,
-          yoyo:      def.yoyo || false,
-        }, def.key);
-      });
-    }
   }
 
   // ======================
@@ -495,21 +465,18 @@ export default class GameScene extends Phaser.Scene {
     const bossData    = this.levelData?.boss;
     const spriteKey   = bossData?.spriteKey;
     const idleAnimKey = bossData ? bossData.id + '_idle' : 'default_idle';
+    const hasSecondActor = !!this.levelData?.secondActor;
 
-    // A swap encounter has the boss start alone centered at full scale.
-    // The side-by-side layout only applies to encounters where both actors
-    // are visible simultaneously (e.g. Mortimer + Dinner Guests).
-    const hasSecondActor    = !!this.levelData?.secondActor;
-    const isSwapEncounter   = !!this.levelData?.secondActor?.swapsWithBoss;
-    const useSharedLayout   = hasSecondActor && !isSwapEncounter;
-
-    const cx          = useSharedLayout ? 270 : ((zone.x + zone.w / 2) + 160);
+    // When sharing the screen with a second actor, Mortimer moves to the left
+    // half at a smaller scale. When solo he stays centered at full scale.
+    const cx          = hasSecondActor ? 270  : ((zone.x + zone.w / 2) + 160);
     const cy          = (zone.y + zone.h / 2) + 200;
-    const spriteScale = useSharedLayout ? 2.0 : (bossData?.spriteScale || 3);
-    const barW        = useSharedLayout ? 460 : 600;
-    const fontSize    = useSharedLayout ? '38px' : '46px';
+    const spriteScale = hasSecondActor ? 2.0  : (bossData?.spriteScale || 3);
+    const barW        = hasSecondActor ? 460  : 600;
+    const fontSize    = hasSecondActor ? '38px' : '46px';
 
-    const nameY = useSharedLayout ? (zone.y + 80) : (zone.y + zone.h - 550);
+    // Nameplate sits just above the HP bar which sits just above the sprite
+    const nameY = hasSecondActor ? (zone.y + 80) : (zone.y + zone.h - 550);
 
     const nameText = this.add.text(cx, nameY, bossData?.name || '???', {
       fontFamily: 'monospace', fontSize, color: '#ff6644',
@@ -549,25 +516,21 @@ export default class GameScene extends Phaser.Scene {
       delay:    500,
     });
 
-    this.entitySlots.boss = { sprite: bossSprite, nameText, titlePanel, hpBar };
+    this.entitySlots.boss = { sprite: bossSprite, nameText, hpBar };
   }
 
   // =================
   // Second actor slot
   // =================
-  // For standard encounters (Mortimer-style), the second actor is placed on
-  // the right half of the screen with no HP bar -- they are a nuisance actor.
-  //
-  // For swap encounters (swapsWithBoss: true), the second actor starts hidden,
-  // gets a full nameplate and HP bar, and fades in centered when spawned as the
-  // primary boss fades out.
+  // Placed on the right half of the screen (cx=810) at a smaller scale.
+  // The second actor has no HP bar and is not a damage target -- they are
+  // a persistent nuisance for the duration of the encounter.
+  // Sprite renders at depth 2 so it always appears in front of the primary boss.
   _buildSecondActorSlot(zone) {
     const actorData = this.levelData?.secondActor;
     if (!actorData) return;
 
-    const isSwapEncounter = !!actorData.swapsWithBoss;
-
-    const cx          = isSwapEncounter ? ((zone.x + zone.w / 2) + 160) : 810;
+    const cx          = 810;
     const cy          = (zone.y + zone.h / 2) + 200;
     const spriteKey   = actorData.spriteKey ?? null;
     const spriteScale = actorData.spriteScale ?? 2.0;
@@ -578,177 +541,33 @@ export default class GameScene extends Phaser.Scene {
       sprite = this.add.sprite(cx, cy, spriteKey, 0)
         .setScale(spriteScale)
         .setOrigin(0.5, 0.5)
-        .setDepth(1)
-        .setAlpha(0);
+        .setDepth(1);
 
       if (this.anims.exists(idleAnimKey)) {
         sprite.play(idleAnimKey);
       }
-    }
-
-    let nameText   = null;
-    let titlePanel = null;
-    let hpBar      = null;
-
-    if (isSwapEncounter) {
-      const nameY  = zone.y + zone.h - 550;
-      nameText = this.add.text(cx, nameY, actorData.name || '???', {
-        fontFamily: 'monospace', fontSize: '46px', color: '#ff6644',
-      }).setOrigin(0.5, 1).setAlpha(0);
-
-      nameText.updateText();
-
-      const padding  = 16;
-      const textW    = nameText.width + padding * 2;
-      const textH    = nameText.height + padding;
-
-      titlePanel = this.add.graphics().setAlpha(0);
-      titlePanel.fillStyle(0x000000, 0.65);
-      titlePanel.fillRect(cx - textW / 2, nameText.y - nameText.height - padding / 2, textW, textH);
-      titlePanel.lineStyle(3, 0x6622a6, 1.0);
-      titlePanel.strokeRect(cx - textW / 2, nameText.y - nameText.height - padding / 2, textW, textH);
-      nameText.setDepth(1);
-
-      hpBar = this._buildBossHealthBar(cx, nameText.y + 36, 600, 42, 0xff3300);
-      hpBar.track?.setAlpha(0);
-      hpBar.fill?.setAlpha(0);
-      if (hpBar.valueText) hpBar.valueText.setAlpha(0);
     }
 
     this.entitySlots.secondActor = {
       sprite,
-      nameText,
-      titlePanel,
-      hpBar,
+      nameText:    null,
+      titlePanel:  null,
+      hpBar:       null,
       currentHealth: actorData.stats?.maxHealth ?? 0,
       _data: actorData,
     };
-  }
-
-  // ================
-  // Third actor slot
-  // ================
-  // Always starts hidden. Fades in centered when the second actor reaches its
-  // spawn threshold. Uses the same centered layout as a solo boss.
-  _buildThirdActorSlot(zone) {
-    const actorData = this.levelData?.thirdActor;
-    if (!actorData) return;
-
-    const cx          = (zone.x + zone.w / 2) + 160;
-    const cy          = (zone.y + zone.h / 2) + 200;
-    const spriteKey   = actorData.spriteKey ?? null;
-    const spriteScale = actorData.spriteScale ?? 3;
-    const idleAnimKey = actorData.id + '_idle';
-
-    let sprite = null;
-    if (spriteKey && this.textures.exists(spriteKey)) {
-      sprite = this.add.sprite(cx, cy, spriteKey, 0)
-        .setScale(spriteScale)
-        .setOrigin(0.5, 0.5)
-        .setDepth(1)
-        .setAlpha(0);
-
-      if (this.anims.exists(idleAnimKey)) {
-        sprite.play(idleAnimKey);
-      }
-    }
-
-    const nameY  = zone.y + zone.h - 550;
-    const nameText = this.add.text(cx, nameY, actorData.name || '???', {
-      fontFamily: 'monospace', fontSize: '46px', color: '#ff6644',
-    }).setOrigin(0.5, 1).setAlpha(0);
-
-    nameText.updateText();
-
-    const padding  = 16;
-    const textW    = nameText.width + padding * 2;
-    const textH    = nameText.height + padding;
-
-    const titlePanel = this.add.graphics().setAlpha(0);
-    titlePanel.fillStyle(0x000000, 0.65);
-    titlePanel.fillRect(cx - textW / 2, nameText.y - nameText.height - padding / 2, textW, textH);
-    titlePanel.lineStyle(3, 0x6622a6, 1.0);
-    titlePanel.strokeRect(cx - textW / 2, nameText.y - nameText.height - padding / 2, textW, textH);
-    nameText.setDepth(1);
-
-    const hpBar = this._buildBossHealthBar(cx, nameText.y + 36, 600, 42, 0xff3300);
-    hpBar.track?.setAlpha(0);
-    hpBar.fill?.setAlpha(0);
-    if (hpBar.valueText) hpBar.valueText.setAlpha(0);
-
-    this.entitySlots.thirdActor = {
-      sprite,
-      nameText,
-      titlePanel,
-      hpBar,
-      currentHealth: actorData.stats?.maxHealth ?? 0,
-      _data: actorData,
-    };
-  }
-
-  // Fades out all display elements of a slot over fadeDuration ms.
-  // Used when one actor is replaced by the next in swap encounters.
-  _fadeActorSlotOut(slot, fadeDuration = 800) {
-    if (!slot) return;
-
-    const targets = [
-      slot.sprite,
-      slot.nameText,
-      slot.titlePanel,
-      slot.hpBar?.track,
-      slot.hpBar?.fill,
-      slot.hpBar?.valueText,
-    ].filter(Boolean);
-
-    if (targets.length) {
-      this.tweens.add({ targets, alpha: 0, duration: fadeDuration, ease: 'Sine.easeIn' });
-    }
-  }
-
-  // Fades in all display elements of a swap/third actor slot.
-  _fadeActorSlotIn(slot, fadeDuration = 900) {
-    if (!slot) return;
-
-    if (slot.sprite) {
-      const startY = slot.sprite.y - 80;
-      const endY   = slot.sprite.y;
-      slot.sprite.setY(startY);
-      this.tweens.add({
-        targets:  slot.sprite,
-        alpha:    1,
-        y:        endY,
-        duration: fadeDuration,
-        ease:     'Back.easeOut',
-      });
-    }
-
-    const uiTargets = [
-      slot.nameText,
-      slot.titlePanel,
-      slot.hpBar?.track,
-      slot.hpBar?.fill,
-      slot.hpBar?.valueText,
-    ].filter(Boolean);
-
-    if (uiTargets.length) {
-      this.tweens.add({ targets: uiTargets, alpha: 1, duration: fadeDuration, ease: 'Sine.easeOut' });
-    }
   }
 
   // Show or hide all display elements of the second actor.
   // Called when the spawn trigger fires, and on death.
   _setSecondActorVisible(visible) {
-    const slot      = this.entitySlots.secondActor;
-    const isSwap    = !!this.levelData?.secondActor?.swapsWithBoss;
+    const slot = this.entitySlots.secondActor;
     if (!slot) return;
 
-    if (visible && isSwap) {
-      this._fadeActorSlotIn(slot);
-      return;
-    }
+    const alpha = visible ? 1 : 0;
 
-    if (visible && !isSwap) {
-      if (slot.sprite) {
+    if (slot.sprite) {
+      if (visible) {
         slot.sprite.setAlpha(0).setY(slot.sprite.y - 80);
         this.tweens.add({
           targets:  slot.sprite,
@@ -757,14 +576,12 @@ export default class GameScene extends Phaser.Scene {
           duration: 900,
           ease:     'Back.easeOut',
         });
+      } else {
+        slot.sprite.setAlpha(0);
       }
-      return;
     }
 
-    // Hide
-    const alpha = 0;
-    if (slot.sprite)     slot.sprite.setAlpha(alpha);
-    if (slot.nameText)   slot.nameText.setAlpha(alpha);
+    if (slot.nameText)  slot.nameText.setAlpha(alpha);
     if (slot.titlePanel) slot.titlePanel.setAlpha(alpha);
     if (slot.hpBar) {
       slot.hpBar.track?.setAlpha(alpha);
@@ -1005,22 +822,15 @@ export default class GameScene extends Phaser.Scene {
       if (slot.hpBar) this._setBossHealthBar(slot.hpBar, 1.0);
       slot._data = actorData;
 
+      // Hide the slot until the spawn trigger fires, unless there is no trigger.
+      // If there is no trigger the actor is present from the start of the fight
+      // and secondActorSpawned must be set true now so the tick methods run.
       const hasSpawnTrigger = !!actorData.spawnTrigger;
       if (hasSpawnTrigger) {
         this._setSecondActorVisible(false);
       } else {
         this.secondActorSpawned = true;
       }
-    }
-
-    if (data.thirdActor && this.entitySlots.thirdActor) {
-      const slot      = this.entitySlots.thirdActor;
-      const actorData = data.thirdActor;
-      if (slot.nameText) slot.nameText.setText(actorData.name || '???');
-      if (slot.hpBar) slot.hpBar.maxValue = actorData.stats?.maxHealth ?? 0;
-      slot.currentHealth = actorData.stats?.maxHealth ?? 0;
-      if (slot.hpBar) this._setBossHealthBar(slot.hpBar, 1.0);
-      slot._data = actorData;
     }
 
     ['tank', 'healer', 'player'].forEach(id => {
@@ -1671,10 +1481,7 @@ export default class GameScene extends Phaser.Scene {
     this._tickBossAbilities();
     this._tickSecondActorAutoAttack();
     this._tickSecondActorAbilities();
-    this._tickThirdActorAutoAttack();
-    this._tickThirdActorAbilities();
     this._tickSpawnTrigger();
-    this._tickThirdActorSpawnTrigger();
     this._tickPhase();
     this._tickDebuffs();
     this._tickSummonedAdds();
@@ -1703,7 +1510,6 @@ export default class GameScene extends Phaser.Scene {
     if (this.bossIsCasting) return;
     if (this.bossBuffs?.vanished) return;
     if (Date.now() < this.bossAbilityLockoutUntil) return;
-    if (this.activeDamageTargetSlot !== 'boss') return;
 
     const bossData = this.entitySlots.boss?._data;
     if (!bossData) return;
@@ -1729,7 +1535,6 @@ export default class GameScene extends Phaser.Scene {
     if (this.bossIsCasting) return;
     if (this.bossDebuffs?.silenced) return;
     if (this.bossBuffs?.vanished) return;
-    if (this.activeDamageTargetSlot !== 'boss') return;
 
     // Grace period - no special abilities for the first 20 seconds of the fight
     const GRACE_PERIOD_MS = 1000;
@@ -1796,7 +1601,6 @@ export default class GameScene extends Phaser.Scene {
     if (!this.secondActorSpawned) return;
     if (this.bossDialoguePlaying) return;
     if ((this.entitySlots.boss?.currentHealth ?? 0) <= 0) return;
-    if (this.activeDamageTargetSlot !== 'secondActor') return;
 
     const slot = this.entitySlots.secondActor;
     if (!slot?._data) return;
@@ -1836,7 +1640,6 @@ export default class GameScene extends Phaser.Scene {
     if (!this.secondActorSpawned) return;
     if (this.bossDialoguePlaying) return;
     if ((this.entitySlots.boss?.currentHealth ?? 0) <= 0) return;
-    if (this.activeDamageTargetSlot !== 'secondActor') return;
 
     const slot = this.entitySlots.secondActor;
     if (!slot?._data) return;
@@ -1943,24 +1746,15 @@ export default class GameScene extends Phaser.Scene {
   _spawnSecondActor() {
     this.secondActorSpawned = true;
 
-    const actorData     = this.levelData.secondActor;
-    const slot          = this.entitySlots.secondActor;
-    const isSwapEncounter = !!actorData.swapsWithBoss;
+    const actorData = this.levelData.secondActor;
+    const slot      = this.entitySlots.secondActor;
     if (!slot) return;
 
     slot.currentHealth = actorData.stats?.maxHealth ?? 0;
     if (slot.hpBar) slot.hpBar.maxValue = slot.currentHealth;
-    if (slot.hpBar) this._setBossHealthBar(slot.hpBar, 1.0);
+    this._setBossHealthBar(slot.hpBar, 1.0);
 
-    if (isSwapEncounter) {
-      this._fadeActorSlotOut(this.entitySlots.boss, 800);
-      this.time.delayedCall(600, () => {
-        this._setSecondActorVisible(true);
-      });
-      this.activeDamageTargetSlot = 'secondActor';
-    } else {
-      this._setSecondActorVisible(true);
-    }
+    this._setSecondActorVisible(true);
 
     const introLine = actorData.dialogue?.intro ?? (actorData.name + ' joins the fight!');
     const lines     = Array.isArray(introLine) ? introLine : [introLine];
@@ -2019,184 +1813,6 @@ export default class GameScene extends Phaser.Scene {
       this.secondActorResummonCooldownUntil = Date.now() + cooldownMs;
       console.log('[SecondActor] Re-summon cooldown:', cooldownTicks, 'ticks');
     }
-  }
-
-  // =====================================
-  // Third actor spawn trigger checker
-  // =====================================
-  // Checks each tick whether the thirdActor's spawnTrigger condition is met.
-  // Only supported trigger type is second_actor_health_percent.
-  _tickThirdActorSpawnTrigger() {
-    if (!this.levelData?.thirdActor) return;
-    if (this.thirdActorSpawned) return;
-
-    const actorData    = this.levelData.thirdActor;
-    const spawnTrigger = actorData.spawnTrigger;
-    if (!spawnTrigger) return;
-
-    if (spawnTrigger.type === 'second_actor_health_percent') {
-      const slot    = this.entitySlots.secondActor;
-      const maxHp   = slot?.hpBar?.maxValue ?? 1;
-      const current = slot?.currentHealth ?? maxHp;
-      const pct     = current / maxHp;
-      if (pct <= (spawnTrigger.value ?? 25) / 100) {
-        this._spawnThirdActor();
-      }
-    }
-  }
-
-  // Fades the second actor out and fades the third actor in as the final form.
-  _spawnThirdActor() {
-    this.thirdActorSpawned = true;
-
-    const actorData = this.levelData.thirdActor;
-    const slot      = this.entitySlots.thirdActor;
-    if (!slot) return;
-
-    slot.currentHealth = actorData.stats?.maxHealth ?? 0;
-    if (slot.hpBar) slot.hpBar.maxValue = slot.currentHealth;
-    if (slot.hpBar) this._setBossHealthBar(slot.hpBar, 1.0);
-
-    this._fadeActorSlotOut(this.entitySlots.secondActor, 800);
-    this.time.delayedCall(600, () => {
-      this._fadeActorSlotIn(slot, 900);
-    });
-
-    this.activeDamageTargetSlot = 'thirdActor';
-
-    const introLine = actorData.dialogue?.intro ?? (actorData.name + ' joins the fight!');
-    const lines     = Array.isArray(introLine) ? introLine : [introLine];
-    this.showDialogueSequence(lines, '#ff9966');
-
-    console.log('[ThirdActor] Spawned:', actorData.name);
-  }
-
-  // =====================================
-  // Third actor auto-attack
-  // =====================================
-  _tickThirdActorAutoAttack() {
-    if (!this.thirdActorSpawned) return;
-    if (this.bossDialoguePlaying) return;
-    if ((this.entitySlots.boss?.currentHealth ?? 0) <= 0) return;
-    if (this.activeDamageTargetSlot !== 'thirdActor') return;
-
-    const slot = this.entitySlots.thirdActor;
-    if (!slot?._data) return;
-    if ((slot.currentHealth ?? 0) <= 0) return;
-
-    const attackSpeed = Math.round(slot._data.stats?.attackSpeed ?? 3);
-    if (this.tickCount % attackSpeed !== 0) return;
-
-    const damageRange = slot._data.stats?.damageRange ?? [100, 200];
-    const baseDamage  = Phaser.Math.Between(damageRange[0], damageRange[1]);
-    const damage      = Math.round(baseDamage * (this.bossDamageMultiplier ?? 1));
-    const targetId    = this.getHighestThreatTarget();
-
-    this._applyDamageToCharacter(targetId, damage, 'icon_autoAttack', 'physical');
-    this.addThreat('tank', 50);
-    this._updateThreatMeters();
-
-    const actorName  = slot._data.name ?? 'Third Actor';
-    const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
-    console.log('[ThirdActor]', actorName, 'attacks', targetName, 'for', damage);
-
-    const uiScene = this.scene.get('UIScene');
-    if (uiScene?.spawnAbilityBadge) {
-      const bossZone = window.GAME_CONFIG.ZONES.BOSS;
-      uiScene.spawnAbilityBadge(bossZone, 'autoAttack', actorName + ' attacks!');
-    }
-  }
-
-  // =====================================
-  // Third actor ability rotation
-  // =====================================
-  _tickThirdActorAbilities() {
-    if (!this.thirdActorSpawned) return;
-    if (this.bossDialoguePlaying) return;
-    if ((this.entitySlots.boss?.currentHealth ?? 0) <= 0) return;
-    if (this.activeDamageTargetSlot !== 'thirdActor') return;
-
-    const slot = this.entitySlots.thirdActor;
-    if (!slot?._data) return;
-    if ((slot.currentHealth ?? 0) <= 0) return;
-
-    const GRACE_PERIOD_MS         = 1000;
-    const POST_ABILITY_LOCKOUT_MS = 2000;
-
-    if (!this.tickerStartedAt || Date.now() - this.tickerStartedAt < GRACE_PERIOD_MS) return;
-    if (Date.now() < this.thirdActorAbilityLockoutUntil) return;
-
-    const abilityIds = slot._data.abilityIds ?? [];
-    const abilities  = this.levelData?.abilities ?? {};
-    const now        = Date.now();
-
-    for (const abilityId of abilityIds) {
-      const ability = abilities[abilityId];
-      if (!ability) continue;
-      if (!ability.recastTimer || ability.recastTimer <= 0) continue;
-
-      const lastUsed = this.thirdActorAbilityCooldowns[abilityId] ?? 0;
-      const recastMs = ability.recastTimer * 1000;
-
-      if (now - lastUsed >= recastMs) {
-        this.thirdActorAbilityCooldowns[abilityId] = now;
-        this.thirdActorAbilityLockoutUntil = now + POST_ABILITY_LOCKOUT_MS;
-        console.log('[ThirdActor]', slot._data.name, 'uses', ability.name ?? abilityId);
-
-        const uiScene = this.scene.get('UIScene');
-        if (uiScene?.spawnAbilityBadge) {
-          const bossZone = window.GAME_CONFIG.ZONES.BOSS;
-          uiScene.spawnAbilityBadge(bossZone, abilityId, ability.name ?? abilityId);
-        }
-
-        this._fireBossAbility(abilityId, ability);
-        break;
-      }
-    }
-  }
-
-  // =====================================
-  // Third actor damage application
-  // =====================================
-  _applyDamageToThirdActor(damage, iconKey = null, damageType = 'physical') {
-    const slot = this.entitySlots.thirdActor;
-    if (!slot) return;
-    if ((slot.currentHealth ?? 0) <= 0) return;
-
-    if (!DAMAGE_TYPES.has(damageType)) {
-      damageType = 'physical';
-    }
-
-    const resistList  = slot._data?.stats?.resistList ?? {};
-    const finalDamage = this._applyResistReduction(damage, damageType, resistList);
-
-    const maxHealth    = slot.hpBar?.maxValue ?? 1;
-    slot.currentHealth = Math.max(0, (slot.currentHealth ?? maxHealth) - finalDamage);
-
-    const pct = slot.currentHealth / maxHealth;
-    this._setBossHealthBar(slot.hpBar, pct);
-
-    const uiScene = this.scene.get('UIScene');
-    if (uiScene?.spawnFloatingText) {
-      uiScene.spawnFloatingText(window.GAME_CONFIG.ZONES.BOSS, finalDamage, 'damage', iconKey);
-    }
-
-    if (slot.currentHealth <= 0) {
-      this._onThirdActorDeath();
-    }
-  }
-
-  // Called when the third actor reaches 0 HP. This ends the encounter.
-  _onThirdActorDeath() {
-    const slot = this.entitySlots.thirdActor;
-    if (!slot) return;
-
-    slot.currentHealth = 0;
-    this._fadeActorSlotOut(slot, 1200);
-
-    console.log('[ThirdActor] Died -- encounter complete');
-
-    this.playBossDeath();
   }
 
   // =====================================
@@ -3449,19 +3065,7 @@ export default class GameScene extends Phaser.Scene {
   // =====================================
   // Boss damage application
   // =====================================
-  // Routes incoming player damage to whichever actor slot is currently active.
-  // In swap encounters this shifts from boss -> secondActor -> thirdActor.
   _applyDamageToBoss(damage, iconKey = null, damageType = 'physical') {
-    if (this.activeDamageTargetSlot === 'secondActor') {
-      this._applyDamageToSecondActor(damage, iconKey, damageType);
-      return;
-    }
-
-    if (this.activeDamageTargetSlot === 'thirdActor') {
-      this._applyDamageToThirdActor(damage, iconKey, damageType);
-      return;
-    }
-
     const slot = this.entitySlots.boss;
     if (!slot) return;
 
@@ -4347,7 +3951,7 @@ export default class GameScene extends Phaser.Scene {
 
     const saveData     = loadSaveData();
     const selectedRaidId = this.registry.get('selectedRaidId') || 'spookspire_keep';
-    const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot';
+    const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot_and_nighttime';
 
     const updatedSave = recordBossDefeat(saveData, selectedRaidId, selectedBossId);
     this.registry.set('saveData', updatedSave);
