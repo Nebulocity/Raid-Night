@@ -133,7 +133,7 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.spritesheet('boss_sir_trotsalot_idle',      'assets/raids/spookspire_keep/bosses/sir_trotsalot/boss_sir_trotsalot_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('boss_sir_trotsalot_attacking', 'assets/raids/spookspire_keep/bosses/sir_trotsalot/boss_sir_trotsalot_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('boss_nighttime_idle',      'assets/raids/spookspire_keep/bosses/sir_trotsalot/boss_nighttime_idle.webp',           { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('boss_nighttime_attacking', 'assets/raids/spookspire_keep/bosses/sir_trotsalot/boss_nighttime_attacking.webp',  { frameWidth: 384, frameHeight: 384 });\
+    this.load.spritesheet('boss_nighttime_attacking', 'assets/raids/spookspire_keep/bosses/sir_trotsalot/boss_nighttime_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('boss_sir_trotsalot_mounted_idle',      'assets/raids/spookspire_keep/bosses/sir_trotsalot/boss_sir_trotsalot_mounted_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('boss_sir_trotsalot_mounted_attacking',      'assets/raids/spookspire_keep/bosses/sir_trotsalot/boss_sir_trotsalot_mounted_attacking.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('boss_sir_trotsalot_mounted_defeated',  'assets/raids/spookspire_keep/bosses/sir_trotsalot/boss_sir_trotsalot_mounted_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
