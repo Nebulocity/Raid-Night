@@ -31,16 +31,7 @@
         "trigger": { "type": "health_percent", "value": 100 },
         "abilityIds": ["moonlit_hoofstrike"]
       },
-      {
-        "id": "phase_3",
-        "label": "Mounted",
-        "trigger": { "type": "health_percent", "value": 25 },
-        "abilityIds": ["moonlit_hoofstrike"],
-        "onEnter": [
-          { "type": "dialogue", "lines": ["Sir Trotsalot mounts Nighttime!"] },
-          { "type": "modify_stats", "actorId": "boss", "statKey": "attackSpeed", "multiplier": 0.7 }
-        ]
-      }
+
     ],
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
@@ -56,6 +47,7 @@
     "name": "Sir Trotsalot",
     "spriteKey": "boss_sir_trotsalot_idle",
     "spriteScale": 3,
+    "swapsWithBoss": true,
     "stats": {
       "health": 220000,
       "maxHealth": 220000,
@@ -80,6 +72,43 @@
     "animations": {
       "idle": {
         "key": "boss_sir_trotsalot_idle",
+        "startFrame": 0,
+        "endFrame": 10,
+        "frameRate": 6,
+        "repeat": -1
+      }
+    }
+  },
+  "thirdActor": {
+    "id": "nighttime_mounted",
+    "name": "Sir Trotsalot & Nighttime",
+    "spriteKey": "boss_nighttime_mounted_idle",
+    "spriteScale": 3,
+    "stats": {
+      "health": 220000,
+      "maxHealth": 220000,
+      "mana": 0,
+      "maxMana": 0,
+      "usesMana": false,
+      "damageRange": [2500, 4500],
+      "attackSpeed": 2,
+      "armor": 15000,
+      "attackHitChance": 90,
+      "abilityHitChance": 90,
+      "resistList": {
+        "fire": 0, "frost": 0, "nature": 0,
+        "holy": 0, "shadow": 30, "arcane": 0
+      }
+    },
+    "spawnTrigger": { "type": "second_actor_health_percent", "value": 25 },
+    "abilityIds": ["moonlit_hoofstrike", "shadow_cleave", "berserker_charge"],
+    "dialogue": {
+      "intro": ["Sir Trotsalot mounts Nighttime! They fight as one!"],
+      "defeat": ["They fall... as one."]
+    },
+    "animations": {
+      "idle": {
+        "key": "boss_nighttime_mounted_idle",
         "startFrame": 0,
         "endFrame": 10,
         "frameRate": 6,
