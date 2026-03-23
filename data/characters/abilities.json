@@ -215,7 +215,7 @@
     "description": "Heals target for 50% of their max health.",
     "iconId": "salve",
     "manaCost": 350,
-    "recastTicks": 10,
+    "recastTicks": 5,
     "canCrit": true,
     "targetType": "ally_lowest_hp",
     "effects": [
