@@ -115,6 +115,15 @@ export default class GameScene extends Phaser.Scene {
     this.currentEncounterActorIndex  = 0;
     this.firedEncounterSwapIndices   = new Set();
     this.encounterSwapInProgress     = false;
+
+    // Dialogue queue -- entries are played one at a time in arrival order.
+    // Each entry: { type: 'sequence'|'popup', ...args }
+    this.dialogueQueue = [];
+    this.dialogueBusy  = false;
+
+    // Combat log -- append-only array of damage events from boss to characters.
+    // Each entry: { tick, sourceName, abilityName, targetId, damage, damageType, targetHpAfter }
+    this.combatLog = [];
   }
 
   // ======
@@ -164,10 +173,10 @@ export default class GameScene extends Phaser.Scene {
     // Defer threat meter update until after slots are built
     this.time.delayedCall(100, () => this._updateThreatMeters());
 
-    // Show a click-to-start overlay to satisfy browser autoplay policy.
-    // Audio will not play until the user has interacted with the page.
-    // The overlay is invisible but covers the full canvas so any click counts.
-    this._buildAudioUnlockOverlay();
+    // Show the pull countdown overlay immediately. It dims the scene, blocks
+    // all interaction, shows boss intro dialogue, then counts down 5 to 1
+    // before starting the ticker and enabling combat.
+    this._buildPullCountdownOverlay();
   }
 
   // ======
@@ -519,15 +528,15 @@ export default class GameScene extends Phaser.Scene {
 
     nameText.updateText();
 
-    const padding = 16;
-    const textW   = nameText.width + padding * 2;
-    const textH   = nameText.height + padding;
+    const padding  = 16;
+    const textW    = nameText.width + padding * 2;
+    const textH    = nameText.height + padding;
+    const panelY   = nameText.y - nameText.height / 2 - padding / 4;
 
-    const titlePanel = this.add.graphics();
-    titlePanel.fillStyle(0x000000, 0.65);
-    titlePanel.fillRect(cx - textW / 2, nameText.y - nameText.height - padding / 2, textW, textH);
-    titlePanel.lineStyle(3, 0x6622a6, 1.0);
-    titlePanel.strokeRect(cx - textW / 2, nameText.y - nameText.height - padding / 2, textW, textH);
+    const titlePanel = this.add.rectangle(cx, panelY, textW, textH, 0x000000)
+      .setAlpha(0.65)
+      .setStrokeStyle(3, 0x6622a6, 1.0)
+      .setOrigin(0.5, 0.5);
     nameText.setDepth(1);
 
     const hpBar = this._buildBossHealthBar(cx, nameText.y + 36, barW, 42, 0xff3300);
@@ -1221,65 +1230,83 @@ export default class GameScene extends Phaser.Scene {
     if (targetId === 'healer') this.playHealerHit();
   }
 
-  // ====================
-  // AUDIO UNLOCK OVERLAY
-  // ====================
-  // Browsers block audio until the user interacts with the page.
-  // This overlay intercepts the first click/tap anywhere on screen,
-  // plays a silent sound to unlock the audio context, then removes itself.
-  // After this fires, all subsequent sounds play immediately.
-  _buildAudioUnlockOverlay() {
+  // ==========================
+  // PULL COUNTDOWN OVERLAY
+  // ==========================
+  // Shown immediately when the scene loads. Dims the scene, blocks all
+  // interaction, shows boss intro dialogue, then counts down 5 to 1.
+  // Combat starts as soon as "1" fades out.
+  _buildPullCountdownOverlay() {
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
 
-    // Semi-transparent overlay covering the full canvas
-    const overlay = this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.0)
-      .setDepth(999)
+    // Full-screen dim that blocks all pointer events reaching the scene below
+    const blocker = this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.55)
+      .setDepth(90)
       .setInteractive();
 
-    // Small prompt at the bottom so the player knows to tap
-    const prompt = this.add.text(WIDTH / 2, HEIGHT - 160, 'TAP TO BEGIN', {
-      fontFamily: 'monospace',
-      fontSize:   '32px',
-      color:      '#c8a96e',
-      stroke:     '#000000',
-      strokeThickness: 4,
-    }).setOrigin(0.5).setDepth(1000).setAlpha(0);
+    const startCombat = () => {
+      this.tweens.add({
+        targets:  blocker,
+        alpha:    0,
+        duration: 300,
+        onComplete: () => {
+          blocker.destroy();
+          this.bossDialoguePlaying = false;
+          this._startTicker(window.GAME_CONFIG.TICK_MS);
+        },
+      });
+    };
 
-    // Pulse the prompt in and out
-    this.tweens.add({
-      targets:  prompt,
-      alpha:    1,
-      duration: 600,
-      yoyo:     true,
-      repeat:   -1,
-    });
+    const runCountdown = () => {
+      const cx      = WIDTH / 2;
+      const cy      = HEIGHT * 0.50;
+      const steps   = ['Pulling in 5', '4', '3', '2', '1'];
+      const STEP_MS = 1000;
+      const FADE_MS = 150;
+      let   index   = 0;
 
-    overlay.once('pointerdown', () => {
-      overlay.destroy();
-      prompt.destroy();
+      const showStep = () => {
+        const label = steps[index];
+        index++;
 
-      // Play a silent sound to unlock the audio context
-      try {
-        const silentCtx = new AudioContext();
-        const buf = silentCtx.createBuffer(1, 1, 22050);
-        const src = silentCtx.createBufferSource();
-        src.buffer = buf;
-        src.connect(silentCtx.destination);
-        src.start(0);
-        silentCtx.close();
-      } catch (e) {
-        // Not all browsers need this - safe to ignore
-      }
+        const text = this.add.text(cx, cy, label, {
+          fontFamily:      'monospace',
+          fontSize:        index === 1 ? '52px' : '96px',
+          color:           '#a82020',
+          stroke:          '#000000',
+          strokeThickness: 6,
+        }).setOrigin(0.5).setAlpha(0).setDepth(91);
 
-      if (window.GAME_CONFIG.DEBUG_SKIP_INTRO) {
-        // Clear the dialogue flag that init() set to true, then start immediately
-        this.bossDialoguePlaying = false;
-        this._startTicker(window.GAME_CONFIG.TICK_MS);
-      } else {
-        // Full intro - dialogue sequence will clear the flag and start the ticker
-        this._showBossDialogue();
-      }      
-    });
+        this.tweens.add({
+          targets:  text,
+          alpha:    1,
+          duration: FADE_MS,
+          onComplete: () => {
+            this.time.delayedCall(STEP_MS - FADE_MS * 2, () => {
+              this.tweens.add({
+                targets:  text,
+                alpha:    0,
+                duration: FADE_MS,
+                onComplete: () => {
+                  text.destroy();
+                  if (index < steps.length) {
+                    showStep();
+                  } else {
+                    startCombat();
+                  }
+                },
+              });
+            });
+          },
+        });
+      };
+
+      showStep();
+    };
+
+    // Show boss intro dialogue first if any lines exist, then run the countdown.
+    // If there are no intro lines, go straight to the countdown.
+    this._showBossDialogue(runCountdown);
   }
 
   // ================
@@ -1288,26 +1315,24 @@ export default class GameScene extends Phaser.Scene {
 
   // Show the boss opening dialogue sequence on level load.
   // openingDialogue in the JSON can be a string or an array of strings.
-  _showBossDialogue() {
+  _showBossDialogue(onComplete = null) {
     const raw   = this.levelData?.boss?.dialog?.intro
                   || this.levelData?.boss?.openingDialogue
-                  || 'YOU DARE CHALLENGE ME?!';
-    const fadeMs = 350;
-    const lines = Array.isArray(raw) ? raw : [raw];
-    const holdMs = this.levelData?.boss?.audioDuration ?? 6000;
-    const holdPerLine = Math.max(500, (holdMs / lines.length) - (fadeMs * 2));
+                  || '';
+    const lines = Array.isArray(raw) ? raw.filter(l => l.length > 0) : (raw ? [raw] : []);
 
-    // TODO: Uncomment this
     this._playSound(this.levelData?.boss?.openingSound);
 
-    // Pass an onComplete callback so the ticker starts only after
-    // the last intro line finishes - guaranteeing no overlap.
-    // this.showDialogueSequence(lines, '#ff9944', holdPerLine, 350, () => {
-    //   const delay = window.GAME_CONFIG.TICK_MS;
-    //   console.log('[GameScene] Intro finished - starting ticker, delay:', delay, 'ms');
-    //   this._startTicker(delay);
-    // });
+    if (!lines.length) {
+      if (onComplete) onComplete();
+      return;
+    }
 
+    const fadeMs      = 350;
+    const holdMs      = this.levelData?.boss?.audioDuration ?? 6000;
+    const holdPerLine = Math.max(500, (holdMs / lines.length) - (fadeMs * 2));
+
+    this.showDialogueSequence(lines, '#ff9944', holdPerLine, fadeMs, onComplete);
   }
 
   // Show dialogue triggered by a phase change.
@@ -1349,31 +1374,66 @@ export default class GameScene extends Phaser.Scene {
 
   // ==============================================
   showDialogueSequence(lines, color = '#ffffff', holdMs = 2200, fadeMs = 350, onComplete = null) {
-    if (!lines || lines.length === 0) return;
+    if (!lines || lines.length === 0) {
+      if (onComplete) onComplete();
+      return;
+    }
+    this.dialogueQueue.push({ type: 'sequence', lines, color, holdMs, fadeMs, onComplete });
+    this._drainDialogueQueue();
+  }
 
-    // Block boss abilities from firing while this sequence plays
+  showPopup(message, color = '#ffffff', duration = 2500) {
+    this.dialogueQueue.push({ type: 'popup', message, color, duration });
+    this._drainDialogueQueue();
+  }
+
+  _drainDialogueQueue() {
+    if (this.dialogueBusy || this.dialogueQueue.length === 0) return;
+
+    const entry = this.dialogueQueue.shift();
+    this.dialogueBusy = true;
+
+    const done = () => {
+      this.dialogueBusy = false;
+      this._drainDialogueQueue();
+    };
+
+    if (entry.type === 'sequence') {
+      this._showDialogueSequenceNow(
+        entry.lines, entry.color, entry.holdMs, entry.fadeMs,
+        () => { if (entry.onComplete) entry.onComplete(); done(); }
+      );
+    } else {
+      this._showPopupNow(entry.message, entry.color, entry.duration, done);
+    }
+  }
+
+  // =======================
+  // Internal display methods -- call showDialogueSequence / showPopup instead.
+  // =======================
+  _showDialogueSequenceNow(lines, color = '#ffffff', holdMs = 2200, fadeMs = 350, onComplete = null) {
+    if (!lines || lines.length === 0) {
+      if (onComplete) onComplete();
+      return;
+    }
+
     this.bossDialoguePlaying = true;
 
     const zone = window.GAME_CONFIG.ZONES.POPUP;
     const cx   = zone.x + zone.w / 2;
     const cy   = zone.y + zone.h / 2;
 
-    // One persistent panel for the whole sequence
     const panel = this.add.rectangle(cx, cy - 250, zone.w, zone.h, 0x000000, 0.78)
       .setStrokeStyle(2, 0xff4400, 0.85)
       .setAlpha(0)
       .setDepth(80);
 
-    // Fade panel in once, it stays until all lines are done
     this.tweens.add({ targets: panel, alpha: 1, duration: fadeMs });
 
-    // Play each line sequentially
     let lineIndex = 0;
 
     const showNext = () => {
       if (lineIndex >= lines.length) {
-        // All lines done - fade panel out, destroy, unblock boss abilities,
-        // and call onComplete if provided (used to start the ticker).
         this.tweens.add({
           targets: panel, alpha: 0, duration: fadeMs,
           onComplete: () => {
@@ -1398,7 +1458,6 @@ export default class GameScene extends Phaser.Scene {
         strokeThickness: 3,
       }).setOrigin(0.5).setAlpha(0).setDepth(81);
 
-      // Fade this line in, hold, fade out, then trigger next
       this.tweens.add({
         targets:  text,
         alpha:    1,
@@ -1411,7 +1470,6 @@ export default class GameScene extends Phaser.Scene {
               duration: fadeMs,
               onComplete: () => {
                 text.destroy();
-                // Small gap between lines
                 this.time.delayedCall(150, showNext);
               },
             });
@@ -1423,8 +1481,7 @@ export default class GameScene extends Phaser.Scene {
     showNext();
   }
 
-  // Simple single-message popup for system events (not boss dialogue).
-  showPopup(message, color = '#ffffff', duration = 2500) {
+  _showPopupNow(message, color = '#ffffff', duration = 2500, onComplete = null) {
     const zone = window.GAME_CONFIG.ZONES.POPUP;
     const cx   = zone.x + zone.w / 2;
     const cy   = zone.y + zone.h / 2;
@@ -1439,7 +1496,11 @@ export default class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: [panel, text], alpha: 1, duration: 250 });
     this.tweens.add({
       targets: [panel, text], alpha: 0, duration: 400, delay: duration,
-      onComplete: () => { panel.destroy(); text.destroy(); },
+      onComplete: () => {
+        panel.destroy();
+        text.destroy();
+        if (onComplete) onComplete();
+      },
     });
   }
 
@@ -1518,6 +1579,7 @@ export default class GameScene extends Phaser.Scene {
     this.gameRunning = true;
     this.tickerStartedAt = Date.now();
     console.log('[GameScene] Tick started, delay:', delay, 'ms');
+    this.events.emit('combat-start');
     this.tickTimer = this.time.addEvent({
       delay: delay, loop: true,
       callback: this._tick, callbackScope: this,
@@ -2380,6 +2442,8 @@ export default class GameScene extends Phaser.Scene {
 
     slot.currentHealth = Math.max(0, (slot.currentHealth ?? maxHealth) - finalDamage);
 
+    this._logBossDamage(iconKey, characterId, finalDamage, damageType, slot.currentHealth);
+
     const pct = slot.currentHealth / maxHealth;
     this._setHealthBar(slot.hpBar, pct);
 
@@ -2427,13 +2491,64 @@ export default class GameScene extends Phaser.Scene {
       3000
     );
 
-    // If the player dies, end the game
     if (characterId === 'player') {
+      this.events.emit('player-dead');
+    }
+
+    const allDead = ['player', 'tank', 'healer'].every(
+      id => (this.entitySlots[id]?.currentHealth ?? 0) <= 0
+    );
+
+    if (allDead) {
       this.time.delayedCall(2000, () => {
         this.showPopup('DEFEAT', '#ff2222', 3000);
         this._onPartyWiped();
       });
     }
+  }
+
+  // =====================================
+  // Combat log
+  // =====================================
+  // Appends one entry per boss-to-character damage event.
+  // abilityName is derived from iconKey (strips 'icon_' prefix), then looked
+  // up in levelData.abilities for a human-readable name. Falls back to
+  // 'Auto Attack' for autoAttack and the raw id for anything unrecognised.
+  _logBossDamage(iconKey, targetId, damage, damageType, targetHpAfter) {
+    if (damage <= 0) return;
+
+    const rawId      = iconKey ? iconKey.replace(/^icon_/, '') : 'autoAttack';
+    const isAutoAtk  = rawId === 'autoAttack';
+    const abilityDef = this.levelData?.abilities?.[rawId];
+    const abilityName = isAutoAtk
+      ? 'Auto Attack'
+      : (abilityDef?.name ?? rawId);
+
+    const sourceName = this._getActiveActorData()?.name ?? 'Boss';
+    const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
+
+    const entry = {
+      tick:          this.tickCount,
+      sourceName,
+      abilityName,
+      damageType,
+      targetId,
+      targetName,
+      damage,
+      targetHpAfter: Math.round(targetHpAfter),
+    };
+
+    this.combatLog.push(entry);
+    this.events.emit('combat-log-entry', entry);
+
+    console.log(
+      '[CombatLog] T' + entry.tick +
+      ' | ' + sourceName +
+      ' -> ' + targetName +
+      ' | ' + abilityName +
+      ' | ' + damage + ' ' + damageType +
+      ' | HP left: ' + entry.targetHpAfter
+    );
   }
 
   // =====================================
@@ -4531,6 +4646,15 @@ export default class GameScene extends Phaser.Scene {
 
         if (slot.nameText) {
           slot.nameText.setText(incomingActor.name ?? '???');
+          slot.nameText.updateText();
+
+          if (slot.titlePanel) {
+            const swapPadding = 16;
+            slot.titlePanel.setSize(
+              slot.nameText.width + swapPadding * 2,
+              slot.nameText.height + swapPadding
+            );
+          }
         }
 
         const newSpriteKey   = incomingActor.spriteKey;
@@ -4628,14 +4752,12 @@ export default class GameScene extends Phaser.Scene {
       });
     }
 
-    // titlePanel is a Graphics object drawn at absolute coordinates and cannot
-    // be repositioned by tweening x without a full redraw. Fade it out instead.
     if (slot.titlePanel) {
       this.tweens.add({
         targets:  slot.titlePanel,
-        alpha:    0,
-        duration: 400,
-        ease:     'Sine.easeIn',
+        x:        targetX,
+        duration: 600,
+        ease:     'Sine.easeInOut',
       });
     }
 

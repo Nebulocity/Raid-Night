@@ -44,9 +44,9 @@ export default class UIScene extends Phaser.Scene {
     this.lbLocked        = false;
     // Buff bar slot objects per character: { player, tank, healer }
     this.buffBars        = {};
-    // Boss cast bar objects -- built once, shown/hidden as needed
-    this.bossCastBar     = null;
-    this.bossCastTween   = null;
+    // Tracks the currently displayed ability badge per caster zone key.
+    // When a new badge arrives for the same zone, the old one is destroyed first.
+    this.activeBadges    = {};
   }
 
   // ======
@@ -89,6 +89,17 @@ export default class UIScene extends Phaser.Scene {
 
     const gameScene = this.scene.get('GameScene');
     if (gameScene) {
+      // Block all action bar input until GameScene signals combat has started.
+      // This prevents the player from firing abilities during the pull countdown.
+      const { WIDTH, HEIGHT } = window.GAME_CONFIG;
+      const inputBlocker = this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0)
+        .setDepth(999)
+        .setInteractive();
+
+      gameScene.events.once('combat-start', () => {
+        inputBlocker.destroy();
+      });
+
       gameScene.events.on('tick', (count) => {
         this.tickCount = count;
         if (this._tickLabel) this._tickLabel.setText('TICK ' + count);
@@ -105,6 +116,10 @@ export default class UIScene extends Phaser.Scene {
       gameScene.events.on('player-debuff-update', (debuffs) => {
         const locked = !!(debuffs?.stun || debuffs?.silence);
         this._setSpellButtonsLocked(locked);
+      });
+
+      gameScene.events.once('player-dead', () => {
+        this._setSpellButtonsLocked(true);
       });
     }
 
@@ -425,30 +440,41 @@ export default class UIScene extends Phaser.Scene {
   }
 
   // spawnAbilityBadge
-  // Shows a floating "[icon] Spell Name" badge on the caster for 2 seconds.
-  // zone     - GAME_CONFIG zone of the caster
-  // abilityId - e.g. 'regrowth', used to derive icon key and label
-  // label    - display name of the ability
+  // Shows a "[icon] Spell Name" badge just above the caster's head.
+  // If a badge is already showing for this caster, it is replaced immediately.
+  // On exit the badge grows vertically, falls, and fades out.
   spawnAbilityBadge(zone, abilityId, label) {
-    const iconKey  = 'icon_' + abilityId;
-    const hasIcon  = this.textures.exists(iconKey);
+    const iconKey   = 'icon_' + abilityId;
+    const hasIcon   = this.textures.exists(iconKey);
     const ICON_SIZE = 56;
 
     const cx = zone.x + zone.w / 2;
-    // Stagger badges the same way as floating text
+    const cy = zone.y + zone.h - 400;
+
     const badgeKey = 'badge_' + zone.x + '_' + zone.y;
-    const bOffset  = (this.floatOffsets[badgeKey] ?? 0);
-    this.floatOffsets[badgeKey] = (bOffset + 58) % 116;
-    const cy = zone.y + 60 + bOffset;
+
+    if (this.activeBadges[badgeKey]) {
+      const oldObjects = this.activeBadges[badgeKey];
+      this.activeBadges[badgeKey] = null;
+      this.tweens.add({
+        targets:  oldObjects,
+        alpha:    0,
+        scaleY:   1.8,
+        y:        '+=55',
+        duration: 420,
+        ease:     'Sine.easeIn',
+        onComplete: () => oldObjects.forEach(o => { try { o.destroy(); } catch (e) {} }),
+      });
+    }
 
     const objects = [];
 
-    // Dark pill background
     const bgW   = hasIcon ? ICON_SIZE + 12 + (label.length * 14) + 20 : (label.length * 14) + 20;
     const bgH   = 52;
-    const panel = this.add.graphics().setDepth(48);
-    panel.fillStyle(0x000000, 0.72);
-    panel.fillRoundedRect(cx - bgW / 2, cy - bgH / 2, bgW, bgH, 10);
+
+    const panel = this.add.rectangle(cx, cy, bgW, bgH, 0x000000)
+      .setAlpha(0.72)
+      .setDepth(48);
     objects.push(panel);
 
     let textX = cx;
@@ -465,28 +491,36 @@ export default class UIScene extends Phaser.Scene {
     }
 
     const nameText = this.add.text(textX, cy, label, {
-      fontFamily: 'monospace',
-      fontSize:   '26px',
-      color:      '#ffffff',
-      stroke:     '#000000',
+      fontFamily:      'monospace',
+      fontSize:        '26px',
+      color:           '#ffffff',
+      stroke:          '#000000',
       strokeThickness: 3,
     }).setOrigin(hasIcon ? 0 : 0.5, 0.5).setDepth(49).setAlpha(0);
     objects.push(nameText);
 
+    this.activeBadges[badgeKey] = objects;
+
     // Fade in
     this.tweens.add({
-      targets:  objects.slice(1),  // fade icon and text (not graphics panel)
+      targets:  objects,
       alpha:    1,
       duration: 180,
     });
 
-    // Hold then fade out
+    // Hold then exit: grow tall, fall, fade
     this.time.delayedCall(1800, () => {
+      if (this.activeBadges[badgeKey] === objects) {
+        this.activeBadges[badgeKey] = null;
+      }
       this.tweens.add({
         targets:  objects,
         alpha:    0,
-        duration: 300,
-        onComplete: () => objects.forEach(o => o.destroy()),
+        scaleY:   1.8,
+        y:        '+=55',
+        duration: 420,
+        ease:     'Sine.easeIn',
+        onComplete: () => objects.forEach(o => { try { o.destroy(); } catch (e) {} }),
       });
     });
   }
