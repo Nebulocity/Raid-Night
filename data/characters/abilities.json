@@ -53,8 +53,8 @@
     "class": "paladin",
     "description": "Moderate holy strike against the current boss.",
     "iconId": "verdict_of_wisdom",
-    "manaCost": 135,
-    "recastTicks": 0,
+    "manaCost": 0,
+    "recastTicks": 2,
     "canCrit": true,
     "targetType": "single_boss",
     "effects": [
@@ -64,6 +64,10 @@
         "min": 600,
         "max": 1550,
         "target": "current_target"
+      },
+      {
+        "type": "restore_mana",
+        "amount": 1500
       }
     ]
   },
