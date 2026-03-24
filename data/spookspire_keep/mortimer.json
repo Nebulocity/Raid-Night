@@ -9,8 +9,8 @@
     "id": "mortimer",
     "name": "Mortimer",
     "stats": {
-      "health": 300000,
-      "maxHealth": 300000,
+      "health": 400000,
+      "maxHealth": 400000,
       "mana": 0,
       "maxMana": 0,
       "usesMana": false,
@@ -61,7 +61,7 @@
     "audioDuration": 4000,
     "dialog": {
       "intro": ["Hm, unannounced visitors. Preparations must be made..."],
-      "defeat": ["Time... never enough time."],
+      "defeat": [],
       "victory": ["Victory!"]
     },
     "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
@@ -164,7 +164,7 @@
         "durationTicks": 8,
         "dispellable": false
       },
-      "dialogue": "Mortimer gouges the tank! He turns to a new target!",
+      "dialogue": "Mortimer uses Gouge! He turns to a new target!",
       "audioDuration": 2000
     },
     "mortimer_berserk_dagger": {
@@ -173,8 +173,8 @@
       "damageType": "physical",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 1500,
-      "immediateMax": 2700,
+      "immediateMin": 2500,
+      "immediateMax": 3700,
       "duration": 0,
       "recastTimer": 10,
       "targetType": "random_ally",
@@ -189,8 +189,8 @@
       "targetType": "highest_mana",
       "applyDebuff": {
         "id": "mana_burn",
-        "manaBurnPercent": 3,
-        "manaBurnDamageMultiplier": 3,
+        "manaBurnPercent": 5,
+        "manaBurnDamageMultiplier": 2,
         "dispellable": false
       },
       "dialogue": "Baroness Silvania burns your mana!",
@@ -203,8 +203,8 @@
       "immediateFlag": false,
       "duration": 12,
       "tickEffect": { "type": "damage" },
-      "tickMin": 1667,
-      "tickMax": 1667,
+      "tickMin": 1800,
+      "tickMax": 1800,
       "recastTimer": 12,
       "targetType": "random_ally",
       "applyDebuff": {
@@ -241,8 +241,8 @@
       "damageType": "physical",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 2000,
-      "immediateMax": 3000,
+      "immediateMin": 3000,
+      "immediateMax": 3800,
       "duration": 0,
       "recastTimer": 24,
       "targetType": "highest_threat",
