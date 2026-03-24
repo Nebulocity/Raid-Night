@@ -2895,6 +2895,31 @@ export default class GameScene extends Phaser.Scene {
           break;
         }
 
+        case 'restore_mana': {
+          for (const tid of targets.filter(t => t !== 'boss')) {
+            
+            const slot = this.entitySlots[tid];
+            if (!slot) continue;
+            
+            const maxMana = slot.manaBar?.maxValue ?? 0;
+            if (maxMana <= 0) continue;
+            
+            const amount = eff.amountPct ? Math.round(maxMana * eff.amountPct) : (eff.amount ?? 0);
+            
+            slot.currentMana = Math.min(maxMana, (slot.currentMana ?? maxMana) + amount);
+            this._setManaBar(slot.manaBar, slot.currentMana / maxMana);
+            
+            const uiScene = this.scene.get('UIScene');
+            
+            if (uiScene?.spawnFloatingText) {
+              const zone = window.GAME_CONFIG.ZONES[tid.toUpperCase()] ?? window.GAME_CONFIG.ZONES.PLAYER;
+              uiScene.spawnFloatingText(zone, amount, 'mana', iconKey);
+            }
+            console.log('[' + casterId + '] restore_mana -> ' + tid + ' +' + amount);
+          }
+          break;
+        }
+          
         default:
           console.warn('[GameScene] Unknown effect type:', eff.type, 'on', ability.id);
       }
