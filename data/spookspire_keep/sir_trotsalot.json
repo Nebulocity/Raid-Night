@@ -13,13 +13,13 @@
       "spriteKey": "nighttime_idle",
       "spriteScale": 3,
       "stats": {
-        "health": 220000,
-        "maxHealth": 220000,
+        "health": 200000,
+        "maxHealth": 200000,
         "mana": 0,
         "maxMana": 0,
         "usesMana": false,
-        "damageRange": [2000, 4000],
-        "attackSpeed": 3,
+        "damageRange": [1500, 3500],
+        "attackSpeed": 2,
         "armor": 12000,
         "attackHitChance": 90,
         "abilityHitChance": 90,
@@ -31,7 +31,7 @@
       "abilityIds": ["moonlit_hoofstrike"],
       "swapTrigger": { "type": "health_percent", "value": 50 },
       "onSwap": [
-        { "type": "dialogue", "lines": ["Nighttime fades into the darkness..."] }
+        { "type": "dialogue", "lines": ["Nighttime calls for her master, Sir Trotsalot!"] }
       ],
       "animations": {
         "idle": {
@@ -50,13 +50,13 @@
       "spriteKey": "sir_trotsalot_idle",
       "spriteScale": 3,
       "stats": {
-        "health": 220000,
-        "maxHealth": 220000,
+        "health": 300000,
+        "maxHealth": 300000,
         "mana": 0,
         "maxMana": 0,
         "usesMana": false,
-        "damageRange": [900, 1500],
-        "attackSpeed": 3,
+        "damageRange": [2000, 4000],
+        "attackSpeed": 2,
         "armor": 14000,
         "attackHitChance": 90,
         "abilityHitChance": 90,
@@ -65,10 +65,10 @@
           "holy": 0, "shadow": 25, "arcane": 0
         }
       },
-      "abilityIds": ["shadow_cleave", "intangible_presence", "berserker_charge"],
+      "abilityIds": ["shadow_cleave", "intangible_presence"],
       "swapTrigger": { "type": "health_percent", "value": 25 },
       "onSwap": [
-        { "type": "dialogue", "lines": ["Sir Trotsalot mounts Nighttime! They fight as one!"] }
+        { "type": "dialogue", "lines": ["Sir Trotsalot leaps into the air and mounts Nighttime!"] }
       ],
       "animations": {
         "idle": {
@@ -87,13 +87,13 @@
       "spriteKey": "sir_trotsalot_mounted_idle",
       "spriteScale": 3,
       "stats": {
-        "health": 220000,
-        "maxHealth": 220000,
+        "health": 500000,
+        "maxHealth": 500000,
         "mana": 0,
         "maxMana": 0,
         "usesMana": false,
-        "damageRange": [2500, 4500],
-        "attackSpeed": 2,
+        "damageRange": [1000, 3500],
+        "attackSpeed": 1,
         "armor": 15000,
         "attackHitChance": 90,
         "abilityHitChance": 90,
@@ -102,7 +102,7 @@
           "holy": 0, "shadow": 30, "arcane": 0
         }
       },
-      "abilityIds": ["moonlit_hoofstrike", "shadow_cleave", "berserker_charge"],
+      "abilityIds": ["moonlit_hoofstrike", "shadow_cleave", "intangible_presence", "berserker_charge"],
       "animations": {
         "idle": {
           "key": "sir_trotsalot_mounted_idle",
@@ -121,13 +121,13 @@
     "name": "Nighttime",
     "spriteKey": "nighttime_idle",
     "stats": {
-      "health": 220000,
-      "maxHealth": 220000,
+      "health": 200000,
+      "maxHealth": 200000,
       "mana": 0,
       "maxMana": 0,
       "usesMana": false,
-      "damageRange": [2000, 4000],
-      "attackSpeed": 3,
+      "damageRange": [1500, 3500],
+      "attackSpeed": 2,
       "armor": 12000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
@@ -140,9 +140,9 @@
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": ["Nighttime rears up in the darkness!"],
+      "intro": ["An undead horse stands in her stable, eating flesh from a dead adventurer...", "Nighttime rears up and attacks!"],
       "defeat": ["They fall... as one."],
-      "victory": ["Victory."]
+      "victory": ["Victory!"]
     },
     "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
   },
@@ -157,9 +157,9 @@
       "immediateMin": 2200,
       "immediateMax": 3400,
       "duration": 0,
-      "recastTimer": 16,
+      "recastTimer": 5,
       "targetType": "highest_threat",
-      "dialogue": "Nighttime's hooves crash down with spectral force!",
+      "dialogue": null,
       "audioDuration": 2000
     },
     "shadow_cleave": {
@@ -171,9 +171,9 @@
       "immediateMin": 3000,
       "immediateMax": 5000,
       "duration": 0,
-      "recastTimer": 6,
+      "recastTimer": 10,
       "targetType": "highest_threat",
-      "dialogue": "Sir Trotsalot cleaves through the shadows!",
+      "dialogue": "Sir Trotsalot cleaves!",
       "audioDuration": 2000
     },
     "intangible_presence": {
@@ -190,7 +190,7 @@
         "dispellable": true,
         "dispelType": "magic"
       },
-      "dialogue": "Sir Trotsalot's presence unnerves the entire party!",
+      "dialogue": null,
       "audioDuration": 2000
     },
     "berserker_charge": {
@@ -199,8 +199,8 @@
       "damageType": "physical",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 1500,
-      "immediateMax": 3200,
+      "immediateMin": 2500,
+      "immediateMax": 4200,
       "duration": 0,
       "recastTimer": 24,
       "targetType": "random_ally",
