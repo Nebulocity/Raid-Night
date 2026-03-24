@@ -1153,7 +1153,7 @@ export default class GameScene extends Phaser.Scene {
   //   - Attack is fully negated (caller returns early)
   //   - BLOCK floating text shown on character zone
   //   - If Holy Shield is active (tank): deal blockDamage to boss,
-  //     generate 135% threat, consume one charge.
+  //     generate 200% threat, consume one charge.
   //     If that was the last charge, deactivate Holy Shield.
   //
   // Returns true if the attack was blocked.
@@ -1196,12 +1196,12 @@ export default class GameScene extends Phaser.Scene {
       const hs = slot.holyShield;
 
       // Deal block damage back to the boss
-      const blockDmg    = hs.blockDamage ?? 59;
+      const blockDmg    = hs.blockDamage ?? 590;
       const iconKey     = this.textures.exists('icon_holy_shield') ? 'icon_holy_shield' : null;
       this._applyDamageToBoss(blockDmg, iconKey);
 
       // Generate threat from block
-      const blockThreat = Math.round(blockDmg * (hs.blockThreatMultiplier ?? 1.35));
+      const blockThreat = Math.round(blockDmg * (hs.blockThreatMultiplier ?? 2));
       this.addThreat('tank', blockThreat);
       this._updateThreatMeters();
 
@@ -3052,7 +3052,7 @@ export default class GameScene extends Phaser.Scene {
   //
   //  1. Awaken         -- any dead ally, always
   //  2. Spike response -- anyone dropped >30% HP since last tick OR is below 20%:
-  //                       cash Spirit Surge first if a HoT is running on them,
+  //                       cast Spirit Surge first if a HoT is running on them,
   //                       then Renew on the most critical target
   //  3. Critical       -- anyone below 25%: Spirit Surge if HoT active, else Renew
   //  4. OOM guard      -- healer mana <15%: skip all mana-costing spells
@@ -4101,11 +4101,11 @@ export default class GameScene extends Phaser.Scene {
     // as a separate array so the designer can reorder without touching this code.
     const priorityOrder = [
       'provoke',               // set-max threat -- use whenever off cooldown
-      'verdict_of_prejudice',  // highest damage
-      'verdict_of_righteousness',
+      'sacred_bulwark',        // defensive, use when available
       'sanctify',              // AoE holy damage
-      'verdict_of_wisdom',     // spammable filler
-      'sacred_bulwark',        // defensive -- use when available
+      'verdict_of_prejudice',  // highest damage
+      'verdict_of_wisdom',     // Spammable ability to restore tank mana
+      'verdict_of_righteousness', // Damage filler
     ];
 
     // Filter to only abilities this character actually has
