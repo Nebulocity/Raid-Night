@@ -32,8 +32,7 @@
         "abilityIds": [
           "mortimer_vanish",
           "mortimer_blind",
-          "mortimer_gouge",
-          "mortimer_berserk_dagger"
+          "mortimer_gouge"
         ]
       },
       {
@@ -174,10 +173,10 @@
       "damageType": "physical",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 2000,
-      "immediateMax": 4000,
+      "immediateMin": 1500,
+      "immediateMax": 2700,
       "duration": 0,
-      "recastTimer": 14,
+      "recastTimer": 10,
       "targetType": "random_ally",
       "dialogue": "Mortimer berserks and hurls a dagger!",
       "audioDuration": 1500
@@ -190,7 +189,7 @@
       "targetType": "highest_mana",
       "applyDebuff": {
         "id": "mana_burn",
-        "manaBurnPercent": 2,
+        "manaBurnPercent": 3,
         "manaBurnDamageMultiplier": 3,
         "dispellable": false
       },
@@ -223,8 +222,8 @@
       "damageType": "physical",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 3500,
-      "immediateMax": 3500,
+      "immediateMin": 1500,
+      "immediateMax": 2500,
       "duration": 0,
       "recastTimer": 24,
       "targetType": "second_highest_threat",
@@ -242,8 +241,8 @@
       "damageType": "physical",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 6000,
-      "immediateMax": 6000,
+      "immediateMin": 2000,
+      "immediateMax": 3000,
       "duration": 0,
       "recastTimer": 24,
       "targetType": "highest_threat",
