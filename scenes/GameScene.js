@@ -3809,7 +3809,12 @@ export default class GameScene extends Phaser.Scene {
   addThreat(characterId, amount) {
     if (!this.threatTable) this._initThreatTable();
     if (this.threatTable[characterId] !== undefined) {
-      this.threatTable[characterId] += amount;
+      if (characterId == "tank") {
+        this.threatTable[characterId] += (amount * 3);
+      }
+      else {
+        this.threatTable[characterId] += amount;
+      }
     }
   }
 
