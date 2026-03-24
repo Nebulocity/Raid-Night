@@ -74,7 +74,7 @@
     "projector_vortex": {
       "id": "projector_vortex",
       "name": "Projector Vortex",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -99,7 +99,7 @@
     "cacklefire": {
       "id": "cacklefire",
       "name": "Cacklefire",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {

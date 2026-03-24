@@ -12,19 +12,19 @@
     },
     "spritesheets": [
       {
-        "key": "boss_magtheridax_idle",
+        "key": "magtheridax_idle",
         "path": "assets/raids/the_basement_demon/bosses/magtheridax/magtheridax_idle.webp",
         "frameWidth": 256,
         "frameHeight": 256
       },
       {
-        "key": "boss_magtheridax_attacking",
+        "key": "magtheridax_attacking",
         "path": "assets/raids/the_basement_demon/bosses/magtheridax/magtheridax_attacking.webp",
         "frameWidth": 256,
         "frameHeight": 256
       },
       {
-        "key": "boss_magtheridax_defeated",
+        "key": "magtheridax_defeated",
         "path": "assets/raids/the_basement_demon/bosses/magtheridax/magtheridax_defeated.web",
         "frameWidth": 256,
         "frameHeight": 256
@@ -96,25 +96,25 @@
       "tank": 0,
       "healer": 0
     },
-    "spriteKey": "boss_magtheridax_idle",
+    "spriteKey": "magtheridax_idle",
     "spriteScale": 3,
     "animations": {
       "idle": {
-        "key": "boss_magtheridax_idle",
+        "key": "magtheridax_idle",
         "startFrame": 0,
         "endFrame": 9,
         "frameRate": 6,
         "repeat": -1
       },
       "attack": {
-        "key": "boss_magtheridax_attacking",
+        "key": "magtheridax_attacking",
         "startFrame": 0,
         "endFrame": 15,
         "frameRate": 12,
         "repeat": 0
       },
       "defeated": {
-        "key": "boss_magtheridax_defeated",
+        "key": "magtheridax_defeated",
         "startFrame": 0,
         "endFrame": 15,
         "frameRate": 10,
@@ -192,7 +192,7 @@
     "fel_frustration": {
       "id": "fel_frustration",
       "name": "Fel Frustration",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -213,7 +213,7 @@
     "demonic_tantrum": {
       "id": "demonic_tantrum",
       "name": "Demonic Tantrum",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -237,7 +237,7 @@
     "exasperated_void_bolt": {
       "id": "exasperated_void_bolt",
       "name": "Exasperated Void Bolt",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {

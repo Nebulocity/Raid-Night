@@ -12,20 +12,20 @@
     },
     "spritesheets": [
       {
-        "key": "boss_high_chief_bonkgar_idle",
-        "path": "assets/raids/the_cracked_mountain/bosses/high_chief_bonkgar/boss_high_chief_bonkgar_idle.webp",
+        "key": "high_chief_bonkgar_idle",
+        "path": "assets/raids/the_cracked_mountain/bosses/high_chief_bonkgar/high_chief_bonkgar_idle.webp",
         "frameWidth": 256,
         "frameHeight": 256
       },
       {
-        "key": "boss_high_chief_bonkgar_attacking",
-        "path": "assets/raids/the_cracked_mountain/bosses/high_chief_bonkgar/boss_high_chief_bonkgar_attacking.webp",
+        "key": "high_chief_bonkgar_attacking",
+        "path": "assets/raids/the_cracked_mountain/bosses/high_chief_bonkgar/high_chief_bonkgar_attacking.webp",
         "frameWidth": 256,
         "frameHeight": 256
       },
       {
-        "key": "boss_high_chief_bonkgar_defeated",
-        "path": "assets/raids/the_cracked_mountain/bosses/high_chief_bonkgar/boss_high_chief_bonkgar_defeated.webp",
+        "key": "high_chief_bonkgar_defeated",
+        "path": "assets/raids/the_cracked_mountain/bosses/high_chief_bonkgar/high_chief_bonkgar_defeated.webp",
         "frameWidth": 256,
         "frameHeight": 256
       }
@@ -96,25 +96,25 @@
       "tank": 0,
       "healer": 0
     },
-    "spriteKey": "boss_high_chief_bonkgar_idle",
+    "spriteKey": "high_chief_bonkgar_idle",
     "spriteScale": 3,
     "animations": {
       "idle": {
-        "key": "boss_high_chief_bonkgar_idle",
+        "key": "high_chief_bonkgar_idle",
         "startFrame": 0,
         "endFrame": 11,
         "frameRate": 6,
         "repeat": -1
       },
       "attack": {
-        "key": "boss_high_chief_bonkgar_attacking",
+        "key": "high_chief_bonkgar_attacking",
         "startFrame": 0,
         "endFrame": 15,
         "frameRate": 12,
         "repeat": 0
       },
       "defeated": {
-        "key": "boss_high_chief_bonkgar_defeated",
+        "key": "high_chief_bonkgar_defeated",
         "startFrame": 0,
         "endFrame": 15,
         "frameRate": 10,
@@ -192,7 +192,7 @@
     "war_stomp": {
       "id": "war_stomp",
       "name": "War Stomp",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -213,7 +213,7 @@
     "gronks_boomblast": {
       "id": "gronks_boomblast",
       "name": "Gronk's Boomblast",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -237,7 +237,7 @@
     "squinteyes_prophecy": {
       "id": "squinteyes_prophecy",
       "name": "Squinteye's Prophecy",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {

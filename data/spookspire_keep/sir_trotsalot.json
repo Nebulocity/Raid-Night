@@ -5,10 +5,121 @@
     "raidId": "spookspire_keep",
     "bossId": "sir_trotsalot"
   },
+
+  "encounterActors": [
+    {
+      "id": "nighttime",
+      "name": "Nighttime",
+      "spriteKey": "nighttime_idle",
+      "spriteScale": 3,
+      "stats": {
+        "health": 220000,
+        "maxHealth": 220000,
+        "mana": 0,
+        "maxMana": 0,
+        "usesMana": false,
+        "damageRange": [2000, 4000],
+        "attackSpeed": 3,
+        "armor": 12000,
+        "attackHitChance": 90,
+        "abilityHitChance": 90,
+        "resistList": {
+          "fire": 0, "frost": 0, "nature": 0,
+          "holy": 0, "shadow": 15, "arcane": 0
+        }
+      },
+      "abilityIds": ["moonlit_hoofstrike"],
+      "swapTrigger": { "type": "health_percent", "value": 50 },
+      "onSwap": [
+        { "type": "dialogue", "lines": ["Nighttime fades into the darkness..."] }
+      ],
+      "animations": {
+        "idle": {
+          "key": "nighttime_idle",
+          "startFrame": 0, "endFrame": 10, "frameRate": 6, "repeat": -1
+        },
+        "attacking": {
+          "key": "nighttime_attacking",
+          "startFrame": 0, "endFrame": 11, "frameRate": 12, "repeat": 0
+        }
+      }
+    },
+    {
+      "id": "sir_trotsalot",
+      "name": "Sir Trotsalot",
+      "spriteKey": "sir_trotsalot_idle",
+      "spriteScale": 3,
+      "stats": {
+        "health": 220000,
+        "maxHealth": 220000,
+        "mana": 0,
+        "maxMana": 0,
+        "usesMana": false,
+        "damageRange": [900, 1500],
+        "attackSpeed": 3,
+        "armor": 14000,
+        "attackHitChance": 90,
+        "abilityHitChance": 90,
+        "resistList": {
+          "fire": 0, "frost": 0, "nature": 0,
+          "holy": 0, "shadow": 25, "arcane": 0
+        }
+      },
+      "abilityIds": ["shadow_cleave", "intangible_presence", "berserker_charge"],
+      "swapTrigger": { "type": "health_percent", "value": 25 },
+      "onSwap": [
+        { "type": "dialogue", "lines": ["Sir Trotsalot mounts Nighttime! They fight as one!"] }
+      ],
+      "animations": {
+        "idle": {
+          "key": "sir_trotsalot_idle",
+          "startFrame": 0, "endFrame": 10, "frameRate": 6, "repeat": -1
+        },
+        "attacking": {
+          "key": "sir_trotsalot_attacking",
+          "startFrame": 0, "endFrame": 11, "frameRate": 12, "repeat": 0
+        }
+      }
+    },
+    {
+      "id": "nighttime_mounted",
+      "name": "Sir Trotsalot & Nighttime",
+      "spriteKey": "sir_trotsalot_mounted_idle",
+      "spriteScale": 3,
+      "stats": {
+        "health": 220000,
+        "maxHealth": 220000,
+        "mana": 0,
+        "maxMana": 0,
+        "usesMana": false,
+        "damageRange": [2500, 4500],
+        "attackSpeed": 2,
+        "armor": 15000,
+        "attackHitChance": 90,
+        "abilityHitChance": 90,
+        "resistList": {
+          "fire": 0, "frost": 0, "nature": 0,
+          "holy": 0, "shadow": 30, "arcane": 0
+        }
+      },
+      "abilityIds": ["moonlit_hoofstrike", "shadow_cleave", "berserker_charge"],
+      "animations": {
+        "idle": {
+          "key": "sir_trotsalot_mounted_idle",
+          "startFrame": 0, "endFrame": 10, "frameRate": 6, "repeat": -1
+        },
+        "attacking": {
+          "key": "sir_trotsalot_mounted_attacking",
+          "startFrame": 0, "endFrame": 11, "frameRate": 12, "repeat": 0
+        }
+      }
+    }
+  ],
+
   "boss": {
     "id": "nighttime",
     "name": "Nighttime",
-    "spriteKey": "boss_nighttime_idle",
+    "spriteKey": "nighttime_idle",
     "stats": {
       "health": 220000,
       "maxHealth": 220000,
@@ -25,97 +136,17 @@
         "holy": 0, "shadow": 15, "arcane": 0
       }
     },
-    "phases": [
-      {
-        "id": "phase_1",
-        "label": "Nighttime",
-        "trigger": { "type": "health_percent", "value": 100 },
-        "abilityIds": ["moonlit_hoofstrike"]
-      }
-    ],
+    "phases": [],
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
       "intro": ["Nighttime rears up in the darkness!"],
-      "defeat": [],
+      "defeat": ["They fall... as one."],
       "victory": ["Victory."]
     },
     "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
   },
-  "secondActor": {
-    "id": "sir_trotsalot",
-    "name": "Sir Trotsalot",
-    "spriteKey": "boss_sir_trotsalot_idle",
-    "spriteScale": 3,
-    "swapsWithBoss": true,
-    "stats": {
-      "health": 220000,
-      "maxHealth": 220000,
-      "mana": 0,
-      "maxMana": 0,
-      "usesMana": false,
-      "damageRange": [900, 1500],
-      "attackSpeed": 3,
-      "armor": 14000,
-      "attackHitChance": 90,
-      "abilityHitChance": 90,
-      "resistList": {
-        "fire": 0, "frost": 0, "nature": 0,
-        "holy": 0, "shadow": 25, "arcane": 0
-      }
-    },
-    "spawnTrigger": { "type": "damage_taken_percent", "value": 5 },
-    "abilityIds": ["shadow_cleave", "intangible_presence", "berserker_charge"],
-    "dialogue": {
-      "intro": []
-    },
-    "animations": {
-      "idle": {
-        "key": "boss_sir_trotsalot_idle",
-        "startFrame": 0,
-        "endFrame": 10,
-        "frameRate": 6,
-        "repeat": -1
-      }
-    }
-  },
-  "thirdActor": {
-    "id": "nighttime_mounted",
-    "name": "Sir Trotsalot & Nighttime",
-    "spriteKey": "boss_nighttime_mounted_idle",
-    "spriteScale": 3,
-    "stats": {
-      "health": 220000,
-      "maxHealth": 220000,
-      "mana": 0,
-      "maxMana": 0,
-      "usesMana": false,
-      "damageRange": [2500, 4500],
-      "attackSpeed": 2,
-      "armor": 15000,
-      "attackHitChance": 90,
-      "abilityHitChance": 90,
-      "resistList": {
-        "fire": 0, "frost": 0, "nature": 0,
-        "holy": 0, "shadow": 30, "arcane": 0
-      }
-    },
-    "spawnTrigger": { "type": "second_actor_health_percent", "value": 25 },
-    "abilityIds": ["moonlit_hoofstrike", "shadow_cleave", "berserker_charge"],
-    "dialogue": {
-      "intro": ["Sir Trotsalot mounts Nighttime! They fight as one!"],
-      "defeat": ["They fall... as one."]
-    },
-    "animations": {
-      "idle": {
-        "key": "boss_nighttime_mounted_idle",
-        "startFrame": 0,
-        "endFrame": 10,
-        "frameRate": 6,
-        "repeat": -1
-      }
-    }
-  },
+
   "abilities": {
     "moonlit_hoofstrike": {
       "id": "moonlit_hoofstrike",

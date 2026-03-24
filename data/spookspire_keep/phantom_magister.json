@@ -138,7 +138,7 @@
       "immediateFlag": true,
       "immediateEffect": { "type": "summon_add", "addId": "ice_elemental" },
       "recastTimer": 120,
-      "targetType": "boss_self",
+      "targetType": "self",
       "dialogue": "An Ice Elemental is summoned!",
       "audioDuration": 2000
     },

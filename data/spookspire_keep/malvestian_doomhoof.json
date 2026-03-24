@@ -108,7 +108,7 @@
       "name": "Fiendish Portal",
       "immediateFlag": false,
       "recastTimer": 60,
-      "targetType": "boss_self",
+      "targetType": "self",
       "applyBuff": {
         "id": "auto_attack_bonus",
         "bonusDamage": 0,

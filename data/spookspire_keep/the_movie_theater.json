@@ -75,7 +75,7 @@
     "now_showing": {
       "id": "now_showing",
       "name": "Now Showing",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -96,7 +96,7 @@
     "intermission": {
       "id": "intermission",
       "name": "Intermission",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -120,7 +120,7 @@
     "final_feature": {
       "id": "final_feature",
       "name": "Final Feature",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {

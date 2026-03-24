@@ -108,7 +108,7 @@
       "name": "Fury",
       "immediateFlag": false,
       "recastTimer": 20,
-      "targetType": "boss_self",
+      "targetType": "self",
       "applyBuff": {
         "id": "extra_auto_chance",
         "chance": 50,

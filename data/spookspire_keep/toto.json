@@ -73,7 +73,7 @@
     "yapping_frenzy": {
       "id": "yapping_frenzy",
       "name": "Yapping Frenzy",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {

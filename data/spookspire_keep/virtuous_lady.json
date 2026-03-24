@@ -8,6 +8,7 @@
   "boss": {
     "id": "virtuous_lady",
     "name": "Virtuous Lady",
+    "spriteScale": 4,
     "stats": {
       "health": 500000,
       "maxHealth": 500000,

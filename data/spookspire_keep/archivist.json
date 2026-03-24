@@ -95,7 +95,7 @@
       "immediateFlag": true,
       "immediateEffect": { "type": "summon_add", "addId": "haunted_tome" },
       "recastTimer": 20,
-      "targetType": "boss_self",
+      "targetType": "self",
       "dialogue": "A Haunted Tome materializes!",
       "audioDuration": 2000
     },
@@ -104,7 +104,7 @@
       "name": "Magic Infusion",
       "immediateFlag": false,
       "recastTimer": 40,
-      "targetType": "boss_self",
+      "targetType": "self",
       "applyBuff": {
         "id": "auto_attack_bonus",
         "bonusDamage": 1000,
@@ -151,7 +151,7 @@
       "castTimeTicks": 10,
       "interruptible": true,
       "recastTimer": 60,
-      "targetType": "boss_self",
+      "targetType": "self",
       "applyBuff": {
         "id": "damage_increase_cast",
         "multiplier": 3,

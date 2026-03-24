@@ -47,7 +47,9 @@
           "mortimer_berserk_dagger"
         ],
         "onEnter": [
-          { "type": "dialogue", "lines": ["Oh, I've gone and made a mess..."] }
+          { "type": "dialogue", "lines": ["Oh, I've gone and made a mess..."] },
+          { "type": "dismiss_second_actor" },
+          { "type": "reposition_boss" }
         ]
       }
     ],
@@ -70,6 +72,7 @@
     "name": "The Dinner Guests",
     "spriteKey": "dinner_guests_idle",
     "spriteScale": 2.5,
+    "nuisance": true,
     "stats": {
       "health": 200000,
       "maxHealth": 200000,

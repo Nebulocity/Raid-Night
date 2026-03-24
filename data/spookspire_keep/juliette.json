@@ -74,7 +74,7 @@
     "spotlight_kiss": {
       "id": "spotlight_kiss",
       "name": "Spotlight Kiss",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -97,7 +97,7 @@
     "overacted_devotion": {
       "id": "overacted_devotion",
       "name": "Overacted Devotion",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -111,7 +111,7 @@
       "tickMax": 0,
       "threatPerDamage": 0,
       "recastTimer": 22,
-      "targetType": "boss_self",
+      "targetType": "self",
       "dialogue": "Juliette refuses to leave the stage.",
       "sound": "audio/ragnaros_attack.ogg",
       "audioDuration": 2000,

@@ -107,6 +107,14 @@ export default class GameScene extends Phaser.Scene {
     this.enteredPhaseIds         = new Set();
     this.timeCycleStartTick      = 0;
     this.timeCycleActivePhaseId  = null;
+
+    // Sequential encounter actor tracking.
+    // Used when levelData.encounterActors is present (e.g. Sir Trotsalot).
+    // currentEncounterActorIndex points to the active actor in that array.
+    // firedEncounterSwapIndices prevents the swap trigger from re-firing.
+    this.currentEncounterActorIndex  = 0;
+    this.firedEncounterSwapIndices   = new Set();
+    this.encounterSwapInProgress     = false;
   }
 
   // ======
@@ -371,10 +379,11 @@ export default class GameScene extends Phaser.Scene {
     // =====================
     // BOSS ANIMATIONS
     // =====================
-    // These are driven entirely by levelData.boss.animations
+    // These are driven entirely by levelData.boss.animations.
     // Key naming: boss.id + '_' + animationName (e.g. 'ragnaros_idle')
+    // Skipped when encounterActors is present -- that block handles registration instead.
     const bossData = this.levelData?.boss;
-    if (bossData?.animations) {
+    if (bossData?.animations && !this.levelData?.encounterActors) {
       Object.entries(bossData.animations).forEach(([animName, def]) => {
         const animKey = bossData.id + '_' + animName;
         this._safeCreateAnim({
@@ -387,6 +396,31 @@ export default class GameScene extends Phaser.Scene {
           repeat:    def.repeat,
           yoyo:      def.yoyo || false,
         }, def.key);
+      });
+    }
+
+    // =====================
+    // ENCOUNTER ACTOR ANIMATIONS
+    // =====================
+    // When an encounter uses sequential actors, all actor animations are registered
+    // up front so they are ready when a swap occurs mid-fight.
+    const encounterActors = this.levelData?.encounterActors;
+    if (encounterActors?.length) {
+      encounterActors.forEach(actorData => {
+        if (!actorData.animations) return;
+        Object.entries(actorData.animations).forEach(([animName, def]) => {
+          const animKey = actorData.id + '_' + animName;
+          this._safeCreateAnim({
+            key:       animKey,
+            frames:    anims.generateFrameNumbers(def.key, {
+              start: def.startFrame,
+              end:   def.endFrame,
+            }),
+            frameRate: def.frameRate,
+            repeat:    def.repeat,
+            yoyo:      def.yoyo || false,
+          }, def.key);
+        });
       });
     }
 
@@ -462,9 +496,10 @@ export default class GameScene extends Phaser.Scene {
   // Boss slot
   // =========
   _buildBossSlot(zone) {
-    const bossData    = this.levelData?.boss;
-    const spriteKey   = bossData?.spriteKey;
-    const idleAnimKey = bossData ? bossData.id + '_idle' : 'default_idle';
+    const encounterActors = this.levelData?.encounterActors;
+    const bossData        = encounterActors?.[0] ?? this.levelData?.boss;
+    const spriteKey       = bossData?.spriteKey;
+    const idleAnimKey     = bossData ? bossData.id + '_idle' : 'default_idle';
     const hasSecondActor = !!this.levelData?.secondActor;
 
     // When sharing the screen with a second actor, Mortimer moves to the left
@@ -516,7 +551,7 @@ export default class GameScene extends Phaser.Scene {
       delay:    500,
     });
 
-    this.entitySlots.boss = { sprite: bossSprite, nameText, hpBar };
+    this.entitySlots.boss = { sprite: bossSprite, nameText, titlePanel, hpBar };
   }
 
   // =================
@@ -554,6 +589,7 @@ export default class GameScene extends Phaser.Scene {
       titlePanel:  null,
       hpBar:       null,
       currentHealth: actorData.stats?.maxHealth ?? 0,
+      nuisance:    !!actorData.nuisance,
       _data: actorData,
     };
   }
@@ -803,14 +839,14 @@ export default class GameScene extends Phaser.Scene {
   // ===============
   _populateFromData(data) {
     if (data.boss && this.entitySlots.boss) {
+      const initialActor = data.encounterActors?.[0] ?? data.boss;
       const slot = this.entitySlots.boss;
-      slot.nameText.setText(data.boss.name || '???');
+      slot.nameText.setText(initialActor.name || '???');
 
-      // Stamp maxValue onto bar so _setBossHealthBar can display current / max
-      if (slot.hpBar) slot.hpBar.maxValue = data.boss.stats?.maxHealth ?? 0;
-      slot.currentHealth = data.boss.stats?.maxHealth ?? 0;
+      if (slot.hpBar) slot.hpBar.maxValue = initialActor.stats?.maxHealth ?? 0;
+      slot.currentHealth = initialActor.stats?.maxHealth ?? 0;
       this._setBossHealthBar(slot.hpBar, 1.0);
-      slot._data = data.boss;
+      slot._data = initialActor;
     }
 
     if (data.secondActor && this.entitySlots.secondActor) {
@@ -1004,10 +1040,25 @@ export default class GameScene extends Phaser.Scene {
   // work with any boss without modification.
 
   _getBossAnimKey(animName) {
-    const bossId = this.levelData?.boss?.id;
-    if (!bossId) return null;
-    const key = bossId + '_' + animName;
+    const encounterActors = this.levelData?.encounterActors;
+    const activeActorId   = encounterActors
+      ? encounterActors[this.currentEncounterActorIndex]?.id
+      : this.levelData?.boss?.id;
+
+    if (!activeActorId) return null;
+    const key = activeActorId + '_' + animName;
     return this.anims.exists(key) ? key : null;
+  }
+
+  // Returns the data object for whichever actor is currently fighting.
+  // When encounterActors is present, this is the current indexed actor.
+  // Otherwise it falls back to levelData.boss.
+  _getActiveActorData() {
+    const encounterActors = this.levelData?.encounterActors;
+    if (encounterActors?.length) {
+      return encounterActors[this.currentEncounterActorIndex] ?? null;
+    }
+    return this.levelData?.boss ?? null;
   }
 
   playBossAttack() {
@@ -1018,13 +1069,13 @@ export default class GameScene extends Phaser.Scene {
     const current = slot.sprite.anims.currentAnim;
     if (current && current.key === animKey && slot.sprite.anims.isPlaying) return;
 
-    // Determine target from threat table
-    const targetId   = this.getHighestThreatTarget();
-    const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
-    const bossName   = this.levelData?.boss?.name ?? 'Boss';
+    const targetId        = this.getHighestThreatTarget();
+    const targetName      = this.entitySlots[targetId]?._data?.name ?? targetId;
+    const activeActorData = this._getActiveActorData();
+    const bossName        = activeActorData?.name ?? 'Boss';
     console.log('[Boss]', bossName, 'attacks', targetName + '!');
 
-    this._playSound(this.levelData?.boss?.attackSound);
+    this._playSound(activeActorData?.attackSound);
 
     const idleKey = this._getBossAnimKey('idle');
     
@@ -1422,7 +1473,11 @@ export default class GameScene extends Phaser.Scene {
   // Call this when the boss reaches 0 health.
   // Plays the death sound, shows death dialogue, then stops the ticker.
   playBossDeath() {
-    const bossData = this.levelData?.boss;
+    const encounterActors = this.levelData?.encounterActors;
+    const activeActor     = encounterActors
+      ? encounterActors[this.currentEncounterActorIndex]
+      : null;
+    const bossData = activeActor ?? this.levelData?.boss;
 
     this._playSound(bossData?.deathSound);
 
@@ -1434,20 +1489,16 @@ export default class GameScene extends Phaser.Scene {
 
     const slot = this.entitySlots.boss;
     if (slot?.sprite) {
-      // Try animations.defeated.key first (injected by BossLoadingScene from catalog),
-      // then fall back to the legacy _getBossAnimKey('death') lookup
-      const defeatedKey = this.levelData?.boss?.animations?.defeated?.key;
-      const deathKey    = (defeatedKey && this.anims.exists(defeatedKey))
-                          ? defeatedKey
-                          : this._getBossAnimKey('death');
+      const defeatedKey = activeActor?.animations?.defeated?.key
+                          ?? this.levelData?.boss?.animations?.defeated?.key
+                          ?? this._getBossAnimKey('death');
 
-      if (deathKey && this.anims.exists(deathKey)) {
-        slot.sprite.play(deathKey);
+      if (defeatedKey && this.anims.exists(defeatedKey)) {
+        slot.sprite.play(defeatedKey);
         slot.sprite.once('animationcomplete', () => {
           this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 800 });
         });
       } else {
-        // Fallback fade if no defeat sheet loaded yet for this boss
         this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 1500 });
       }
     }
@@ -1479,6 +1530,7 @@ export default class GameScene extends Phaser.Scene {
 
     this._tickBossAutoAttack();
     this._tickBossAbilities();
+    this._tickEncounterActorSwap();
     this._tickSecondActorAutoAttack();
     this._tickSecondActorAbilities();
     this._tickSpawnTrigger();
@@ -1509,6 +1561,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.bossDialoguePlaying) return;
     if (this.bossIsCasting) return;
     if (this.bossBuffs?.vanished) return;
+    if (this.encounterSwapInProgress) return;
     if (Date.now() < this.bossAbilityLockoutUntil) return;
 
     const bossData = this.entitySlots.boss?._data;
@@ -1535,6 +1588,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.bossIsCasting) return;
     if (this.bossDebuffs?.silenced) return;
     if (this.bossBuffs?.vanished) return;
+    if (this.encounterSwapInProgress) return;
 
     // Grace period - no special abilities for the first 20 seconds of the fight
     const GRACE_PERIOD_MS = 1000;
@@ -1605,6 +1659,8 @@ export default class GameScene extends Phaser.Scene {
     const slot = this.entitySlots.secondActor;
     if (!slot?._data) return;
     if ((slot.currentHealth ?? 0) <= 0) return;
+
+    if (slot.nuisance) return;
 
     const attackSpeed = Math.round(slot._data.stats?.attackSpeed ?? 3);
     if (this.tickCount % attackSpeed !== 0) return;
@@ -1986,7 +2042,7 @@ export default class GameScene extends Phaser.Scene {
   // Fire a specific boss ability - plays animation if one is defined,
   // shows dialogue, plays sound.
   _fireBossAbility(abilityId, ability) {
-    const bossName   = this.levelData?.boss?.name ?? 'Boss';
+    const bossName    = this._getActiveActorData()?.name ?? 'Boss';
     const abilityName = ability.name ?? abilityId;
     const targetType  = ability.targetType;
     const isAoE       = targetType === 'all_allies';
@@ -2013,7 +2069,7 @@ export default class GameScene extends Phaser.Scene {
   // Called directly for instant abilities, or deferred by _beginBossCast
   // for cast-time abilities once the cast completes.
   _resolveBossAbilityEffect(abilityId, ability) {
-    const bossName    = this.levelData?.boss?.name ?? 'Boss';
+    const bossName    = this._getActiveActorData()?.name ?? 'Boss';
     const abilityName = ability.name ?? abilityId;
     const targetType  = ability.targetType;
     const isAoE       = targetType === 'all_allies';
@@ -3077,7 +3133,7 @@ export default class GameScene extends Phaser.Scene {
       damageType = 'physical';
     }
 
-    const resistList   = this.levelData?.boss?.stats?.resistList ?? {};
+    const resistList   = this._getActiveActorData()?.stats?.resistList ?? {};
     let   finalDamage  = this._applyResistReduction(damage, damageType, resistList);
 
     // damage_increase_cast -- boss takes amplified damage while casting
@@ -3100,7 +3156,15 @@ export default class GameScene extends Phaser.Scene {
     }
 
     if (slot.currentHealth <= 0) {
-      this.playBossDeath();
+      const encounterActors  = this.levelData?.encounterActors;
+      const nextActorIndex   = this.currentEncounterActorIndex + 1;
+      const hasNextActor     = encounterActors && nextActorIndex < encounterActors.length;
+
+      if (hasNextActor && !this.encounterSwapInProgress) {
+        this._swapEncounterActor(nextActorIndex);
+      } else if (!hasNextActor) {
+        this.playBossDeath();
+      }
     }
   }
 
@@ -3464,26 +3528,27 @@ export default class GameScene extends Phaser.Scene {
   _tickEnrage() {
     if (this.bossBuffs?.enrage) return;
 
-    const enrageDef = this.levelData?.boss?.enrage;
+    const activeActorData = this._getActiveActorData();
+    const enrageDef       = activeActorData?.enrage ?? this.levelData?.boss?.enrage;
     if (!enrageDef) return;
 
-    const slot   = this.entitySlots.boss;
+    const slot = this.entitySlots.boss;
     if (!slot) return;
 
-    const maxHp    = slot.hpBar?.maxValue ?? 1;
-    const current  = slot.currentHealth ?? maxHp;
-    const hpPct    = current / maxHp;
+    const maxHp      = slot.hpBar?.maxValue ?? 1;
+    const current    = slot.currentHealth ?? maxHp;
+    const hpPct      = current / maxHp;
     const triggerPct = (enrageDef.trigger?.value ?? 30) / 100;
 
     if (hpPct <= triggerPct) {
       this._applyBossBuff('enrage', {
-        damageMultiplier:    enrageDef.damageMultiplier    ?? 1,
+        damageMultiplier:      enrageDef.damageMultiplier      ?? 1,
         attackSpeedMultiplier: enrageDef.attackSpeedMultiplier ?? 1,
         extraAutoAttackDamage: enrageDef.extraAutoAttackDamage ?? 0,
       }, 0);
 
       this.showPopup(
-        (this.levelData?.boss?.name ?? 'Boss') + ' ENRAGES!',
+        (activeActorData?.name ?? 'Boss') + ' ENRAGES!',
         '#ff2200',
         3000
       );
@@ -4127,6 +4192,18 @@ export default class GameScene extends Phaser.Scene {
   //   time_cycle      -- alternates between two phases on a tick timer
   //   second_actor_alive -- active while the named second actor is alive
   _resolveCurrentPhase() {
+    const encounterActors = this.levelData?.encounterActors;
+    if (encounterActors?.length) {
+      const activeActor = encounterActors[this.currentEncounterActorIndex];
+      if (!activeActor) return null;
+
+      // Return a synthetic phase-like object so _tickBossAbilities works unchanged.
+      return {
+        id:         activeActor.id + '_active',
+        abilityIds: activeActor.abilityIds ?? [],
+      };
+    }
+
     const phases = this.levelData?.boss?.phases ?? [];
     if (!phases.length) return null;
 
@@ -4168,6 +4245,8 @@ export default class GameScene extends Phaser.Scene {
   // Called every tick. Detects phase changes, fires onEnter events once,
   // and manages time_cycle phase switching.
   _tickPhase() {
+    if (this.levelData?.encounterActors?.length) return;
+
     const phases = this.levelData?.boss?.phases ?? [];
     if (!phases.length) return;
 
@@ -4322,6 +4401,16 @@ export default class GameScene extends Phaser.Scene {
           break;
         }
 
+        case 'dismiss_second_actor': {
+          this._dismissSecondActor();
+          break;
+        }
+
+        case 'reposition_boss': {
+          this._repositionBossToCenter();
+          break;
+        }
+
         case 'set_vanished': {
           const actorId = event.actorId ?? 'boss';
           const visible = !event.value;
@@ -4354,5 +4443,202 @@ export default class GameScene extends Phaser.Scene {
           console.warn('[onEnter] Unknown event type:', event.type);
       }
     }
+  }
+
+  // =====================================
+  // Encounter actor swap trigger
+  // =====================================
+  // Called every tick. Checks whether the current encounter actor's swapTrigger
+  // has been met and advances to the next actor in encounterActors if so.
+  // Only runs when levelData.encounterActors is present.
+  _tickEncounterActorSwap() {
+    const encounterActors = this.levelData?.encounterActors;
+    if (!encounterActors?.length) return;
+    if (this.encounterSwapInProgress) return;
+
+    const activeActor = encounterActors[this.currentEncounterActorIndex];
+    if (!activeActor?.swapTrigger) return;
+
+    if (this.firedEncounterSwapIndices.has(this.currentEncounterActorIndex)) return;
+
+    const nextIndex = this.currentEncounterActorIndex + 1;
+    if (nextIndex >= encounterActors.length) return;
+
+    const slot       = this.entitySlots.boss;
+    const maxHp      = slot?.hpBar?.maxValue ?? 1;
+    const currentHp  = slot?.currentHealth ?? maxHp;
+    const hpPct      = currentHp / maxHp;
+    const triggerPct = (activeActor.swapTrigger.value ?? 50) / 100;
+
+    if (hpPct <= triggerPct) {
+      this.firedEncounterSwapIndices.add(this.currentEncounterActorIndex);
+      this._swapEncounterActor(nextIndex);
+    }
+  }
+
+  _swapEncounterActor(nextIndex) {
+    const encounterActors = this.levelData?.encounterActors;
+    if (!encounterActors) return;
+
+    const outgoingActor = encounterActors[this.currentEncounterActorIndex];
+    const incomingActor = encounterActors[nextIndex];
+    if (!incomingActor) return;
+
+    const slot = this.entitySlots.boss;
+    if (!slot) return;
+
+    const FADE_OUT_MS = 600;
+    const FADE_IN_MS  = 900;
+
+    this.encounterSwapInProgress = true;
+
+    console.log('[EncounterActor] Swapping from', outgoingActor?.id, 'to', incomingActor.id);
+
+    if (outgoingActor?.onSwap?.length) {
+      this._executeOnEnterEvents(outgoingActor.onSwap, { id: outgoingActor.id + '_swap' });
+    }
+
+    this.tweens.add({
+      targets:  slot.sprite,
+      alpha:    0,
+      duration: FADE_OUT_MS,
+      ease:     'Sine.easeIn',
+      onComplete: () => {
+        this.currentEncounterActorIndex = nextIndex;
+
+        // Clear combat state from the outgoing actor so it does not carry
+        // into the incoming one. Cooldowns, buffs, cast state, and queued
+        // abilities are all actor-specific and must start fresh.
+        this.bossAbilityCooldowns       = {};
+        this.bossAbilityLockoutUntil    = 0;
+        this.bossBuffs                  = {};
+        this.bossIsCasting              = false;
+        this.bossCurrentCast            = null;
+        this.bossQueuedAbilityId        = null;
+
+        if (this.bossCurrentCastTimer) {
+          try { this.bossCurrentCastTimer.remove(); } catch (e) {}
+          this.bossCurrentCastTimer = null;
+        }
+
+        slot._data         = incomingActor;
+        slot.currentHealth = incomingActor.stats?.maxHealth ?? 0;
+
+        if (slot.hpBar) {
+          slot.hpBar.maxValue = slot.currentHealth;
+          this._setBossHealthBar(slot.hpBar, 1.0);
+        }
+
+        if (slot.nameText) {
+          slot.nameText.setText(incomingActor.name ?? '???');
+        }
+
+        const newSpriteKey   = incomingActor.spriteKey;
+        const newSpriteScale = incomingActor.spriteScale ?? 3;
+
+        if (newSpriteKey && this.textures.exists(newSpriteKey)) {
+          slot.sprite.setTexture(newSpriteKey, 0);
+        }
+
+        slot.sprite.setScale(newSpriteScale);
+
+        const idleKey = incomingActor.id + '_idle';
+        if (this.anims.exists(idleKey)) {
+          slot.sprite.play(idleKey);
+        }
+
+        this.tweens.add({
+          targets:  slot.sprite,
+          alpha:    1,
+          duration: FADE_IN_MS,
+          ease:     'Back.easeOut',
+          onComplete: () => {
+            this.encounterSwapInProgress = false;
+          },
+        });
+
+        console.log('[EncounterActor] Now active:', incomingActor.id);
+      },
+    });
+  }
+
+  // =====================================
+  // Dismiss second actor
+  // =====================================
+  // Fades out the second actor sprite and stops their ability routine.
+  // Used when a phase transition ends the second actor's presence.
+  _dismissSecondActor() {
+    const slot = this.entitySlots.secondActor;
+    if (!slot) return;
+
+    if (slot.sprite) {
+      this.tweens.add({
+        targets:  slot.sprite,
+        alpha:    0,
+        duration: 800,
+        ease:     'Sine.easeIn',
+      });
+    }
+
+    slot.currentHealth  = 0;
+    this.secondActorSpawned = false;
+
+    console.log('[SecondActor] Dismissed by onEnter event');
+  }
+
+  // =====================================
+  // Reposition boss to center
+  // =====================================
+  // Slides the primary boss sprite to the horizontal center of the BOSS zone.
+  // Used when the second actor leaves and the boss should fill the full zone.
+  _repositionBossToCenter() {
+    const slot = this.entitySlots.boss;
+    if (!slot?.sprite) return;
+
+    const { WIDTH } = window.GAME_CONFIG;
+    const targetX   = WIDTH / 2;
+
+    this.tweens.add({
+      targets:  slot.sprite,
+      x:        targetX,
+      duration: 600,
+      ease:     'Sine.easeInOut',
+    });
+
+    if (slot.hpBar) {
+      const fillTargetX = targetX - slot.hpBar.maxWidth / 2;
+
+      if (slot.hpBar.track) {
+        this.tweens.add({ targets: slot.hpBar.track, x: targetX, duration: 600, ease: 'Sine.easeInOut' });
+      }
+      if (slot.hpBar.fill) {
+        this.tweens.add({ targets: slot.hpBar.fill, x: fillTargetX, duration: 600, ease: 'Sine.easeInOut' });
+      }
+      if (slot.hpBar.valueText) {
+        this.tweens.add({ targets: slot.hpBar.valueText, x: targetX, duration: 600, ease: 'Sine.easeInOut' });
+      }
+    }
+
+    if (slot.nameText) {
+      this.tweens.add({
+        targets:  slot.nameText,
+        x:        targetX,
+        duration: 600,
+        ease:     'Sine.easeInOut',
+      });
+    }
+
+    // titlePanel is a Graphics object drawn at absolute coordinates and cannot
+    // be repositioned by tweening x without a full redraw. Fade it out instead.
+    if (slot.titlePanel) {
+      this.tweens.add({
+        targets:  slot.titlePanel,
+        alpha:    0,
+        duration: 400,
+        ease:     'Sine.easeIn',
+      });
+    }
+
+    console.log('[Boss] Repositioned to center:', targetX);
   }
 }
