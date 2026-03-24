@@ -48,7 +48,7 @@
           "virtuous_repentance"
         ],
         "onEnter": [
-          { "type": "dialogue", "lines": ["Virtuous Lady BERSERKS! All abilities deal double damage!"] }
+          { "type": "dialogue", "lines": ["Virtuous Lady enrages!"] }
         ]
       }
     ],
@@ -60,9 +60,9 @@
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": ["Virtuous Lady steps forward, eyes vacant and burning!"],
-      "defeat": ["The madness lifts. Virtuous Lady collapses in silence."],
-      "victory": ["Victory."]
+      "intro": ["The golden statue of a virtuous Lady steps forward, eyes vacant and burning!"],
+      "defeat": [],
+      "victory": ["Victory!"]
     },
     "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
   },
@@ -81,7 +81,7 @@
       "tickMax": 500,
       "recastTimer": 20,
       "targetType": "all_allies",
-      "dialogue": "Holy fire scorches the ground beneath your feet.",
+      "dialogue": "The ground burns with holy fire!",
       "audioDuration": 2000
     },
     "virtuous_fire": {
@@ -98,7 +98,7 @@
       "tickMax": 1500,
       "recastTimer": 12,
       "targetType": "highest_threat",
-      "dialogue": "Virtuous Fire engulfs the target!",
+      "dialogue": "Holy flames engulf the target!",
       "audioDuration": 2000
     },
     "virtuous_wrath": {
