@@ -3162,12 +3162,23 @@ export default class GameScene extends Phaser.Scene {
     // ==================
     // 5. Quicken
     // ==================
+    // Self-cast if healer is below 20% mana regardless of other conditions.
+    // Cast on the lowest-mana ally if healer is above 50% mana and any ally
+    // is below 20% mana.
     {
-      const mnTarget = aliveIds.find(id => {
+      const healerManaPctRaw = (healerSlot.currentMana ?? healerMaxMana) / healerMaxMana;
+      const healerNeedsMana  = healerManaPctRaw < 0.20;
+      const healerFlush      = healerManaPctRaw >= 0.50;
+
+      const allyNeedsMana = aliveIds.find(id => {
+        if (id === 'healer') return false;
         const s = this.entitySlots[id];
         return ((s?.currentMana ?? 1) / (s?.manaBar?.maxValue ?? 1)) < 0.20;
       });
-      if (mnTarget) {
+
+      if (healerNeedsMana) {
+        if (this._castCharacterAbility('healer', 'quicken')) return;
+      } else if (healerFlush && allyNeedsMana) {
         if (this._castCharacterAbility('healer', 'quicken')) return;
       }
     }
