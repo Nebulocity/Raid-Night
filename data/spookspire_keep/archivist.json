@@ -14,21 +14,31 @@
       "mana": 0,
       "maxMana": 0,
       "usesMana": false,
-      "damageRange": [2000, 4000],
+      "damageRange": [
+        2000,
+        4000
+      ],
       "attackSpeed": 3,
       "armor": 13000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
       "resistList": {
-        "fire": 0, "frost": 0, "nature": 0,
-        "holy": 0, "shadow": 0, "arcane": 50
+        "fire": 0,
+        "frost": 0,
+        "nature": 0,
+        "holy": 0,
+        "shadow": 0,
+        "arcane": 50
       }
     },
     "phases": [
       {
         "id": "phase_1",
         "label": "Tome Phase",
-        "trigger": { "type": "health_percent", "value": 100 },
+        "trigger": {
+          "type": "health_percent",
+          "value": 100
+        },
         "abilityIds": [
           "summon_haunted_tome",
           "magic_infusion",
@@ -38,54 +48,95 @@
       {
         "id": "phase_2",
         "label": "Lore Absorption",
-        "trigger": { "type": "health_percent", "value": 50 },
+        "trigger": {
+          "type": "summons_count",
+          "addId": "haunted_tome",
+          "value": 10
+        },
         "abilityIds": [
           "magic_infusion",
           "vengeful_beam",
           "lore_absorption"
         ],
         "onEnter": [
-          { "type": "dialogue", "lines": ["The Archivist begins absorbing the knowledge of forbidden tomes!"] }
+          {
+            "type": "dialogue",
+            "lines": [
+              "The Archivist begins absorbing the knowledge of forbidden tomes!"
+            ]
+          }
         ]
       },
       {
         "id": "phase_3",
         "label": "Enrage",
-        "trigger": { "type": "health_percent", "value": 15 },
+        "trigger": {
+          "type": "health_percent",
+          "value": 15
+        },
         "abilityIds": [
           "vengeful_beam_rapid",
           "magic_infusion"
         ],
         "onEnter": [
-          { "type": "dialogue", "lines": ["The Archivist stops summoning tomes and attacks relentlessly!"] }
+          {
+            "type": "dialogue",
+            "lines": [
+              "The Archivist stops summoning tomes and attacks relentlessly!"
+            ]
+          }
         ]
       }
     ],
     "enrage": {
-      "trigger": { "type": "health_percent", "value": 15 },
+      "trigger": {
+        "type": "health_percent",
+        "value": 15
+      },
       "damageMultiplier": 1.0,
       "extraAutoAttackDamage": 1000
     },
-    "threatTable": { "player": 0, "tank": 0, "healer": 0 },
+    "threatTable": {
+      "player": 0,
+      "tank": 0,
+      "healer": 0
+    },
     "audioDuration": 4000,
     "dialog": {
       "intro": [],
-      "defeat": ["The archive falls silent."],
-      "victory": ["Victory."]
+      "defeat": [
+        "The archive falls silent."
+      ],
+      "victory": [
+        "Victory."
+      ]
     },
-    "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
+    "sounds": {
+      "intro": "",
+      "attack": "",
+      "hit": "",
+      "defeat": "",
+      "victory": ""
+    }
   },
   "summonedAdds": [
     {
       "id": "haunted_tome",
       "name": "Haunted Tome",
-      "health": 8000,
+      "health": 20000,
       "lifespanTicks": 9,
       "damageType": "arcane",
-      "onExpireEffect": { "type": "damage" },
+      "onExpireEffect": {
+        "type": "damage"
+      },
       "onExpireMin": 4000,
       "onExpireMax": 4000,
-      "onExpireTargets": "all_allies"
+      "onExpireTargets": "all_allies",
+      "idleKey": "haunted_tome_idle",
+      "idleFrameStart": 0,
+      "idleFrameEnd": 11,
+      "idleFrameRate": 8,
+      "maxCount": 1
     }
   ],
   "abilities": {
@@ -93,8 +144,11 @@
       "id": "summon_haunted_tome",
       "name": "Summon Haunted Tome",
       "immediateFlag": true,
-      "immediateEffect": { "type": "summon_add", "addId": "haunted_tome" },
-      "recastTimer": 20,
+      "immediateEffect": {
+        "type": "summon_add",
+        "addId": "haunted_tome"
+      },
+      "recastTimer": 10,
       "targetType": "self",
       "dialogue": "A Haunted Tome materializes!",
       "audioDuration": 2000
@@ -120,11 +174,13 @@
       "name": "Vengeful Beam",
       "damageType": "arcane",
       "immediateFlag": true,
-      "immediateEffect": { "type": "damage" },
+      "immediateEffect": {
+        "type": "damage"
+      },
       "immediateMin": 4435,
       "immediateMax": 5999,
       "duration": 0,
-      "recastTimer": 20,
+      "recastTimer": 10,
       "targetType": "second_highest_threat",
       "dialogue": "A vengeful beam of arcane energy lances out!",
       "audioDuration": 2000
@@ -134,11 +190,13 @@
       "name": "Vengeful Beam",
       "damageType": "arcane",
       "immediateFlag": true,
-      "immediateEffect": { "type": "damage" },
+      "immediateEffect": {
+        "type": "damage"
+      },
       "immediateMin": 4435,
       "immediateMax": 5999,
       "duration": 0,
-      "recastTimer": 10,
+      "recastTimer": 5,
       "targetType": "second_highest_threat",
       "dialogue": "Vengeful beams fly without pause!",
       "audioDuration": 1500
@@ -152,10 +210,9 @@
       "interruptible": true,
       "recastTimer": 60,
       "targetType": "self",
-      "applyBuff": {
+      "castStartBuff": {
         "id": "damage_increase_cast",
-        "multiplier": 3,
-        "durationTicks": 0
+        "multiplier": 3
       },
       "dialogue": "The Archivist begins casting Lore Absorption!",
       "audioDuration": 3000

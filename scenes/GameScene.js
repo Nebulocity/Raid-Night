@@ -89,6 +89,9 @@ export default class GameScene extends Phaser.Scene {
     // Active summoned add slots: array of { addDef, currentHealth, hpBar, nameText,
     // lifespanTimer, index }. Built dynamically as adds are spawned.
     this.summonedAddSlots = [];
+    this.summonedAddCounters = {};
+    // Tracks how many of each add id have been spawned (for summons_count phase triggers).
+    this.summonedAddCounters = {};
 
     // Active boss buffs: { buffId: { ...params } }
     // Includes vanished, auto_attack_bonus, extra_auto_chance, enrage.
@@ -1944,12 +1947,36 @@ export default class GameScene extends Phaser.Scene {
     const TICK_MS = window.GAME_CONFIG.TICK_MS;
     const index   = this.summonedAddSlots.length;
 
+    if (addDef.maxCount != null) {
+      const liveCount = this.summonedAddSlots.filter(s => s.addDef?.id === addDef.id && (s.currentHealth ?? 0) > 0).length;
+      if (liveCount >= addDef.maxCount) {
+        console.log('[Add] Spawn skipped -- maxCount reached for', addDef.id);
+        return;
+      }
+    }
+
+    if (addDef.maxCount != null) {
+      const liveCount = this.summonedAddSlots.filter(s => s.addDef?.id === addDef.id && (s.currentHealth ?? 0) > 0).length;
+      if (liveCount >= addDef.maxCount) {
+        console.log('[Add] Spawn skipped -- maxCount reached for', addDef.id);
+        return;
+      }
+    }
+
     const addSlot = this._buildAddSlot(addDef, index);
     if (!addSlot) return;
 
     addSlot.currentHealth = addDef.health ?? 1;
     addSlot.addDef        = addDef;
     addSlot.index         = index;
+
+    if (addDef.id) {
+      this.summonedAddCounters[addDef.id] = (this.summonedAddCounters[addDef.id] ?? 0) + 1;
+    }
+
+    if (addDef.id) {
+      this.summonedAddCounters[addDef.id] = (this.summonedAddCounters[addDef.id] ?? 0) + 1;
+    }
 
     const lifespanTicks = addDef.lifespanTicks ?? 9;
     let   ticksElapsed  = 0;
@@ -2010,7 +2037,27 @@ export default class GameScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '16px', color: '#ff4422',
     }).setOrigin(0.5, 0.5).setDepth(11);
 
-    return { bg, nameText, hpBar, countdownText, currentHealth: addDef.health ?? 1 };
+    let sprite = null;
+    if (addDef.idleKey && this.textures.exists(addDef.idleKey)) {
+      const animKey = addDef.idleKey + '_anim';
+      if (!this.anims.exists(animKey)) {
+        this.anims.create({
+          key:       animKey,
+          frames:    this.anims.generateFrameNumbers(addDef.idleKey, {
+            start: addDef.idleFrameStart ?? 0,
+            end:   addDef.idleFrameEnd   ?? 11,
+          }),
+          frameRate: addDef.idleFrameRate ?? 8,
+          repeat:    -1,
+        });
+      }
+      sprite = this.add.sprite(cx, cy - 80, addDef.idleKey)
+        .setScale(0.3)
+        .setDepth(15);
+      sprite.play(animKey);
+    }
+
+    return { bg, nameText, hpBar, countdownText, sprite, currentHealth: addDef.health ?? 1 };
   }
 
   // Hides and destroys all display elements for an add slot.
@@ -2023,6 +2070,8 @@ export default class GameScene extends Phaser.Scene {
     addSlot.hpBar?.fill?.destroy();
     addSlot.hpBar?.valueText?.destroy();
     addSlot.countdownText?.destroy();
+    addSlot.sprite?.destroy();
+    addSlot.sprite?.destroy();
   }
 
   // Applies damage to a summoned add by index.
@@ -2334,6 +2383,14 @@ export default class GameScene extends Phaser.Scene {
 
     this.bossIsCasting   = true;
     this.bossCurrentCast = { abilityId, ability };
+
+    if (ability.castStartBuff) {
+      const csb    = ability.castStartBuff;
+      const buffId = csb.id;
+      const params = { ...csb };
+      delete params.id;
+      this._applyBossBuff(buffId, params, ability.castTimeTicks);
+    }
 
     console.log('[Boss] Casting', ability.name ?? abilityId, 'for', ability.castTimeTicks, 'ticks');
 
@@ -3262,6 +3319,12 @@ export default class GameScene extends Phaser.Scene {
   // Boss damage application
   // =====================================
   _applyDamageToBoss(damage, iconKey = null, damageType = 'physical') {
+    const liveAdd = this.summonedAddSlots.find(s => (s.currentHealth ?? 0) > 0);
+    if (liveAdd) {
+      this._applyDamageToAdd(this.summonedAddSlots.indexOf(liveAdd), damage, iconKey, damageType);
+      return;
+    }
+
     const slot = this.entitySlots.boss;
     if (!slot) return;
 
@@ -4378,6 +4441,13 @@ export default class GameScene extends Phaser.Scene {
         const actorId = phase.trigger?.actorId ?? 'secondActor';
         const slot    = this.entitySlots[actorId];
         if ((slot?.currentHealth ?? 0) > 0) resolved = phase;
+      }
+
+      if (triggerType === 'summons_count') {
+        const addId    = phase.trigger?.addId;
+        const required = phase.trigger?.value ?? 10;
+        const spawned  = this.summonedAddCounters?.[addId] ?? 0;
+        if (spawned >= required) resolved = phase;
       }
     }
 

@@ -69,7 +69,6 @@ export default class BossLoadingScene extends Phaser.Scene {
     const barH  = 16;
     const barY  = HEIGHT * 0.75;
     const barX  = cx - barW / 2;
-    console.log('cx: ', cx, 'barW: ',barW, 'barX: ', barX);
 
     this.add.text(cx, barY - 44, 'Preparing encounter...', {
       fontFamily: 'monospace', fontSize: '28px',

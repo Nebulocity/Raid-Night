@@ -189,6 +189,7 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.spritesheet('the_archivist_idle',      'assets/raids/spookspire_keep/bosses/the_archivist/the_archivist_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('the_archivist_attacking', 'assets/raids/spookspire_keep/bosses/the_archivist/the_archivist_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
     // this.load.spritesheet('the_archivist_defeated',  'assets/raids/spookspire_keep/bosses/the_archivist/the_archivist_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('haunted_tome_idle',        'assets/raids/spookspire_keep/bosses/the_archivist/haunted_tome_idle.webp',          { frameWidth: 384, frameHeight: 384 });
 
     this.load.spritesheet('aether_drake_idle',      'assets/raids/spookspire_keep/bosses/aether_drake/aether_drake_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('aether_drake_attacking', 'assets/raids/spookspire_keep/bosses/aether_drake/aether_drake_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
@@ -239,6 +240,9 @@ export default class PreloadScene extends Phaser.Scene {
 
       // Water totems
       'totem_spring', 'totem_purify', 'totem_chill',
+
+      // The Archivist
+      'summon_haunted_tome', 'magic_infusion', 'vengeful_beam', 'lore_absorption',
 
       // Generic auto-attack fallback
       'autoAttack',
