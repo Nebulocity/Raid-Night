@@ -93,7 +93,7 @@
         "maxMana": 0,
         "usesMana": false,
         "damageRange": [1000, 3500],
-        "attackSpeed": 1,
+        "attackSpeed": 2,
         "armor": 15000,
         "attackHitChance": 90,
         "abilityHitChance": 90,
@@ -127,7 +127,7 @@
       "maxMana": 0,
       "usesMana": false,
       "damageRange": [1500, 3500],
-      "attackSpeed": 2,
+      "attackSpeed": 1,
       "armor": 12000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
@@ -141,7 +141,7 @@
     "audioDuration": 4000,
     "dialog": {
       "intro": ["An undead horse stands in her stable, eating flesh from a dead adventurer..."],
-      "defeat": ["They fall... as one."],
+      "defeat": [],
       "victory": ["Victory!"]
     },
     "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
