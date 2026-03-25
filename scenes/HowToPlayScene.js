@@ -51,6 +51,7 @@ export default class HowToPlayScene extends Phaser.Scene {
 
     this.add.text(WIDTH / 2, 90, 'How to Play', {
       fontFamily:      'monospace',
+      font:            'Menlo',
       fontSize:        '80px',
       color:           '#fff1c7',
       stroke:          '#000000',
