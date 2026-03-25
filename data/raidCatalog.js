@@ -140,7 +140,7 @@ const THE_CRACKED_MOUNTAIN = {
 //
 // Unlock flowchart:
 //
-//   [sir_trotsalot_and_nighttime]  <- always unlocked
+//   [sir_trotsalot]  <- always unlocked
 //          |           |
 //     [mortimer]  [virtuous_lady]
 //          |           
@@ -165,7 +165,7 @@ const SPOOKSPIRE_KEEP = {
   backgroundPath:  raidRootPath('bg_spookspire_keep.webp'),
   bosses: [
     {
-      id:                       'sir_trotsalot_and_nighttime',
+      id:                       'sir_trotsalot',
       name:                     'Sir Trotsalot',
       buttonKey:                'button_sir_trotsalot',
       buttonPath:               bossButtonPath('sir_trotsalot.webp'),
@@ -196,7 +196,7 @@ const SPOOKSPIRE_KEEP = {
       defeatedPath:             bossSpriteSheet('spookspire_keep', 'mortimer', 'mortimer_defeated.webp'),
       levelKey:                 'level_mortimer',
       levelPath:                'data/spookspire_keep/mortimer.json',
-      unlockedBy:               [],
+      unlockedBy:               ['sir_trotsalot'],
     },
     {
       id:                       'virtuous_lady',
@@ -213,7 +213,7 @@ const SPOOKSPIRE_KEEP = {
       defeatedPath:             bossSpriteSheet('spookspire_keep', 'virtuous_lady', 'virtuous_lady_defeated.webp'),
       levelKey:                 'level_virtuous_lady',
       levelPath:                'data/spookspire_keep/virtuous_lady.json',
-      unlockedBy:               [],
+      unlockedBy:               ['sir_trotsalot'],
     },
     {
       id:                       'the_movie_theater',
@@ -230,7 +230,7 @@ const SPOOKSPIRE_KEEP = {
       defeatedPath:             bossSpriteSheet('spookspire_keep', 'sir_trotsalot', 'sir_trotsalot_mounted_defeated.webp'),  // TODO: add movie theater defeated sheet
       levelKey:                 'level_the_movie_theater',
       levelPath:                'data/spookspire_keep/the_movie_theater.json',
-      unlockedBy:               ['mortimer'],
+      unlockedBy:               ['the_movie_theater'],
     },
     {
       id:                       'the_archivist',
