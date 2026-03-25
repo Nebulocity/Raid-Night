@@ -2688,18 +2688,26 @@ export default class GameScene extends Phaser.Scene {
       switch (eff.type) {
 
         case 'damage': {
-          let dmg = Phaser.Math.Between(eff.min, eff.max);
-          if (ability.canCrit && Math.random() * 100 < critChance) {
-            dmg = Math.round(dmg * critMult);
-          }
-          for (const tid of targets) {
-            if (tid === 'boss') {
-              this._applyDamageToBoss(dmg, iconKey);
-              this.addThreat(casterId, Math.round(dmg));
-              this._updateThreatMeters();
+          const hitCount = (ability.targetType === 'random_multi_boss' && ability.targetCount)
+            ? ability.targetCount
+            : 1;
+
+          let lastDmg = 0;
+          for (let hit = 0; hit < hitCount; hit++) {
+            let dmg = Phaser.Math.Between(eff.min, eff.max);
+            if (ability.canCrit && Math.random() * 100 < critChance) {
+              dmg = Math.round(dmg * critMult);
             }
+            for (const tid of targets) {
+              if (tid === 'boss') {
+                this._applyDamageToBoss(dmg, iconKey);
+                this.addThreat(casterId, Math.round(dmg));
+                this._updateThreatMeters();
+              }
+            }
+            lastDmg = dmg;
           }
-          effectResults[i] = dmg;
+          effectResults[i] = lastDmg;
           break;
         }
 
