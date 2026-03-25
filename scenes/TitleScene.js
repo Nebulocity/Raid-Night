@@ -55,7 +55,7 @@ export default class TitleScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     const text = this.add.text(x, y, label, {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel Decorative, serif',
       fontSize: '44px',
       color: '#fff4cf',
       stroke: '#000000',

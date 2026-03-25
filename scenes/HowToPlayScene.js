@@ -50,8 +50,7 @@ export default class HowToPlayScene extends Phaser.Scene {
       .setTint(0x555555);
 
     this.add.text(WIDTH / 2, 90, 'How to Play', {
-      fontFamily:      'monospace',
-      font:            'Menlo',
+      fontFamily:      'Cinzel Decorative, serif',
       fontSize:        '80px',
       color:           '#fff1c7',
       stroke:          '#000000',
@@ -87,7 +86,7 @@ export default class HowToPlayScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       const label = this.add.text(tx, TAB_Y, tab.label, {
-        fontFamily:      'monospace',
+        fontFamily:      'Cinzel, serif',
         fontSize:        '54px',
         color:           '#' + tab.textColor.toString(16).padStart(6, '0'),
         stroke:          '#000000',
@@ -147,7 +146,7 @@ export default class HowToPlayScene extends Phaser.Scene {
     const topY     = cy - CARD_H / 2 + 20;
 
     const nameText = this.add.text(textX, topY, ability.name ?? ability.id, {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel, serif',
       fontSize:        '40px',
       color:           '#ffffff',
       stroke:          '#000000',
@@ -156,7 +155,7 @@ export default class HowToPlayScene extends Phaser.Scene {
     group.add(nameText);
 
     const descText = this.add.text(textX, topY + nameText.height + 10, ability.description ?? '', {
-      fontFamily:  'monospace',
+      fontFamily:  'Cinzel, serif',
       fontSize:    '30px',
       color:       '#cccccc',
       wordWrap:    { width: textMaxW },
@@ -174,7 +173,7 @@ export default class HowToPlayScene extends Phaser.Scene {
       cy + CARD_H / 2 - 18,
       costLabel,
       {
-        fontFamily: 'monospace',
+        fontFamily: 'Cinzel, serif',
         fontSize:   '32px',
         color:      '#' + textColor.toString(16).padStart(6, '0'),
       }
@@ -204,7 +203,7 @@ export default class HowToPlayScene extends Phaser.Scene {
   // ===========
   _buildBackButton(WIDTH, HEIGHT) {
     const btn = this.add.text(85, HEIGHT * 0.96, '< BACK', {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel, serif',
       fontSize:        '56px',
       color:           '#ccaa66',
       stroke:          '#000000',

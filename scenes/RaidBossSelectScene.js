@@ -61,7 +61,7 @@ export default class RaidBossSelectScene extends Phaser.Scene {
 
     // Raid name just above the background
     this.add.text(WIDTH / 2, bgTop - 48, raid.name, {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel Decorative, serif',
       fontSize:        '54px',
       color:           '#fff1c7',
       stroke:          '#000000',
@@ -70,7 +70,7 @@ export default class RaidBossSelectScene extends Phaser.Scene {
 
     // Blinking wipe token line
     const tokenText = this.add.text(WIDTH / 2, bgTop - 104, 'Raid Wipe Tokens Left: ' + saveData.raidWipeTokensLeft, {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel, serif',
       fontSize:        '34px',
       color:           '#f3e6c2',
       stroke:          '#000000',
@@ -210,7 +210,7 @@ export default class RaidBossSelectScene extends Phaser.Scene {
     const plateW      = buttonSize + 45;
 
     const nameText = this.add.text(0, -9999, shortName, {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel, serif',
       fontSize:        '32px',
       color:           (unlocked && !defeated) ? '#fff1c7' : '#555555',
       stroke:          '#000000',
@@ -336,7 +336,7 @@ export default class RaidBossSelectScene extends Phaser.Scene {
 
     // Text-based back button - replace with sprite version later
     const btn = this.add.text(85, HEIGHT * 0.96, '< BACK', {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel, serif',
       fontSize:        '48px',
       color:           '#ccaa66',
       stroke:          '#000000',

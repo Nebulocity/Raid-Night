@@ -41,7 +41,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     const titleY = HEIGHT * 0.10;
 
     this.add.text(WIDTH / 2, titleY, 'Choose Your Raid!', {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel Decorative, serif',
       fontSize:   '64px',
       color:      '#fff1c7',
       stroke:     '#000000',
@@ -49,7 +49,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     const tokenText = this.add.text(WIDTH / 2, titleY + 90, 'Raid Wipe Tokens Left: ' + saveData.raidWipeTokensLeft, {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel, serif',
       fontSize:   '44px',
       color:      '#f3e6c2',
       stroke:     '#000000',
@@ -117,7 +117,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     const textW = btnW - textX - BTN_PADDING;
 
     this.add.text(textX, btnY - 30, raid.name, {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel, serif',
       fontSize:        '48px',
       color:           '#fff1c7',
       stroke:          '#000000',
@@ -140,7 +140,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     const progressColor  = raidCleared ? '#ffd700' : '#aaaaaa';
 
     this.add.text(textX, btnY + 50, progressLabel, {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel, serif',
       fontSize:        '36px',
       color:           progressColor,
       stroke:          '#000000',
@@ -149,7 +149,7 @@ export default class RaidSelectScene extends Phaser.Scene {
 
     if (!unlocked) {
       this.add.text(btnX, btnY + BTN_HEIGHT / 2 + 18, 'Locked', {
-        fontFamily: 'monospace',
+        fontFamily: 'Cinzel, serif',
         fontSize:   '28px',
         color:      '#bbbbbb',
         stroke:     '#000000',
@@ -198,7 +198,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
 
     const btn = this.add.text(85, HEIGHT * 0.96, '< BACK', {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel, serif',
       fontSize:        '48px',
       color:           '#ccaa66',
       stroke:          '#000000',

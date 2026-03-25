@@ -75,7 +75,7 @@ export default class UIScene extends Phaser.Scene {
 
     // Tick counter label
     this._tickLabel = this.add.text(WIDTH - 20, ab.y + 10, 'TICK 0', {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel, serif',
       fontSize:   '20px',
       color:      '#445544',
       align:      'right',
@@ -230,14 +230,14 @@ export default class UIScene extends Phaser.Scene {
     const name      = ability?.name || abilityId;
     const shortName = name.length > 14 ? name.substring(0, 13) + '...' : name;
     const label     = this.add.text(x, y + size / 2 - 4, shortName, {
-      fontFamily: 'monospace', fontSize: '18px', color: '#ffffff',
+      fontFamily: 'Cinzel, serif', fontSize: '18px', color: '#ffffff',
       stroke: '#000000', strokeThickness: 2, align: 'center',
     }).setOrigin(0.5, 1).setDepth(12);
 
     // Mana cost - top-left corner
     const manaLabel = this.add.text(x - size / 2 + 4, y - size / 2 + 4,
       ability?.manaCost ? ability.manaCost + 'm' : '', {
-      fontFamily: 'monospace', fontSize: '16px', color: '#66aaff',
+      fontFamily: 'Cinzel, serif', fontSize: '16px', color: '#66aaff',
       stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0, 0).setDepth(12);
 
@@ -251,7 +251,7 @@ export default class UIScene extends Phaser.Scene {
 
     // Cooldown countdown text - large and centerd
     const cdText = this.add.text(x, y, '', {
-      fontFamily: 'monospace', fontSize: '48px', color: '#ffffff',
+      fontFamily: 'Cinzel, serif', fontSize: '48px', color: '#ffffff',
       stroke: '#000000', strokeThickness: 5,
     }).setOrigin(0.5).setDepth(14);
 
@@ -325,7 +325,7 @@ export default class UIScene extends Phaser.Scene {
       .setDepth(11);
 
     this.add.text(x, y + size / 2 - 22, element.toUpperCase(), {
-      fontFamily: 'monospace', fontSize: '18px',
+      fontFamily: 'Cinzel, serif', fontSize: '18px',
       color: '#' + color.toString(16).padStart(6, '0'), align: 'center',
     }).setOrigin(0.5, 1).setDepth(12);
 
@@ -463,7 +463,7 @@ export default class UIScene extends Phaser.Scene {
     }
 
     const text = this.add.text(cx + (iconOffsetX > 0 ? 4 : 0), cy, label, {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel, serif',
       fontSize:        fSize,
       color:           color,
       stroke:          '#000000',
@@ -533,7 +533,7 @@ export default class UIScene extends Phaser.Scene {
     }
 
     const nameText = this.add.text(textX, cy, label, {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel, serif',
       fontSize:        '26px',
       color:           '#ffffff',
       stroke:          '#000000',
@@ -611,13 +611,13 @@ export default class UIScene extends Phaser.Scene {
 
       // Ticks remaining - small label BELOW the slot, not overlapping icon
       const durationText = this.add.text(sx, sy - SLOT_SIZE / 2 - 4, '', {
-        fontFamily: 'monospace', fontSize: '18px', color: '#ffffff',
+        fontFamily: 'Cinzel, serif', fontSize: '18px', color: '#ffffff',
         stroke: '#000000', strokeThickness: 2,
       }).setOrigin(0.5, 1).setDepth(DEPTH + 2).setVisible(false);
 
       // Stack badge (x2, x3) - bottom-right corner INSIDE the slot
       const stackText = this.add.text(sx + SLOT_SIZE / 2 - 2, sy + SLOT_SIZE / 2 - 2, '', {
-        fontFamily: 'monospace', fontSize: '18px', color: '#ffdd00',
+        fontFamily: 'Cinzel, serif', fontSize: '18px', color: '#ffdd00',
         stroke: '#000000', strokeThickness: 2,
       }).setOrigin(1, 1).setDepth(DEPTH + 2).setVisible(false);
 
@@ -758,7 +758,7 @@ export default class UIScene extends Phaser.Scene {
     const textLeft  = cx - TOOLTIP_W / 2 + PADDING + (hasIcon ? ICON_SIZE + 24 : 0);
 
     const nameText = this.add.text(textLeft, cy - 80, ability.name ?? ability.id, {
-      fontFamily:      'monospace',
+      fontFamily:      'Cinzel, serif',
       fontSize:        '42px',
       color:           '#ffffff',
       stroke:          '#000000',
@@ -767,7 +767,7 @@ export default class UIScene extends Phaser.Scene {
     objects.push(nameText);
 
     const descText = this.add.text(textLeft, cy - 80 + nameText.height + 12, ability.description ?? '', {
-      fontFamily:  'monospace',
+      fontFamily:  'Cinzel, serif',
       fontSize:    '34px',
       color:       '#dddddd',
       wordWrap:    { width: TEXT_W },
@@ -779,7 +779,7 @@ export default class UIScene extends Phaser.Scene {
       (ability.recastTicks > 0 ? '   |   ' + ability.recastTicks + 's cooldown' : '   |   No cooldown');
 
     const statText = this.add.text(textLeft, cy - 80 + nameText.height + 12 + descText.height + 14, statLine, {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel, serif',
       fontSize:   '32px',
       color:      '#88aaff',
     }).setOrigin(0, 0).setDepth(101).setAlpha(0);
@@ -844,7 +844,7 @@ export default class UIScene extends Phaser.Scene {
       .setAlpha(0);
 
     const label = this.add.text(cx, cy, '', {
-      fontFamily: 'monospace', fontSize: '22px', color: '#ffffff',
+      fontFamily: 'Cinzel, serif', fontSize: '22px', color: '#ffffff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5, 0.5).setDepth(72).setAlpha(0);
 
@@ -914,7 +914,7 @@ export default class UIScene extends Phaser.Scene {
       .setAlpha(0);
 
     const text = this.add.text(cx, cy, '- ' + phase.toUpperCase() + ' -', {
-      fontFamily: 'monospace', fontSize: '40px', color: '#ff6633', align: 'center',
+      fontFamily: 'Cinzel, serif', fontSize: '40px', color: '#ff6633', align: 'center',
     }).setOrigin(0.5).setDepth(61).setAlpha(0);
 
     this.tweens.add({ targets: [panel, text], alpha: 1, duration: 400 });

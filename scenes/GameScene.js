@@ -523,7 +523,7 @@ export default class GameScene extends Phaser.Scene {
     const nameY = hasSecondActor ? (zone.y + 80) : (zone.y + zone.h - 550);
 
     const nameText = this.add.text(cx, nameY, bossData?.name || '???', {
-      fontFamily: 'monospace', fontSize, color: '#ff6644',
+      fontFamily: 'Cinzel Decorative, serif', fontSize, color: '#ff6644',
     }).setOrigin(0.5, 1);
 
     nameText.updateText();
@@ -660,11 +660,11 @@ export default class GameScene extends Phaser.Scene {
     namePanel.strokeRect(zone.x - 10, zone.y + 480, namePanelW, namePanelH);
 
     // const nameText = this.add.text(cx, zone.y + 80, "Earth Mother's Favorite", {
-    //   fontFamily: 'monospace', fontSize: '32px', color: '#44ddbb',
+    //   fontFamily: 'Cinzel, serif', fontSize: '32px', color: '#44ddbb',
     // }).setOrigin(0.5, 0.5).setAlpha(0.9).setVisible(true);
 
     const nameText = this.add.text(cx, zone.y + 492, 'Earth Mother\'s Favorite', {
-      fontFamily: 'monospace', fontSize: '32px',
+      fontFamily: 'Cinzel, serif', fontSize: '32px',
       color: '#44ddbb',
     }).setOrigin(0.5, 0).setAlpha(0.9);
 
@@ -674,7 +674,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Threat label
     this.add.text(cx - (zone.w + 31) / 2 + 5, zone.y + 640, 'THREAT', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#884400',
+      fontFamily: 'Cinzel, serif', fontSize: '14px', color: '#884400',
     }).setOrigin(0, 0.5);
 
     this.entitySlots.player = { sprite, nameText, hpBar, manaBar, threatBar };
@@ -717,7 +717,7 @@ export default class GameScene extends Phaser.Scene {
     namePanel.strokeRect(zone.x - 10, zone.y + 480, namePanelW, namePanelH);
 
     const nameText = this.add.text(cx, zone.y + 492, label, {
-      fontFamily: 'monospace', fontSize: '32px',
+      fontFamily: 'Cinzel, serif', fontSize: '32px',
       color: '#' + tintColor.toString(16).padStart(6, '0'),
     }).setOrigin(0.5, 0).setAlpha(0.9);
 
@@ -727,7 +727,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Threat label
     this.add.text(cx - (zone.w + 31) / 2 + 5, zone.y + 640, 'THREAT', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#884400',
+      fontFamily: 'Cinzel, serif', fontSize: '14px', color: '#884400',
     }).setOrigin(0, 0.5);
 
     sprite.setAlpha(0);
@@ -763,7 +763,7 @@ export default class GameScene extends Phaser.Scene {
     titlePanel.strokeRect(cx - panelW / 2, panelY + 470, panelW, panelH);
 
     this.add.text(cx - (panelW / 2) + 210, panelY + 500, 'TOTEMS', {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel, serif',
       fontSize:   '32px',
       color:      '#BBC985',
       stroke:     '#000000',
@@ -785,7 +785,7 @@ export default class GameScene extends Phaser.Scene {
       //   .setStrokeStyle(1, 0x554422, 0.6);
 
       const slotLabel = this.add.text(sx, zone.y + zone.h - 125, element.toUpperCase(), {
-        fontFamily: 'monospace', fontSize: '24px', color: '#ffffff',
+        fontFamily: 'Cinzel, serif', fontSize: '24px', color: '#ffffff',
       }).setOrigin(0.5, 1).setAlpha(0.6);
 
       const totemSprite = this.add.sprite(sx, sy, totemKeys[i], 0)
@@ -909,7 +909,7 @@ export default class GameScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
 
     const valueText = this.add.text(cx, cy, '', {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel, serif',
       fontSize:   '32px',
       color:      '#ffffff',
       stroke:     '#000000',
@@ -927,7 +927,7 @@ export default class GameScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
 
     const valueText = this.add.text(cx, cy, '', {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel, serif',
       fontSize:   '32px',
       color:      '#ffffff',
       stroke:     '#000000',
@@ -946,7 +946,7 @@ export default class GameScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
 
     const valueText = this.add.text(cx, cy, '', {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel, serif',
       fontSize:   '48px',
       color:      '#ffffff',
       stroke:     '#000000',
@@ -964,7 +964,7 @@ export default class GameScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
 
     const valueText = this.add.text(cx, cy, '', {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel, serif',
       fontSize:   '32px',
       color:      '#ffffff',
       stroke:     '#000000',
@@ -1021,7 +1021,7 @@ export default class GameScene extends Phaser.Scene {
     const fill  = this.add.rectangle(cx - width / 2, cy, 0, height, 0xff6600)
       .setOrigin(0, 0.5);
     const valueText = this.add.text(cx, cy, '0%', {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel, serif',
       fontSize:   '18px',
       color:      '#ffaa44',
       stroke:     '#000000',
@@ -1270,7 +1270,7 @@ export default class GameScene extends Phaser.Scene {
         index++;
 
         const text = this.add.text(cx, cy, label, {
-          fontFamily:      'monospace',
+          fontFamily:      'Cinzel Decorative, serif',
           fontSize:        index === 1 ? '52px' : '96px',
           color:           '#a82020',
           stroke:          '#000000',
@@ -1449,7 +1449,7 @@ export default class GameScene extends Phaser.Scene {
       lineIndex++;
 
       const text = this.add.text(cx, cy - 250, line, {
-        fontFamily: 'monospace',
+        fontFamily: 'Cinzel, serif',
         fontSize:   '42px',
         color:      color,
         align:      'center',
@@ -1489,7 +1489,7 @@ export default class GameScene extends Phaser.Scene {
     const panel = this.add.rectangle(cx, cy, zone.w, zone.h * 0.6, 0x000000, 0.7)
       .setStrokeStyle(1, 0x444444, 0.8).setAlpha(0).setDepth(80);
     const text  = this.add.text(cx, cy, message, {
-      fontFamily: 'monospace', fontSize: '28px', color,
+      fontFamily: 'Cinzel, serif', fontSize: '28px', color,
       align: 'center', wordWrap: { width: zone.w - 32 },
     }).setOrigin(0.5).setAlpha(0).setDepth(81);
 
@@ -1724,104 +1724,8 @@ export default class GameScene extends Phaser.Scene {
 
     if (slot.nuisance) return;
 
-    // ========================
-    // Submerge - special case
-    // ========================
-    if (abilityId === 'submerge') {
-      this.showAbilityDialogue(abilityId);
-      this.bossSubmerged = true;
-      this.playBossSubmerge();
-
-      // Register for all targets so death/rebirth clears it
-      ['player', 'tank', 'healer'].forEach(id => this._registerDot(id, subTimer));
-      return;
-    }
-
-    // ========================
-    // Wrath of Ragnaros
-    // ========================
-    if (abilityId === 'wrath_of_ragnaros') {
-      this.playBossWrath();
-      // Immediate AoE damage
-      const immDmg = Phaser.Math.Between(
-        this.levelData?.abilities?.wrath_of_ragnaros?.immediateMin ?? 2500,
-        this.levelData?.abilities?.wrath_of_ragnaros?.immediateMax ?? 4500
-      );
-      ['player', 'tank', 'healer'].forEach(id => this._applyDamageToCharacter(id, immDmg, 'icon_wrath_of_ragnaros'));
-      console.log('[Boss] Wrath of Ragnaros AoE immediate:', immDmg);
-      // No tick DoT for wrath - it's handled by wrath_of_fire below
-      return;
-    }
-
-    // ========================
-    // Wrath of Fire - AoE immediate + DoT
-    // ========================
-    if (abilityId === 'wrath_of_fire') {
-      this.showAbilityDialogue(abilityId);
-      // Immediate AoE
-      const immDmg = Phaser.Math.Between(ability.immediateMin ?? 2500, ability.immediateMax ?? 4500);
-      ['player', 'tank', 'healer'].forEach(id => this._applyDamageToCharacter(id, immDmg, 'icon_wrath_of_ragnaros'));
-      console.log('[Boss] Wrath of Fire AoE immediate:', immDmg);
-      // DoT ticks
-      if (ability.duration > 0 && ability.tickMin) {
-        const tickDmg = Phaser.Math.Between(ability.tickMin, ability.tickMax);
-        let ticks = 0;
-        const dotTimer = this.time.addEvent({
-          delay:    TICK_MS,
-          loop:     true,
-          callback: () => {
-            ticks++;
-            ['player', 'tank', 'healer'].forEach(id => this._applyDamageToCharacter(id, tickDmg, 'icon_wrath_of_ragnaros'));
-            if (ticks >= ability.duration || !this.gameRunning) dotTimer.remove();
-          },
-        });
-        // Register for all targets so Rebirth clears it properly
-        ['player', 'tank', 'healer'].forEach(id => this._registerDot(id, dotTimer));
-      }
-      return;
-    }
-
-    // ========================
-    // Magma Blast - single target immediate + DoT
-    // ========================
-    if (abilityId === 'magma_blast') {
-      this.showAbilityDialogue(abilityId);
-      const targetId = this.getHighestThreatTarget();
-      // Immediate hit
-      const immDmg = Phaser.Math.Between(ability.immediateMin ?? 3000, ability.immediateMax ?? 5000);
-      this._applyDamageToCharacter(targetId, immDmg, 'icon_magma_blast');
-      console.log('[Boss] Magma Blast hits', targetId, 'for', immDmg);
-      // DoT ticks - same target, roll once
-      if (ability.duration > 0 && ability.tickMin) {
-        const tickDmg = Phaser.Math.Between(ability.tickMin, ability.tickMax);
-        let ticks = 0;
-        const dotTimer = this.time.addEvent({
-          delay:    TICK_MS,
-          loop:     true,
-          callback: () => {
-            ticks++;
-            this._applyDamageToCharacter(targetId, tickDmg, 'icon_magma_blast');
-            if (ticks >= ability.duration || !this.gameRunning) dotTimer.remove();
-          },
-        });
-        this._registerDot(targetId, dotTimer);
-      }
-      return;
-    }
-
-
-    // ========================
-    // Generic boss ability handling
-    // ========================
-    const resolveTargets = () => {
-      if (targetType === 'all_allies') return ['player', 'tank', 'healer'];
-      if (targetType === 'random_ally') {
-        const alive = ['player', 'tank', 'healer'].filter(id => (this.entitySlots[id]?.currentHealth ?? 0) > 0);
-        return alive.length ? [Phaser.Utils.Array.GetRandom(alive)] : [];
-      }
-      if (targetType === 'boss_self') return [];
-      return [this.getHighestThreatTarget()];
-    };
+    const attackSpeed = Math.round(slot._data.stats?.attackSpeed ?? 3);
+    if (this.tickCount % attackSpeed !== 0) return;
 
     const damageRange = slot._data.stats?.damageRange ?? [100, 200];
     const baseDamage  = Phaser.Math.Between(damageRange[0], damageRange[1]);
@@ -2093,7 +1997,7 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(10);
 
     const nameText = this.add.text(cx, cy - 30, addDef.name || '???', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#ffaa44',
+      fontFamily: 'Cinzel, serif', fontSize: '14px', color: '#ffaa44',
     }).setOrigin(0.5, 0.5).setDepth(11);
 
     const hpBar = this._buildBossHealthBar(cx, cy - 10, barW, barH, 0xcc2200);
@@ -2103,7 +2007,7 @@ export default class GameScene extends Phaser.Scene {
     hpBar.maxValue = addDef.health ?? 1;
 
     const countdownText = this.add.text(cx, cy + 14, String(addDef.lifespanTicks ?? 9), {
-      fontFamily: 'monospace', fontSize: '16px', color: '#ff4422',
+      fontFamily: 'Cinzel, serif', fontSize: '16px', color: '#ff4422',
     }).setOrigin(0.5, 0.5).setDepth(11);
 
     return { bg, nameText, hpBar, countdownText, currentHealth: addDef.health ?? 1 };

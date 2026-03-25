@@ -57,7 +57,7 @@ export default class BossLoadingScene extends Phaser.Scene {
     const nameY = bossSprite ? bossY - (bossSprite.height / 2) - 100 : HEIGHT * 0.20;
 
     this.add.text(cx, nameY, bossName, {
-      fontFamily: 'monospace',
+      fontFamily: 'Cinzel Decorative, serif',
       fontSize:   '64px',
       color:      '#fff1c7',
       stroke:     '#000000',
@@ -69,9 +69,10 @@ export default class BossLoadingScene extends Phaser.Scene {
     const barH  = 16;
     const barY  = HEIGHT * 0.75;
     const barX  = cx - barW / 2;
+    console.log('cx: ', cx, 'barW: ',barW, 'barX: ', barX);
 
     this.add.text(cx, barY - 44, 'Preparing encounter...', {
-      fontFamily: 'monospace', fontSize: '28px',
+      fontFamily: 'Cinzel, serif', fontSize: '28px',
       color: '#c8a96e', align: 'center',
     }).setOrigin(0.5);
 
@@ -81,7 +82,7 @@ export default class BossLoadingScene extends Phaser.Scene {
     this._barShimmer = this.add.rectangle(barX, barY, 0, 3,  0xffd700).setOrigin(0, 0).setAlpha(0.6);
 
     this._statusText = this.add.text(cx, barY + 44, 'Loading...', {
-      fontFamily: 'monospace', fontSize: '22px', color: '#555555', align: 'center',
+      fontFamily: 'Cinzel, serif', fontSize: '22px', color: '#555555', align: 'center',
     }).setOrigin(0.5);
 
     // - Wire up loader events -------------------------------
