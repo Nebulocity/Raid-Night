@@ -1724,8 +1724,104 @@ export default class GameScene extends Phaser.Scene {
 
     if (slot.nuisance) return;
 
-    const attackSpeed = Math.round(slot._data.stats?.attackSpeed ?? 3);
-    if (this.tickCount % attackSpeed !== 0) return;
+    // ========================
+    // Submerge - special case
+    // ========================
+    if (abilityId === 'submerge') {
+      this.showAbilityDialogue(abilityId);
+      this.bossSubmerged = true;
+      this.playBossSubmerge();
+
+      // Register for all targets so death/rebirth clears it
+      ['player', 'tank', 'healer'].forEach(id => this._registerDot(id, subTimer));
+      return;
+    }
+
+    // ========================
+    // Wrath of Ragnaros
+    // ========================
+    if (abilityId === 'wrath_of_ragnaros') {
+      this.playBossWrath();
+      // Immediate AoE damage
+      const immDmg = Phaser.Math.Between(
+        this.levelData?.abilities?.wrath_of_ragnaros?.immediateMin ?? 2500,
+        this.levelData?.abilities?.wrath_of_ragnaros?.immediateMax ?? 4500
+      );
+      ['player', 'tank', 'healer'].forEach(id => this._applyDamageToCharacter(id, immDmg, 'icon_wrath_of_ragnaros'));
+      console.log('[Boss] Wrath of Ragnaros AoE immediate:', immDmg);
+      // No tick DoT for wrath - it's handled by wrath_of_fire below
+      return;
+    }
+
+    // ========================
+    // Wrath of Fire - AoE immediate + DoT
+    // ========================
+    if (abilityId === 'wrath_of_fire') {
+      this.showAbilityDialogue(abilityId);
+      // Immediate AoE
+      const immDmg = Phaser.Math.Between(ability.immediateMin ?? 2500, ability.immediateMax ?? 4500);
+      ['player', 'tank', 'healer'].forEach(id => this._applyDamageToCharacter(id, immDmg, 'icon_wrath_of_ragnaros'));
+      console.log('[Boss] Wrath of Fire AoE immediate:', immDmg);
+      // DoT ticks
+      if (ability.duration > 0 && ability.tickMin) {
+        const tickDmg = Phaser.Math.Between(ability.tickMin, ability.tickMax);
+        let ticks = 0;
+        const dotTimer = this.time.addEvent({
+          delay:    TICK_MS,
+          loop:     true,
+          callback: () => {
+            ticks++;
+            ['player', 'tank', 'healer'].forEach(id => this._applyDamageToCharacter(id, tickDmg, 'icon_wrath_of_ragnaros'));
+            if (ticks >= ability.duration || !this.gameRunning) dotTimer.remove();
+          },
+        });
+        // Register for all targets so Rebirth clears it properly
+        ['player', 'tank', 'healer'].forEach(id => this._registerDot(id, dotTimer));
+      }
+      return;
+    }
+
+    // ========================
+    // Magma Blast - single target immediate + DoT
+    // ========================
+    if (abilityId === 'magma_blast') {
+      this.showAbilityDialogue(abilityId);
+      const targetId = this.getHighestThreatTarget();
+      // Immediate hit
+      const immDmg = Phaser.Math.Between(ability.immediateMin ?? 3000, ability.immediateMax ?? 5000);
+      this._applyDamageToCharacter(targetId, immDmg, 'icon_magma_blast');
+      console.log('[Boss] Magma Blast hits', targetId, 'for', immDmg);
+      // DoT ticks - same target, roll once
+      if (ability.duration > 0 && ability.tickMin) {
+        const tickDmg = Phaser.Math.Between(ability.tickMin, ability.tickMax);
+        let ticks = 0;
+        const dotTimer = this.time.addEvent({
+          delay:    TICK_MS,
+          loop:     true,
+          callback: () => {
+            ticks++;
+            this._applyDamageToCharacter(targetId, tickDmg, 'icon_magma_blast');
+            if (ticks >= ability.duration || !this.gameRunning) dotTimer.remove();
+          },
+        });
+        this._registerDot(targetId, dotTimer);
+      }
+      return;
+    }
+
+
+    // ========================
+    // Generic boss ability handling
+    // ========================
+    const resolveTargets = () => {
+      if (targetType === 'all_allies') return ['player', 'tank', 'healer'];
+      if (targetType === 'random_ally') {
+        const alive = ['player', 'tank', 'healer'].filter(id => (this.entitySlots[id]?.currentHealth ?? 0) > 0);
+        return alive.length ? [Phaser.Utils.Array.GetRandom(alive)] : [];
+      }
+      if (targetType === 'boss_self') return [];
+      return [this.getHighestThreatTarget()];
+    };
 
     const damageRange = slot._data.stats?.damageRange ?? [100, 200];
     const baseDamage  = Phaser.Math.Between(damageRange[0], damageRange[1]);
