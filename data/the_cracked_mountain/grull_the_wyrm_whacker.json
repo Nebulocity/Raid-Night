@@ -12,20 +12,20 @@
     },
     "spritesheets": [
       {
-        "key": "boss_grull_the_wyrm_whacker_idle",
-        "path": "assets/raids/the_cracked_mountain/bosses/idle/boss_grull_the_wyrm_whacker_idle.webp",
+        "key": "grull_the_wyrm_whacker_idle",
+        "path": "assets/raids/the_cracked_mountain/bosses/grull_the_wyrm_whacker/grull_the_wyrm_whacker_idle.webp",
         "frameWidth": 256,
         "frameHeight": 256
       },
       {
-        "key": "boss_grull_the_wyrm_whacker_attacking",
-        "path": "assets/raids/the_cracked_mountain/bosses/attacking/boss_grull_the_wyrm_whacker_attacking.webp",
+        "key": "grull_the_wyrm_whacker_attacking",
+        "path": "assets/raids/the_cracked_mountain/bosses/grull_the_wyrm_whacker/grull_the_wyrm_whacker_attacking.webp",
         "frameWidth": 256,
         "frameHeight": 256
       },
       {
-        "key": "boss_grull_the_wyrm_whacker_defeated",
-        "path": "assets/raids/the_cracked_mountain/bosses/defeated/boss_grull_the_wyrm_whacker_defeated.webp",
+        "key": "grull_the_wyrm_whacker_defeated",
+        "path": "assets/raids/the_cracked_mountain/bosses/grull_the_wyrm_whacker/grull_the_wyrm_whacker_defeated.webp",
         "frameWidth": 256,
         "frameHeight": 256
       }
@@ -77,9 +77,7 @@
         "Grull whacked many wyrms. Now Grull whack you.",
         "YOU ARE SMALLER THAN WYRM. THIS WILL BE QUICK."
       ],
-      "defeat": [
-        "Grull... whacked. This is... embarrassing."
-      ],
+      "defeat": [],
       "victory": [
         "GRULL IS UNDEFEATED. GRULL IS LEGEND. GRULL NEED SNACK."
       ]
@@ -96,11 +94,11 @@
       "tank": 0,
       "healer": 0
     },
-    "spriteKey": "boss_grull_the_wyrm_whacker_idle",
+    "spriteKey": "grull_the_wyrm_whacker_idle",
     "spriteScale": 3,
     "animations": {
       "idle": {
-        "key": "boss_grull_the_wyrm_whacker_idle",
+        "key": "grull_the_wyrm_whacker_idle",
         "startFrame": 0,
         "endFrame": 8,
         "frameRate": 8,
@@ -108,14 +106,14 @@
         "repeat": -1
       },
       "attack": {
-        "key": "boss_grull_the_wyrm_whacker_attacking",
+        "key": "grull_the_wyrm_whacker_attacking",
         "startFrame": 0,
         "endFrame": 15,
         "frameRate": 12,
         "repeat": 0
       },
       "defeated": {
-        "key": "boss_grull_the_wyrm_whacker_defeated",
+        "key": "grull_the_wyrm_whacker_defeated",
         "startFrame": 0,
         "endFrame": 15,
         "frameRate": 10,
@@ -193,7 +191,7 @@
     "wyrm_whack": {
       "id": "wyrm_whack",
       "name": "Wyrm Whack",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -214,7 +212,7 @@
     "ground_tremor": {
       "id": "ground_tremor",
       "name": "Ground Tremor",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -235,7 +233,7 @@
     "stone_spike": {
       "id": "stone_spike",
       "name": "Stone Spike",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {

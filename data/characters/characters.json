@@ -1,0 +1,140 @@
+{
+  "player": {
+    "id": "player",
+    "name": "Earth Mother's Favorite",
+    "class": "shaman",
+    "race": "tauren",
+    "stats": {
+      "health": 8010,
+      "maxHealth": 8010,
+      "mana": 8963,
+      "maxMana": 8963,
+      "armor": 9471,
+      "attackHit": 90,
+      "spellHit": 92,
+      "attackSpeed": 2,
+      "damageRange": [
+        600,
+        816
+      ],
+      "actionInterval": 2,
+      "blockChance": 5,
+      "missChance": 5,
+      "critChance": 8,
+      "critMultiplier": 2.0,
+      "resistances": {
+        "physical": 0,
+        "holy": 0,
+        "nature": 0,
+        "shadow": 0,
+        "fire": 0,
+        "frost": 0,
+        "arcane": 0
+      }
+    },
+    "abilityIds": [
+      "static_burst",
+      "arc_lightning",
+      "ensnare",
+      "salve"
+    ],
+    "specialties": {
+      "chosen": [],
+      "available": []
+    },
+    "gear": {}
+  },
+  "tank": {
+    "id": "tank",
+    "name": "Tanky McTankface",
+    "class": "paladin",
+    "race": "human",
+    "stats": {
+      "health": 12067,
+      "maxHealth": 12067,
+      "mana": 5418,
+      "maxMana": 5418,
+      "armor": 14817,
+      "attackHit": 88,
+      "spellHit": 80,
+      "attackSpeed": 3,
+      "damageRange": [
+        369,
+        573
+      ],
+      "actionInterval": 2,
+      "blockChance": 35,
+      "missChance": 5,
+      "critChance": 5,
+      "critMultiplier": 2.0,
+      "resistances": {
+        "physical": 0,
+        "holy": 15,
+        "nature": 0,
+        "shadow": 0,
+        "fire": 0,
+        "frost": 0,
+        "arcane": 0
+      }
+    },
+    "abilityIds": [
+      "verdict_of_prejudice",
+      "verdict_of_righteousness",
+      "verdict_of_wisdom",
+      "sanctify",
+      "sacred_bulwark",
+      "provoke"
+    ],
+    "specialties": {
+      "chosen": [],
+      "available": []
+    },
+    "gear": {}
+  },
+  "healer": {
+    "id": "healer",
+    "name": "Healer McHealface",
+    "class": "druid",
+    "race": "night_elf",
+    "stats": {
+      "health": 7497,
+      "maxHealth": 7497,
+      "mana": 9303,
+      "maxMana": 9303,
+      "armor": 12256,
+      "attackHit": 75,
+      "spellHit": 88,
+      "attackSpeed": 4,
+      "damageRange": [
+        275,
+        358
+      ],
+      "actionInterval": 1,
+      "missChance": 5,
+      "critChance": 10,
+      "critMultiplier": 2.0,
+      "resistances": {
+        "physical": 0,
+        "holy": 0,
+        "nature": 10,
+        "shadow": 0,
+        "fire": 0,
+        "frost": 0,
+        "arcane": 0
+      }
+    },
+    "abilityIds": [
+      "renew",
+      "sustain",
+      "burgeon",
+      "quicken",
+      "awaken",
+      "spirit_surge"
+    ],
+    "specialties": {
+      "chosen": [],
+      "available": []
+    },
+    "gear": {}
+  }
+}

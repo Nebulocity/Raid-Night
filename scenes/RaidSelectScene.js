@@ -2,11 +2,22 @@
  * RaidSelectScene.js
  *
  * Lets the player choose which raid to enter.
+ *
+ * Layout: header (title + wipe tokens) at the top, then a vertical stack of
+ * full-width raid buttons -- thumbnail on the left, name and boss count on
+ * the right. No zig-zag alternation.
  */
 const Phaser = window.Phaser; // Phaser is loaded via <script> in index.html
 
 import { RAID_CATALOG, RAID_ORDER } from '../data/raidCatalog.js';
 import { loadSaveData, saveSaveData } from '../utils/saveData.js';
+
+// How tall each raid button row is (px). The thumbnail is scaled to fit inside
+// this height with a small inset, and the button background fills the width.
+const BTN_HEIGHT   = 345;
+const BTN_MARGIN   = 40;   // vertical gap between buttons
+const BTN_PADDING  = 32;   // horizontal inset from screen edge
+const THUMB_INSET  = 20;   // gap between thumbnail edge and button edge
 
 export default class RaidSelectScene extends Phaser.Scene {
   constructor() {
@@ -18,99 +29,163 @@ export default class RaidSelectScene extends Phaser.Scene {
     const saveData = loadSaveData();
     this.registry.set('saveData', saveData);
 
-    // Black background fill
+    // Black fill
     this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000);
 
-    // Raid Night background image, centered
+    // Background image, dimmed
     this.add.image(WIDTH / 2, HEIGHT / 2, 'bg_raidnight')
       .setOrigin(0.5)
       .setTint(0x777777);
 
-    this.add.text(WIDTH / 2, (HEIGHT * 0.08) + 100, 'Choose Your Raid!', {
+    // ---- Header -------------------------------------------------------
+    const titleY = HEIGHT * 0.10;
+
+    this.add.text(WIDTH / 2, titleY, 'Choose Your Raid!', {
       fontFamily: 'monospace',
-      fontSize: '64px',
-      color: '#fff1c7',
-      stroke: '#000000',
+      fontSize:   '64px',
+      color:      '#fff1c7',
+      stroke:     '#000000',
       strokeThickness: 8,
     }).setOrigin(0.5);
 
-    const zoneTop = HEIGHT * 0.15;
-    const zoneHeight = HEIGHT * 0.75;
-    
-    const topY = zoneTop + zoneHeight * 0.25;
-    const bottomY = zoneTop + zoneHeight * 0.75;
-    
-    const newBottomY = bottomY - 100;
-    const newTopY = newBottomY - 350;
+    const tokenText = this.add.text(WIDTH / 2, titleY + 90, 'Raid Wipe Tokens Left: ' + saveData.raidWipeTokensLeft, {
+      fontFamily: 'monospace',
+      fontSize:   '44px',
+      color:      '#f3e6c2',
+      stroke:     '#000000',
+      strokeThickness: 6,
+    }).setOrigin(0.5);
 
-    // Button spacing
-    const centers = [
-      { x: WIDTH * 0.70, y: newTopY - 90   },  // spookspire_keep - aligned to the right
-      { x: WIDTH * 0.30, y: newBottomY - 125 }, // the_cracked_mountain - aligned to the left
-      { x: WIDTH * 0.70, y: newBottomY + 130 }, // the_basement_demon - aligned to the right
-    ];
-
-    RAID_ORDER.forEach((raidId, index) => {
-      const raid = RAID_CATALOG[raidId];
-      const unlocked = saveData.unlockedRaidIds.includes(raidId);
-      this._createRaidButton(centers[index].x, centers[index].y, raid, unlocked, saveData);
+    this.tweens.add({
+      targets:  tokenText,
+      alpha:    { from: 1, to: 0.2 },
+      duration: 750,
+      yoyo:     true,
+      repeat:   -1,
+      ease:     'Sine.easeInOut',
     });
 
+    // ---- Button stack -------------------------------------------------
+    // Start the first button far enough below the header to avoid overlap.
+    const stackStartY = titleY + 800;
+
+    RAID_ORDER.forEach((raidId, index) => {
+      const raid     = RAID_CATALOG[raidId];
+      const unlocked = true; // TODO: restore lock check from saveData
+
+      const btnY = stackStartY + index * (BTN_HEIGHT + BTN_MARGIN);
+      this._createRaidButton(WIDTH, btnY, raid, unlocked, saveData);
+    });
+
+    // ---- Back button --------------------------------------------------
     this._drawBackButton();
-    this._drawRaidWipeZone(saveData, newTopY);
   }
 
-  _createRaidButton(x, y, raid, unlocked, saveData) {
+  // Draws one full-width raid button row centerd on btnY.
+  // Layout: [thumb] [name + boss count] on a dark rounded panel.
+  _createRaidButton(WIDTH, btnY, raid, unlocked, saveData) {
+    const alpha    = unlocked ? 1.0 : 0.42;
+    const btnW     = WIDTH - BTN_PADDING * 2;
+    const btnX     = WIDTH / 2;
 
-    // Only for testing, remove later.
-    unlocked = true;
-    
-    const alpha = unlocked ? 1 : 0.42;
+    // Panel background
+    const panel = this.add.rectangle(btnX, btnY, btnW, BTN_HEIGHT, 0x000000)
+      .setStrokeStyle(3, 0x554422, 0.9)
+      .setAlpha(.65);
 
-    const icon = this.add.image(x, y, raid.buttonKey)
+    // Thumbnail -- scale to fit the button height minus insets
+    const thumbSize = BTN_HEIGHT - THUMB_INSET * 2;
+    const thumbX    = BTN_PADDING + THUMB_INSET + thumbSize / 2;
+
+    const thumb = this.add.image(thumbX, btnY, raid.buttonKey)
       .setOrigin(0.5)
-      .setAlpha(alpha)
-      .setScale(0.5);
+      .setAlpha(alpha);
 
-    // Show locked/unlocked
+    // Scale to fill the button height, but cap at 45% of the panel width
+    // so wide images don't push into the text area.
+    const maxThumbW  = btnW * 0.45;
+    const scaleByH   = thumbSize / thumb.height;
+    const scaleByW   = maxThumbW / thumb.width;
+    const scaleToFit = Math.min(scaleByH, scaleByW);
+    thumb.setScale(scaleToFit);
+
+    // Raid name and boss count -- textX is based on the thumbnail's actual
+    // display width after scaling so text always clears the image.
+    const thumbDisplayW = thumb.width * scaleToFit;
+    thumb.setX(BTN_PADDING + THUMB_INSET + thumbDisplayW / 2);
+    const textX = BTN_PADDING + THUMB_INSET + thumbDisplayW + 60;
+    const textW = btnW - textX - BTN_PADDING;
+
+    this.add.text(textX, btnY - 30, raid.name, {
+      fontFamily:      'monospace',
+      fontSize:        '48px',
+      color:           '#fff1c7',
+      stroke:          '#000000',
+      strokeThickness: 6,
+      wordWrap:        { width: textW },
+    }).setOrigin(0, 0.5).setAlpha(alpha);
+
+    // const bossCount = raid.bosses?.length ?? 0;
+    // const bossLabel = bossCount === 1 ? '1 boss' : bossCount + ' bosses';
+
+    const totalBosses    = raid.bosses?.length ?? 0;
+    const defeatedBosses = saveData.defeatedBossIds?.[raid.id]?.length ?? 0;
+    const raidCleared    = defeatedBosses >= totalBosses;
+
+    const bossWord      = totalBosses === 1 ? 'boss' : 'bosses';
+    const progressLabel = raidCleared
+      ? 'Raid Cleared!'
+      : 'Defeated ' + defeatedBosses + ' of ' + totalBosses + ' ' + bossWord;
+
+    const progressColor  = raidCleared ? '#ffd700' : '#aaaaaa';
+
+    this.add.text(textX, btnY + 50, progressLabel, {
+      fontFamily:      'monospace',
+      fontSize:        '36px',
+      color:           progressColor,
+      stroke:          '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0, 0.5).setAlpha(alpha);
+
     if (!unlocked) {
-      this.add.text(x, y + icon.displayHeight * 0.5 + 16, 'Locked', {
+      this.add.text(btnX, btnY + BTN_HEIGHT / 2 + 18, 'Locked', {
         fontFamily: 'monospace',
-        fontSize: '20px',
-        color: '#bbbbbb',
-        stroke: '#000000',
+        fontSize:   '28px',
+        color:      '#bbbbbb',
+        stroke:     '#000000',
         strokeThickness: 4,
       }).setOrigin(0.5);
       return;
     }
 
-    icon.setInteractive({ useHandCursor: true });
+    // Make the whole panel interactive
+    panel.setInteractive({ useHandCursor: true });
 
-    // Hover effect
-    icon.on('pointerover', () => icon.setAlpha(0.8));
-    icon.on('pointerout',  () => icon.setAlpha(1));
+    panel.on('pointerover', () => {
+      panel.setFillStyle(0x1a0e2a);
+      panel.setStrokeStyle(4, 0xffd700, 1);
+      thumb.setAlpha(0.85);
+    });
 
-    // Click
-    icon.on('pointerdown', () => {
+    panel.on('pointerout', () => {
+      panel.setFillStyle(0x000000);
+      panel.setStrokeStyle(3, 0x554422, 0.9);
+      thumb.setAlpha(1);
+    });
+
+    panel.on('pointerdown', () => {
       this.tweens.add({
-        targets: icon,
-        scaleX: 0.47,
-        scaleY: 0.47,
-        duration: 90,
-        yoyo: true,
+        targets:  [panel],
+        scaleX:   0.98,
+        scaleY:   0.98,
+        duration: 80,
+        yoyo:     true,
       });
 
       const nextSave = { ...saveData, lastSelectedRaidId: raid.id };
       saveSaveData(nextSave);
       this.registry.set('saveData', nextSave);
       this.registry.set('selectedRaidId', raid.id);
-
-      this.tweens.add({
-        targets: icon,
-        alpha: 0,
-        duration: 300,
-        ease: 'Quad.easeOut',
-      });
 
       this.cameras.main.fadeOut(1000, 0, 0, 0);
       this.time.delayedCall(500, () => {
@@ -122,59 +197,21 @@ export default class RaidSelectScene extends Phaser.Scene {
   _drawBackButton() {
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
 
-    // Text-based back button - replace with sprite version later
-    const btn = this.add.text(80, HEIGHT * 0.96, '< BACK', {
-      fontFamily: 'monospace',
-      fontSize:   '36px',
-      color:      '#ccaa66',
-      stroke:     '#000000',
+    const btn = this.add.text(85, HEIGHT * 0.96, '< BACK', {
+      fontFamily:      'monospace',
+      fontSize:        '48px',
+      color:           '#ccaa66',
+      stroke:          '#000000',
       strokeThickness: 4,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    btn.on('pointerover', () => btn.setColor('#ffd37a'));
-    btn.on('pointerout',  () => btn.setColor('#ccaa66'));
-    btn.on('pointerdown', () => {
+    btn.on('pointerover',  () => btn.setColor('#ffd37a'));
+    btn.on('pointerout',   () => btn.setColor('#ccaa66'));
+    btn.on('pointerdown',  () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.time.delayedCall(320, () => {
         this.scene.start('TitleScene');
       });
-    });
-
-    // Sprite-based back button (uncomment when button art is ready):
-    // const btn = this.add.image(80, HEIGHT * 0.96, 'button_back')
-    //   .setDisplaySize(120, 60)
-    //   .setOrigin(0.5)
-    //   .setInteractive({ useHandCursor: true });
-    // btn.on('pointerover', () => btn.setTint(0xffd37a));
-    // btn.on('pointerout',  () => btn.clearTint());
-    // btn.on('pointerdown', () => {
-    //   this.cameras.main.fadeOut(300, 0, 0, 0);
-    //   this.time.delayedCall(320, () => { this.scene.start('TitleScene'); });
-    // });
-  }
-
-  _drawRaidWipeZone(saveData, buttonTopY) {
-    const { WIDTH, HEIGHT } = window.GAME_CONFIG;
-
-    const titleY = HEIGHT * 0.08;
-    const buttonEdgeY = buttonTopY - 150;
-    const tokenY = (titleY + buttonEdgeY) / 2;
-
-    const tokenText = this.add.text(WIDTH / 2, tokenY + 300, 'Raid Wipe Tokens Left: ' + saveData.raidWipeTokensLeft, {
-      fontFamily: 'monospace',
-      fontSize: '52px',
-      color: '#f3e6c2',
-      stroke: '#000000',
-      strokeThickness: 6,
-    }).setOrigin(0.5);
-
-    this.tweens.add({
-      targets: tokenText,
-      alpha: { from: 1, to: 0.15 },
-      duration: 750,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
     });
   }
 }

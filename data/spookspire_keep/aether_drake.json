@@ -11,159 +11,78 @@
     "stats": {
       "health": 380000,
       "maxHealth": 380000,
-      "mana": 100000,
-      "maxMana": 100000,
+      "mana": 0,
+      "maxMana": 0,
       "usesMana": false,
-      "damageRange": [
-        1500,
-        2500
-      ],
+      "damageRange": [3000, 5000],
       "attackSpeed": 3,
-      "armor": 15000,
+      "armor": 14000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
       "resistList": {
-        "fire": 25,
-        "frost": 25,
-        "nature": 25,
-        "holy": 0,
-        "shadow": 25,
-        "arcane": 25
+        "fire": 25, "frost": 25, "nature": 0,
+        "holy": 0, "shadow": 25, "arcane": 25
       }
     },
     "phases": [
       {
-        "id": "phase_1",
-        "label": "Phase 1",
+        "id": "aura_phase",
+        "label": "Aura Phase",
         "trigger": {
-          "type": "health_percent",
-          "value": 100
+          "type": "time_cycle",
+          "durationTicks": 90,
+          "cooldownTicks": 30
         },
+        "abilityIds": []
+      },
+      {
+        "id": "battle_phase",
+        "label": "Battle Phase",
+        "trigger": { "type": "health_percent", "value": 100 },
         "abilityIds": [
-          "bloodstar_ray",
-          "menders_ray",
-          "mindlash_ray",
-          "collapsed_constellation"
+          "void_shock",
+          "astral_burn"
         ]
       }
     ],
-    "threatTable": {
-      "player": 0,
-      "tank": 0,
-      "healer": 0
-    },
+    "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
       "intro": [
-        "THE AETHER DRAKE steps forward!"
       ],
-      "defeat": [
-        "The Aether Drake collapses in a heap of theatrical nonsense."
-      ],
-      "victory": [
-        "Victory."
-      ]
+      "defeat": ["The Aether Drake fades into the void."],
+      "victory": ["Victory."]
     },
-    "sounds": {
-      "intro": "",
-      "attack": "",
-      "hit": "",
-      "defeat": "",
-      "victory": ""
-    }
+    "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
   },
   "abilities": {
-    "bloodstar_ray": {
-      "id": "bloodstar_ray",
-      "name": "Bloodstar Ray",
-      "type": "boss_mechanic",
-      "manaCost": 0,
+    "void_shock": {
+      "id": "void_shock",
+      "name": "Void Shock",
+      "damageType": "shadow",
       "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 1700,
-      "immediateMax": 2600,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 4000,
+      "immediateMax": 4000,
       "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 10,
+      "recastTimer": 6,
       "targetType": "highest_threat",
-      "dialogue": "A crimson beam lances through the tank.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "magma_blast"
+      "dialogue": "Void Shock!",
+      "audioDuration": 1500
     },
-    "menders_ray": {
-      "id": "menders_ray",
-      "name": "Mender's Ray",
-      "type": "boss_mechanic",
-      "manaCost": 0,
+    "astral_burn": {
+      "id": "astral_burn",
+      "name": "Astral Burn",
+      "damageType": "fire",
       "immediateFlag": true,
-      "immediateEffect": {
-        "type": "heal_boss"
-      },
-      "immediateMin": 10000,
-      "immediateMax": 18000,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 2000,
+      "immediateMax": 2000,
       "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 20,
-      "targetType": "boss_self",
-      "dialogue": "A green beam knits astral scales.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "regrowth"
-    },
-    "mindlash_ray": {
-      "id": "mindlash_ray",
-      "name": "Mindlash Ray",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 900,
-      "immediateMax": 1500,
-      "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 16,
+      "recastTimer": 10,
       "targetType": "all_allies",
-      "dialogue": "Blue light lashes every mind at once.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "wrath_of_ragnaros"
-    },
-    "collapsed_constellation": {
-      "id": "collapsed_constellation",
-      "name": "Collapsed Constellation",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": false,
-      "immediateEffect": null,
-      "immediateMin": 0,
-      "immediateMax": 0,
-      "duration": 4,
-      "tickEffect": {
-        "type": "damage"
-      },
-      "tickMin": 220,
-      "tickMax": 320,
-      "threatPerDamage": 0,
-      "recastTimer": 24,
-      "targetType": "all_allies",
-      "dialogue": "Stars collapse beneath your feet.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "submerge"
+      "dialogue": "Astral Burn scorches everyone!",
+      "audioDuration": 1500
     }
   }
 }

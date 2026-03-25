@@ -74,7 +74,7 @@
     "skipping_reel": {
       "id": "skipping_reel",
       "name": "Skipping Reel",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -97,7 +97,7 @@
     "ruby_panic": {
       "id": "ruby_panic",
       "name": "Ruby Panic",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {

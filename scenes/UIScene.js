@@ -44,6 +44,19 @@ export default class UIScene extends Phaser.Scene {
     this.lbLocked        = false;
     // Buff bar slot objects per character: { player, tank, healer }
     this.buffBars        = {};
+    // Tracks the currently displayed ability badge per caster zone key.
+    // When a new badge arrives for the same zone, the old one is destroyed first.
+    this.activeBadges    = {};
+    // Boss cast bar objects -- built once, shown/hidden as needed
+    this.bossCastBar     = null;
+    this.bossCastTween   = null;
+    // Tooltip state
+    this.activeTooltip      = null;
+    this.longPressTimer     = null;
+    this.isLongPress        = false;
+    // Tracks whether spell buttons are globally locked so mana dimming
+    // does not fight with the locked visual state.
+    this.spellButtonsLocked = false;
   }
 
   // ======
@@ -86,10 +99,23 @@ export default class UIScene extends Phaser.Scene {
 
     const gameScene = this.scene.get('GameScene');
     if (gameScene) {
+      // Block all action bar input until GameScene signals combat has started.
+      // This prevents the player from firing abilities during the pull countdown.
+      const { WIDTH, HEIGHT } = window.GAME_CONFIG;
+      const inputBlocker = this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0)
+        .setDepth(999)
+        .setInteractive();
+
+      gameScene.events.once('combat-start', () => {
+        inputBlocker.destroy();
+        this._setupKeyboardShortcuts();
+      });
+
       gameScene.events.on('tick', (count) => {
         this.tickCount = count;
         if (this._tickLabel) this._tickLabel.setText('TICK ' + count);
         this._updateCooldowns();
+        this._updateManaDimming();
       });
       gameScene.events.on('phase-change', (phase) => {
         this._showPhaseBanner(phase);
@@ -98,7 +124,18 @@ export default class UIScene extends Phaser.Scene {
       gameScene.events.on('buff-update', ({ characterId, effects }) => {
         this.updateBuffBar(characterId, effects);
       });
+
+      gameScene.events.on('player-debuff-update', (debuffs) => {
+        const locked = !!(debuffs?.stun || debuffs?.silence);
+        this._setSpellButtonsLocked(locked);
+      });
+
+      gameScene.events.once('player-dead', () => {
+        this._setSpellButtonsLocked(true);
+      });
     }
+
+    this._buildBossCastBar();
   }
 
   // ===================================
@@ -107,35 +144,40 @@ export default class UIScene extends Phaser.Scene {
 
   _buildActionBar(levelData) {
     const { ZONES } = window.GAME_CONFIG;
-    const ab        = ZONES.ACTION_BAR;
-    // Button sizing - all 6 buttons (2 spells + 4 totems) laid out left to right
-    // with a divider gap between them, anchored from the left edge
-    const btnSize   = 110;
-    const btnPad    = 8;
-    const btnY      = ab.y + ab.h / 2;
-    const startX    = ab.x + 16;   // left margin
+    const ab       = ZONES.ACTION_BAR;
 
-    // ========================
-    // Left side: spell buttons
-    // ========================
-    const spellAbilityIds = ['lightning_bolt', 'chain_lightning'];
+    const BTN_SIZE  = 200;
+    const BTN_GAP   = 16;
+    const ROW_GAP   = 16;
+    const HALF_W    = ab.w / 2;
+
+    // Two rows centered in the left half (spell buttons)
+    const row1Y = ab.y + BTN_SIZE / 2 + 12;
+    const row2Y = ab.y + BTN_SIZE + ROW_GAP + BTN_SIZE / 2 + 12;
+
+    const spellAbilityIds = (levelData?.characters?.player?.abilityIds ?? []).slice(0, 4);
+    const spellOffsetX    = (HALF_W - (2 * BTN_SIZE + BTN_GAP)) / 2 + BTN_SIZE / 2;
 
     spellAbilityIds.forEach((abilityId, i) => {
       const ability = levelData?.abilities?.[abilityId];
-      const btnX    = startX + i * (btnSize + btnPad) + btnSize / 2;
-      const btn     = this._buildSpellButton(btnX, btnY, btnSize, abilityId, ability);
+      const col  = i % 2;
+      const row  = Math.floor(i / 2);
+      const btnX = spellOffsetX + col * (BTN_SIZE + BTN_GAP);
+      const btnY = row === 0 ? row1Y : row2Y;
+      const btn  = this._buildSpellButton(btnX, btnY, BTN_SIZE, abilityId, ability);
       this.abilityButtons.push(btn);
     });
 
-    // Divider
-    const dividerX = startX + spellAbilityIds.length * (btnSize + btnPad) + 8;
+    // Vertical divider between spell and totem halves
+    const dividerX = HALF_W;
     const divider  = this.add.graphics();
     divider.lineStyle(2, 0x554422, 0.6);
     divider.lineBetween(dividerX, ab.y + 16, dividerX, ab.y + ab.h - 16);
 
-    // ========================
-    // Right side: totem buttons
-    // ========================
+    // Two rows centered in the right half (totem buttons)
+    const TOTEM_SIZE  = 190;
+    const totemOffsetX = HALF_W + (HALF_W - (2 * TOTEM_SIZE + BTN_GAP)) / 2 + TOTEM_SIZE / 2;
+
     const totemElements = ['earth', 'fire', 'water', 'air'];
     const totemColors   = {
       earth: 0x88cc44,
@@ -143,11 +185,15 @@ export default class UIScene extends Phaser.Scene {
       water: 0x44aaff,
       air:   0xaaccff,
     };
-    const totemStartX = dividerX + 16;
+    const totemRow1Y = ab.y + TOTEM_SIZE / 2 + 12;
+    const totemRow2Y = ab.y + TOTEM_SIZE + ROW_GAP + TOTEM_SIZE / 2 + 12;
 
     totemElements.forEach((element, i) => {
-      const btnX = totemStartX + i * (btnSize + btnPad) + btnSize / 2;
-      const btn  = this._buildTotemButton(btnX, btnY, btnSize, element, totemColors[element]);
+      const col   = i % 2;
+      const row   = Math.floor(i / 2);
+      const btnX  = totemOffsetX + col * (TOTEM_SIZE + BTN_GAP);
+      const btnY  = row === 0 ? totemRow1Y : totemRow2Y;
+      const btn   = this._buildTotemButton(btnX, btnY, TOTEM_SIZE, element, totemColors[element]);
       this.totemButtons.push(btn);
     });
   }
@@ -203,54 +249,62 @@ export default class UIScene extends Phaser.Scene {
       .setDepth(13)
       .setVisible(false);
 
-    // Cooldown countdown text - large and centred
+    // Cooldown countdown text - large and centerd
     const cdText = this.add.text(x, y, '', {
       fontFamily: 'monospace', fontSize: '48px', color: '#ffffff',
       stroke: '#000000', strokeThickness: 5,
     }).setOrigin(0.5).setDepth(14);
 
-    bg.on('pointerdown', () => this._pressSpellButton(abilityId, ability, bg, cdOverlay));
+    bg.on('pointerdown', () => {
+      this.isLongPress = false;
+      this.longPressTimer = this.time.delayedCall(500, () => {
+        this.isLongPress    = true;
+        this.longPressTimer = null;
+        if (ability?.description) this._showTooltip(ability);
+      });
+    });
+    bg.on('pointerup', () => {
+      if (this.longPressTimer) {
+        this.longPressTimer.remove();
+        this.longPressTimer = null;
+      }
+      if (!this.isLongPress) {
+        this._pressSpellButton(abilityId, ability, bg, cdOverlay);
+      }
+      this.isLongPress = false;
+    });
     bg.on('pointerover', () => {
-      if (!this.cooldowns[abilityId] && !this.lbLocked) bg.setStrokeStyle(3, 0xffd700, 1);
+      if (!this.cooldowns[abilityId]) bg.setStrokeStyle(3, 0xffd700, 1);
+      if (ability?.description) this._showTooltip(ability);
     });
     bg.on('pointerout', () => {
       if (!this.cooldowns[abilityId]) bg.setStrokeStyle(3, 0x4466aa, 1.0);
+      if (this.longPressTimer) { this.longPressTimer.remove(); this.longPressTimer = null; }
+      this.isLongPress = false;
+      this._hideTooltip();
     });
 
-    return { bg, icon, label, manaLabel, cdOverlay, cdText, abilityId, size };
+    return { bg, icon, label, manaLabel, cdOverlay, cdText, abilityId, abilityDef: ability, size };
   }
 
   _pressSpellButton(abilityId, ability, bg, cdOverlay) {
-    // Block if on cooldown (Chain Lightning recast) or per-tick lock (Lightning Bolt)
     if (this.cooldowns[abilityId]) return;
-    if (abilityId === 'lightning_bolt' && this.lbLocked) return;
+    const btn = this.abilityButtons.find(b => b.abilityId === abilityId);
+    if (btn?.manaDimmed) return;
 
     // Brief press flash
     this.tweens.add({ targets: bg, alpha: 0.4, duration: 80, yoyo: true });
 
-    // Lightning Bolt: disable until next tick fires
-    if (abilityId === 'lightning_bolt') {
-      this.lbLocked = true;
-      bg.setStrokeStyle(3, 0x555555, 0.5);
-      cdOverlay.setVisible(true).setDisplaySize(150, 150);
-      // Unlock on next tick event
-      const gameScene = this.scene.get('GameScene');
-      if (gameScene) {
-        gameScene.events.once('tick', () => {
-          this.lbLocked = false;
-          cdOverlay.setVisible(false);
-          bg.setStrokeStyle(3, 0x4466aa, 1.0);
-        });
-      }
-    }
-
-    // Chain Lightning: start recast cooldown
-    const recastMs = (ability?.recastTimer ?? 0) * 1000;
+    // Start visual cooldown.
+    // New schema uses recastTicks (ticks x TICK_MS = ms); legacy uses recastTimer (seconds).
+    const TICK_MS  = window.GAME_CONFIG.TICK_MS;
+    const recastMs = ((ability?.recastTicks ?? 0) * TICK_MS)
+                   || ((ability?.recastTimer  ?? 0) * 1000);
     if (recastMs > 0) {
       this._startCooldown(abilityId, recastMs, ability, cdOverlay);
     }
 
-    // Emit to GameScene
+    // Emit to GameScene -- it owns the authoritative cooldown gate
     const gameScene = this.scene.get('GameScene');
     if (gameScene) {
       gameScene.events.emit('player-ability', abilityId);
@@ -356,7 +410,8 @@ export default class UIScene extends Phaser.Scene {
 
       // Show remaining seconds
       if (cd.cdText) {
-        cd.cdText.setText(Math.ceil(remaining / 1000).toString());
+        const TICK_MS = window.GAME_CONFIG.TICK_MS;
+        cd.cdText.setText(Math.ceil(remaining / TICK_MS).toString());
       }
     });
   }
@@ -385,7 +440,7 @@ export default class UIScene extends Phaser.Scene {
     this.floatOffsets[zoneKey] = (offset + 52) % 156;  // 3 rows of 52px then reset
     const cy = zone.y + zone.h * 0.4 + offset;
 
-    const prefix = type === 'heal' ? '+' : type === 'miss' ? '' : '-';
+    const prefix = (type === 'heal' || type === 'mana') ? '+' : type === 'miss' ? '' : '-';
     const label  = type === 'miss' ? 'MISS' : prefix + value.toLocaleString();
     const isBossZone = zone === window.GAME_CONFIG.ZONES.BOSS;
     const fSize = type === 'crit' ? '64px' : isBossZone ? '64px' : '42px';
@@ -418,7 +473,7 @@ export default class UIScene extends Phaser.Scene {
 
     this.tweens.add({
       targets:  objects,
-      y:        '-=140',
+      y:        '+=140',
       alpha:    0,
       duration: 1400,
       ease:     'Sine.easeOut',
@@ -427,30 +482,41 @@ export default class UIScene extends Phaser.Scene {
   }
 
   // spawnAbilityBadge
-  // Shows a floating "[icon] Spell Name" badge on the caster for 2 seconds.
-  // zone     - GAME_CONFIG zone of the caster
-  // abilityId - e.g. 'regrowth', used to derive icon key and label
-  // label    - display name of the ability
+  // Shows a "[icon] Spell Name" badge just above the caster's head.
+  // If a badge is already showing for this caster, it is replaced immediately.
+  // On exit the badge grows vertically, falls, and fades out.
   spawnAbilityBadge(zone, abilityId, label) {
-    const iconKey  = 'icon_' + abilityId;
-    const hasIcon  = this.textures.exists(iconKey);
+    const iconKey   = 'icon_' + abilityId;
+    const hasIcon   = this.textures.exists(iconKey);
     const ICON_SIZE = 56;
 
     const cx = zone.x + zone.w / 2;
-    // Stagger badges the same way as floating text
+    const cy = zone.y + zone.h - 400;
+
     const badgeKey = 'badge_' + zone.x + '_' + zone.y;
-    const bOffset  = (this.floatOffsets[badgeKey] ?? 0);
-    this.floatOffsets[badgeKey] = (bOffset + 58) % 116;
-    const cy = zone.y + 60 + bOffset;
+
+    if (this.activeBadges[badgeKey]) {
+      const oldObjects = this.activeBadges[badgeKey];
+      this.activeBadges[badgeKey] = null;
+      this.tweens.add({
+        targets:  oldObjects,
+        alpha:    0,
+        scaleY:   1.8,
+        y:        '+=55',
+        duration: 420,
+        ease:     'Sine.easeIn',
+        onComplete: () => oldObjects.forEach(o => { try { o.destroy(); } catch (e) {} }),
+      });
+    }
 
     const objects = [];
 
-    // Dark pill background
     const bgW   = hasIcon ? ICON_SIZE + 12 + (label.length * 14) + 20 : (label.length * 14) + 20;
     const bgH   = 52;
-    const panel = this.add.graphics().setDepth(48);
-    panel.fillStyle(0x000000, 0.72);
-    panel.fillRoundedRect(cx - bgW / 2, cy - bgH / 2, bgW, bgH, 10);
+
+    const panel = this.add.rectangle(cx, cy, bgW, bgH, 0x000000)
+      .setAlpha(0.72)
+      .setDepth(48);
     objects.push(panel);
 
     let textX = cx;
@@ -467,28 +533,36 @@ export default class UIScene extends Phaser.Scene {
     }
 
     const nameText = this.add.text(textX, cy, label, {
-      fontFamily: 'monospace',
-      fontSize:   '26px',
-      color:      '#ffffff',
-      stroke:     '#000000',
+      fontFamily:      'monospace',
+      fontSize:        '26px',
+      color:           '#ffffff',
+      stroke:          '#000000',
       strokeThickness: 3,
     }).setOrigin(hasIcon ? 0 : 0.5, 0.5).setDepth(49).setAlpha(0);
     objects.push(nameText);
 
+    this.activeBadges[badgeKey] = objects;
+
     // Fade in
     this.tweens.add({
-      targets:  objects.slice(1),  // fade icon and text (not graphics panel)
+      targets:  objects,
       alpha:    1,
       duration: 180,
     });
 
-    // Hold then fade out
+    // Hold then exit: grow tall, fall, fade
     this.time.delayedCall(1800, () => {
+      if (this.activeBadges[badgeKey] === objects) {
+        this.activeBadges[badgeKey] = null;
+      }
       this.tweens.add({
         targets:  objects,
         alpha:    0,
-        duration: 300,
-        onComplete: () => objects.forEach(o => o.destroy()),
+        scaleY:   1.8,
+        y:        '+=55',
+        duration: 420,
+        ease:     'Sine.easeIn',
+        onComplete: () => objects.forEach(o => { try { o.destroy(); } catch (e) {} }),
       });
     });
   }
@@ -504,12 +578,12 @@ export default class UIScene extends Phaser.Scene {
     if (this.buffBars[characterId]) return;
 
     const MAX_SLOTS  = 6;
-    const ICON_SIZE  = 48;   // icon image size
-    const SLOT_SIZE  = 52;   // total slot footprint including border
-    const SLOT_PAD   = 8;
+    const ICON_SIZE  = 24;   // icon image size
+    const SLOT_SIZE  = 24;   // total slot footprint including border
+    const SLOT_PAD   = 6;
     const ROW_W      = MAX_SLOTS * (SLOT_SIZE + SLOT_PAD) - SLOT_PAD;
     // Align left edge of buff row to nameplate left edge (nameplate starts at zone.x - 10)
-    const startX     = zone.x - 10;
+    const startX     = zone.x + 30;
     // Row of icons sits just above the nameplate (nameplate at zone.y + 480)
     // Icons centered at rowY, ticks label sits 6px below the icon bottom
     const rowY       = zone.y + 435;
@@ -537,14 +611,14 @@ export default class UIScene extends Phaser.Scene {
 
       // Ticks remaining - small label BELOW the slot, not overlapping icon
       const durationText = this.add.text(sx, sy - SLOT_SIZE / 2 - 4, '', {
-        fontFamily: 'monospace', fontSize: '32px', color: '#ffffff',
-        stroke: '#000000', strokeThickness: 3,
+        fontFamily: 'monospace', fontSize: '18px', color: '#ffffff',
+        stroke: '#000000', strokeThickness: 2,
       }).setOrigin(0.5, 1).setDepth(DEPTH + 2).setVisible(false);
 
       // Stack badge (x2, x3) - bottom-right corner INSIDE the slot
-      const stackText = this.add.text(sx + SLOT_SIZE / 2 - 3, sy + SLOT_SIZE / 2 - 3, '', {
-        fontFamily: 'monospace', fontSize: '36px', color: '#ffdd00',
-        stroke: '#000000', strokeThickness: 3,
+      const stackText = this.add.text(sx + SLOT_SIZE / 2 - 2, sy + SLOT_SIZE / 2 - 2, '', {
+        fontFamily: 'monospace', fontSize: '18px', color: '#ffdd00',
+        stroke: '#000000', strokeThickness: 2,
       }).setOrigin(1, 1).setDepth(DEPTH + 2).setVisible(false);
 
       slots.push({ frame, icon, durationText, stackText });
@@ -594,6 +668,234 @@ export default class UIScene extends Phaser.Scene {
       } else {
         slot.stackText.setVisible(false);
       }
+    });
+  }
+
+  // Dims all spell buttons while the player is stunned or silenced,
+  // and restores them when the debuff expires.
+  _setSpellButtonsLocked(locked) {
+    this.spellButtonsLocked = locked;
+    this.abilityButtons.forEach(btn => {
+      if (!btn?.bg) return;
+      btn.bg.setAlpha(locked ? 0.35 : 1.0);
+      if (!locked && !this.cooldowns[btn.abilityId]) {
+        btn.bg.setStrokeStyle(3, 0x4466aa, 1.0);
+      }
+    });
+  }
+
+  // ===================================
+  // MANA DIMMING
+  // ===================================
+  // Called every tick. Dims buttons the player cannot currently afford.
+  _updateManaDimming() {
+    if (this.spellButtonsLocked) return;
+
+    const gameScene   = this.scene.get('GameScene');
+    const playerSlot  = gameScene?.entitySlots?.player;
+    if (!playerSlot) return;
+
+    const currentMana = playerSlot.currentMana ?? 0;
+
+    this.abilityButtons.forEach(btn => {
+      if (!btn?.bg) return;
+      if (this.cooldowns[btn.abilityId]) return;
+
+      const cost       = btn.abilityDef?.manaCost ?? 0;
+      const canAfford  = currentMana >= cost;
+
+      if (!canAfford && !btn.manaDimmed) {
+        btn.manaDimmed = true;
+        btn.bg.setAlpha(0.45);
+        btn.bg.setStrokeStyle(3, 0x553333, 0.8);
+        if (btn.manaLabel) btn.manaLabel.setColor('#ff6644');
+      } else if (canAfford && btn.manaDimmed) {
+        btn.manaDimmed = false;
+        btn.bg.setAlpha(1.0);
+        btn.bg.setStrokeStyle(3, 0x4466aa, 1.0);
+        if (btn.manaLabel) btn.manaLabel.setColor('#66aaff');
+      }
+    });
+  }
+
+  // ===================================
+  // KEYBOARD SHORTCUTS
+  // ===================================
+  // Binds keys 1-4 to the first four spell buttons.
+  // Called once on combat-start so keys are inactive during the countdown.
+  _setupKeyboardShortcuts() {
+    if (!this.input?.keyboard) return;
+
+    const keyNames = ['ONE', 'TWO', 'THREE', 'FOUR'];
+    keyNames.forEach((keyName, i) => {
+      this.input.keyboard.on('keydown-' + keyName, () => {
+        const btn = this.abilityButtons[i];
+        if (!btn) return;
+        this._pressSpellButton(btn.abilityId, btn.abilityDef, btn.bg, btn.cdOverlay);
+      });
+    });
+  }
+
+  // ===================================
+  // ABILITY TOOLTIP
+  // ===================================
+  // Fixed position in the center of the screen between the character zones
+  // and the action bar. Shows ability icon, name, description, cost, cooldown.
+  _showTooltip(ability) {
+    this._hideTooltip();
+
+    const { WIDTH }   = window.GAME_CONFIG;
+    const TOOLTIP_W   = 900;
+    const ICON_SIZE   = 100;
+    const PADDING     = 32;
+    const TEXT_W      = TOOLTIP_W - PADDING * 2 - ICON_SIZE - 24;
+    const cx          = WIDTH / 2;
+    const cy          = 1750;
+
+    const objects = [];
+
+    const hasIcon   = this.textures.exists('icon_' + ability.id);
+    const textLeft  = cx - TOOLTIP_W / 2 + PADDING + (hasIcon ? ICON_SIZE + 24 : 0);
+
+    const nameText = this.add.text(textLeft, cy - 80, ability.name ?? ability.id, {
+      fontFamily:      'monospace',
+      fontSize:        '42px',
+      color:           '#ffffff',
+      stroke:          '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0, 0).setDepth(101).setAlpha(0);
+    objects.push(nameText);
+
+    const descText = this.add.text(textLeft, cy - 80 + nameText.height + 12, ability.description ?? '', {
+      fontFamily:  'monospace',
+      fontSize:    '34px',
+      color:       '#dddddd',
+      wordWrap:    { width: TEXT_W },
+      lineSpacing: 6,
+    }).setOrigin(0, 0).setDepth(101).setAlpha(0);
+    objects.push(descText);
+
+    const statLine = (ability.manaCost ? ability.manaCost + 'm' : 'Free') +
+      (ability.recastTicks > 0 ? '   |   ' + ability.recastTicks + 's cooldown' : '   |   No cooldown');
+
+    const statText = this.add.text(textLeft, cy - 80 + nameText.height + 12 + descText.height + 14, statLine, {
+      fontFamily: 'monospace',
+      fontSize:   '32px',
+      color:      '#88aaff',
+    }).setOrigin(0, 0).setDepth(101).setAlpha(0);
+    objects.push(statText);
+
+    const totalH  = nameText.height + 12 + descText.height + 14 + statText.height + PADDING * 2;
+    const panelY  = cy - 80 + totalH / 2 - PADDING;
+
+    const panel = this.add.rectangle(cx, panelY, TOOLTIP_W, totalH, 0x050510)
+      .setStrokeStyle(3, 0x4466aa, 1.0)
+      .setDepth(100)
+      .setAlpha(0);
+    objects.unshift(panel);
+
+    if (hasIcon) {
+      const iconObj = this.add.image(
+        cx - TOOLTIP_W / 2 + PADDING + ICON_SIZE / 2,
+        panelY,
+        'icon_' + ability.id
+      ).setDisplaySize(ICON_SIZE, ICON_SIZE).setOrigin(0.5).setDepth(101).setAlpha(0);
+      objects.push(iconObj);
+    }
+
+    this.tweens.add({ targets: objects, alpha: 1, duration: 150 });
+    this.activeTooltip = objects;
+  }
+
+  _hideTooltip() {
+    if (!this.activeTooltip) return;
+    const toDestroy = this.activeTooltip;
+    this.activeTooltip = null;
+    this.tweens.add({
+      targets:  toDestroy,
+      alpha:    0,
+      duration: 100,
+      onComplete: () => toDestroy.forEach(o => { try { o.destroy(); } catch (e) {} }),
+    });
+  }
+
+  // ===================================
+  // BOSS CAST BAR
+  // ===================================
+  // Built once at scene creation and reused throughout the encounter.
+  // Hidden by default. showBossCastBar() reveals and animates it.
+  _buildBossCastBar() {
+    const { WIDTH, ZONES } = window.GAME_CONFIG;
+    const bossZone = ZONES.BOSS;
+
+    const barW  = 600;
+    const barH  = 36;
+    const cx    = WIDTH / 2;
+    const cy    = bossZone.y + 30;
+
+    const track = this.add.rectangle(cx, cy, barW, barH, 0x111111)
+      .setStrokeStyle(2, 0x6622aa, 0.9)
+      .setDepth(70)
+      .setAlpha(0);
+
+    const fill = this.add.rectangle(cx - barW / 2, cy, 0, barH - 6, 0xcc3300)
+      .setOrigin(0, 0.5)
+      .setDepth(71)
+      .setAlpha(0);
+
+    const label = this.add.text(cx, cy, '', {
+      fontFamily: 'monospace', fontSize: '22px', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5, 0.5).setDepth(72).setAlpha(0);
+
+    this.bossCastBar = { track, fill, label, barW };
+  }
+
+  // Reveals the cast bar and animates it filling over durationMs.
+  // abilityName is displayed inside the bar.
+  showBossCastBar(abilityName, durationMs) {
+    const bar = this.bossCastBar;
+    if (!bar) return;
+
+    if (this.bossCastTween) {
+      this.bossCastTween.stop();
+      this.bossCastTween = null;
+    }
+
+    bar.fill.setDisplaySize(0, bar.fill.height);
+    bar.label.setText('CASTING: ' + abilityName.toUpperCase());
+    bar.track.setAlpha(1);
+    bar.fill.setAlpha(1);
+    bar.label.setAlpha(1);
+
+    this.bossCastTween = this.tweens.add({
+      targets:  bar.fill,
+      displayWidth: bar.barW - 4,
+      duration: durationMs,
+      ease:     'Linear',
+    });
+  }
+
+  // Hides the cast bar. Pass interrupted = true to flash red before hiding.
+  hideBossCastBar(interrupted = false) {
+    const bar = this.bossCastBar;
+    if (!bar) return;
+
+    if (this.bossCastTween) {
+      this.bossCastTween.stop();
+      this.bossCastTween = null;
+    }
+
+    if (interrupted) {
+      bar.fill.setFillStyle(0x884400);
+      bar.label.setText('INTERRUPTED');
+    }
+
+    this.tweens.add({
+      targets:  [bar.track, bar.fill, bar.label],
+      alpha:    0,
+      duration: 300,
+      delay:    interrupted ? 600 : 0,
     });
   }
 

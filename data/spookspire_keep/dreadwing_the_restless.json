@@ -11,161 +11,129 @@
     "stats": {
       "health": 460000,
       "maxHealth": 460000,
-      "mana": 100000,
-      "maxMana": 100000,
+      "mana": 0,
+      "maxMana": 0,
       "usesMana": false,
-      "damageRange": [
-        1500,
-        2500
-      ],
-      "attackSpeed": 3,
+      "damageRange": [2000, 4000],
+      "attackSpeed": 4,
       "armor": 15000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
       "resistList": {
-        "fire": 25,
-        "frost": 25,
-        "nature": 25,
-        "holy": 0,
-        "shadow": 25,
-        "arcane": 25
+        "fire": 50, "frost": 0, "nature": 0,
+        "holy": 0, "shadow": 0, "arcane": 0
       }
     },
     "phases": [
       {
         "id": "phase_1",
-        "label": "Phase 1",
-        "trigger": {
-          "type": "health_percent",
-          "value": 100
-        },
+        "label": "Undying Fury",
+        "trigger": { "type": "health_percent", "value": 100 },
         "abilityIds": [
-          "cryptfire_breath",
-          "restless_ashes",
-          "skeletal_downpour",
-          "cinder_spit"
+          "fearful_roar",
+          "burnt_ground",
+          "cleave",
+          "tail_slap",
+          "ashen_cloud",
+          "infernal_breath"
         ]
       }
     ],
-    "threatTable": {
-      "player": 0,
-      "tank": 0,
-      "healer": 0
-    },
+    "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": [
-        "DREADWING THE RESTLESS steps forward!"
-      ],
-      "defeat": [
-        "Dreadwing the Restless collapses in a heap of theatrical nonsense."
-      ],
-      "victory": [
-        "Victory."
-      ]
+      "intro": [],
+      "defeat": ["Dreadwing the Restless returns to his restless slumber."],
+      "victory": ["Victory."]
     },
-    "sounds": {
-      "intro": "",
-      "attack": "",
-      "hit": "",
-      "defeat": "",
-      "victory": ""
-    }
+    "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
   },
   "abilities": {
-    "cryptfire_breath": {
-      "id": "cryptfire_breath",
-      "name": "Cryptfire Breath",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 1000,
-      "immediateMax": 1600,
-      "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 14,
-      "targetType": "all_allies",
-      "dialogue": "Dreadwing exhales the grave.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "wrath_of_ragnaros"
-    },
-    "restless_ashes": {
-      "id": "restless_ashes",
-      "name": "Restless Ashes",
-      "type": "boss_mechanic",
-      "manaCost": 0,
+    "fearful_roar": {
+      "id": "fearful_roar",
+      "name": "Fearful Roar",
       "immediateFlag": false,
-      "immediateEffect": null,
-      "immediateMin": 0,
-      "immediateMax": 0,
-      "duration": 5,
-      "tickEffect": {
-        "type": "damage"
-      },
-      "tickMin": 220,
-      "tickMax": 340,
-      "threatPerDamage": 0,
-      "recastTimer": 18,
+      "recastTimer": 20,
       "targetType": "all_allies",
-      "dialogue": "Ash and soot cover the battlefield.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "consecration"
+      "applyDebuff": {
+        "id": "stun",
+        "durationTicks": 3,
+        "dispellable": false
+      },
+      "dialogue": "Dreadwing ROARS! Everyone is afraid!",
+      "audioDuration": 2000
     },
-    "skeletal_downpour": {
-      "id": "skeletal_downpour",
-      "name": "Skeletal Downpour",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 1200,
-      "immediateMax": 1800,
-      "duration": 3,
-      "tickEffect": {
-        "type": "damage"
-      },
-      "tickMin": 180,
-      "tickMax": 260,
-      "threatPerDamage": 0,
-      "recastTimer": 24,
+    "burnt_ground": {
+      "id": "burnt_ground",
+      "name": "Burnt Ground",
+      "damageType": "fire",
+      "immediateFlag": false,
+      "duration": 15,
+      "tickEffect": { "type": "damage" },
+      "tickMin": 2000,
+      "tickMax": 2000,
+      "recastTimer": 60,
       "targetType": "all_allies",
-      "dialogue": "Bones rain from the sky.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "submerge"
+      "dialogue": "The ground becomes blackened and charred!",
+      "audioDuration": 2000
     },
-    "cinder_spit": {
-      "id": "cinder_spit",
-      "name": "Cinder Spit",
-      "type": "boss_mechanic",
-      "manaCost": 0,
+    "cleave": {
+      "id": "cleave",
+      "name": "Cleave",
+      "damageType": "physical",
       "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 2400,
-      "immediateMax": 3400,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 4000,
+      "immediateMax": 4000,
       "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 12,
+      "recastTimer": 20,
       "targetType": "highest_threat",
-      "dialogue": "A smoking glob detonates on impact.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "magma_blast"
+      "dialogue": "Dreadwing cleaves!",
+      "audioDuration": 1500
+    },
+    "tail_slap": {
+      "id": "tail_slap",
+      "name": "Tail Slap",
+      "damageType": "physical",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 4000,
+      "immediateMax": 4000,
+      "duration": 0,
+      "recastTimer": 20,
+      "targetType": "lowest_threat",
+      "dialogue": "Dreadwing whips his tail!",
+      "audioDuration": 1500
+    },
+    "ashen_cloud": {
+      "id": "ashen_cloud",
+      "name": "Ashen Cloud",
+      "immediateFlag": false,
+      "recastTimer": 40,
+      "targetType": "all_allies",
+      "applyDebuff": {
+        "id": "hit_chance_reduction",
+        "reductionPercent": 20,
+        "durationTicks": 10,
+        "dispellable": true,
+        "dispelType": "magic"
+      },
+      "dialogue": "Dreadwing exhales a cloud of ash!",
+      "audioDuration": 2000
+    },
+    "infernal_breath": {
+      "id": "infernal_breath",
+      "name": "Infernal Breath",
+      "damageType": "fire",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 8000,
+      "immediateMax": 8000,
+      "duration": 0,
+      "recastTimer": 24,
+      "targetType": "highest_threat",
+      "dialogue": "Dreadwing unleashes Infernal Breath!",
+      "audioDuration": 2000
     }
   }
 }

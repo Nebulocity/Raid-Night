@@ -16,7 +16,7 @@ export default class BossLoadingScene extends Phaser.Scene {
   // init - resolve which boss we're loading
   init() {
     const selectedRaidId = this.registry.get('selectedRaidId') || 'spookspire_keep';
-    const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot_and_nighttime';
+    const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot';
 
     const raid = RAID_CATALOG[selectedRaidId] || RAID_CATALOG.spookspire_keep;
     this.raidMeta        = raid;
@@ -69,7 +69,6 @@ export default class BossLoadingScene extends Phaser.Scene {
     const barH  = 16;
     const barY  = HEIGHT * 0.75;
     const barX  = cx - barW / 2;
-    console.log('cx: ', cx, 'barW: ',barW, 'barX: ', barX);
 
     this.add.text(cx, barY - 44, 'Preparing encounter...', {
       fontFamily: 'monospace', fontSize: '28px',
@@ -103,7 +102,7 @@ export default class BossLoadingScene extends Phaser.Scene {
       if (this._statusText) this._statusText.setText('Ready!');
     });
 
-    // - Queue the level JSON -------------------------------─
+    // - Queue the level JSON --------------------------------
     const { levelKey, levelPath } = this.bossMeta;
     if (!levelKey || !levelPath) return;
 
@@ -114,9 +113,12 @@ export default class BossLoadingScene extends Phaser.Scene {
 
     this.load.json(levelKey, levelPath);
 
-    // Load default party data (later: coalesce with save data in create)
-    if (!this.cache.json.exists('party')) {
-      this.load.json('party', 'data/party/party.json');
+    // Load character roster and ability definitions
+    if (!this.cache.json.exists('characters')) {
+      this.load.json('characters', 'data/characters/characters.json');
+    }
+    if (!this.cache.json.exists('charAbilities')) {
+      this.load.json('charAbilities', 'data/characters/abilities.json');
     }
   }
 
@@ -131,9 +133,18 @@ export default class BossLoadingScene extends Phaser.Scene {
       console.warn('[BossLoadingScene] No level data found for boss:', this.bossMeta?.id);
     }
 
-    // TODO: coalesce with save data once save system exists
-    const partyData = this.cache.json.get('party');
-    if (levelData && partyData) levelData.characters = partyData;
+    // Inject character roster (replaces old party.json)
+    const characterData = this.cache.json.get('characters');
+    if (levelData && characterData) levelData.characters = characterData;
+
+    // Merge character abilities into levelData.abilities so the engine
+    // can look up any ability (boss or character) by id from one place.
+    // Character abilities use the new effects[] schema; boss abilities keep
+    // the old immediateFlag/recastTimer schema -- both coexist under the same key.
+    const charAbilities = this.cache.json.get('charAbilities');
+    if (levelData && charAbilities) {
+      levelData.abilities = { ...charAbilities, ...(levelData.abilities ?? {}) };
+    }
 
     this.registry.set('levelData', levelData || this.cache.json.get('level01'));
 

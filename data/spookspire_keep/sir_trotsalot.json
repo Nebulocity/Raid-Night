@@ -1,0 +1,216 @@
+{
+  "level": {
+    "id": "spookspire_sir_trotsalot",
+    "name": "Spookspire Keep",
+    "raidId": "spookspire_keep",
+    "bossId": "sir_trotsalot"
+  },
+
+  "encounterActors": [
+    {
+      "id": "nighttime",
+      "name": "Nighttime",
+      "spriteKey": "nighttime_idle",
+      "spriteScale": 3,
+      "stats": {
+        "health": 200000,
+        "maxHealth": 200000,
+        "mana": 0,
+        "maxMana": 0,
+        "usesMana": false,
+        "damageRange": [1500, 3500],
+        "attackSpeed": 2,
+        "armor": 12000,
+        "attackHitChance": 90,
+        "abilityHitChance": 90,
+        "resistList": {
+          "fire": 0, "frost": 0, "nature": 0,
+          "holy": 0, "shadow": 15, "arcane": 0
+        }
+      },
+      "abilityIds": ["moonlit_hoofstrike"],
+      "swapTrigger": { "type": "health_percent", "value": 50 },
+      "onSwap": [
+        { "type": "dialogue", "lines": ["Nighttime calls for her master, Sir Trotsalot!"] }
+      ],
+      "animations": {
+        "idle": {
+          "key": "nighttime_idle",
+          "startFrame": 0, "endFrame": 10, "frameRate": 6, "repeat": -1
+        },
+        "attacking": {
+          "key": "nighttime_attacking",
+          "startFrame": 0, "endFrame": 11, "frameRate": 12, "repeat": 0
+        }
+      }
+    },
+    {
+      "id": "sir_trotsalot",
+      "name": "Sir Trotsalot",
+      "spriteKey": "sir_trotsalot_idle",
+      "spriteScale": 3,
+      "stats": {
+        "health": 300000,
+        "maxHealth": 300000,
+        "mana": 0,
+        "maxMana": 0,
+        "usesMana": false,
+        "damageRange": [2000, 4000],
+        "attackSpeed": 2,
+        "armor": 14000,
+        "attackHitChance": 90,
+        "abilityHitChance": 90,
+        "resistList": {
+          "fire": 0, "frost": 0, "nature": 0,
+          "holy": 0, "shadow": 25, "arcane": 0
+        }
+      },
+      "abilityIds": ["shadow_cleave", "intangible_presence"],
+      "swapTrigger": { "type": "health_percent", "value": 25 },
+      "onSwap": [
+        { "type": "dialogue", "lines": ["Sir Trotsalot leaps into the air and mounts Nighttime!"] }
+      ],
+      "animations": {
+        "idle": {
+          "key": "sir_trotsalot_idle",
+          "startFrame": 0, "endFrame": 10, "frameRate": 6, "repeat": -1
+        },
+        "attacking": {
+          "key": "sir_trotsalot_attacking",
+          "startFrame": 0, "endFrame": 11, "frameRate": 12, "repeat": 0
+        }
+      }
+    },
+    {
+      "id": "nighttime_mounted",
+      "name": "Sir Trotsalot & Nighttime",
+      "spriteKey": "sir_trotsalot_mounted_idle",
+      "spriteScale": 3,
+      "stats": {
+        "health": 500000,
+        "maxHealth": 500000,
+        "mana": 0,
+        "maxMana": 0,
+        "usesMana": false,
+        "damageRange": [1000, 3500],
+        "attackSpeed": 2,
+        "armor": 15000,
+        "attackHitChance": 90,
+        "abilityHitChance": 90,
+        "resistList": {
+          "fire": 0, "frost": 0, "nature": 0,
+          "holy": 0, "shadow": 30, "arcane": 0
+        }
+      },
+      "abilityIds": ["moonlit_hoofstrike", "shadow_cleave", "intangible_presence", "berserker_charge"],
+      "animations": {
+        "idle": {
+          "key": "sir_trotsalot_mounted_idle",
+          "startFrame": 0, "endFrame": 10, "frameRate": 6, "repeat": -1
+        },
+        "attacking": {
+          "key": "sir_trotsalot_mounted_attacking",
+          "startFrame": 0, "endFrame": 11, "frameRate": 12, "repeat": 0
+        }
+      }
+    }
+  ],
+
+  "boss": {
+    "id": "nighttime",
+    "name": "Nighttime",
+    "spriteKey": "nighttime_idle",
+    "stats": {
+      "health": 200000,
+      "maxHealth": 200000,
+      "mana": 0,
+      "maxMana": 0,
+      "usesMana": false,
+      "damageRange": [1500, 3500],
+      "attackSpeed": 1,
+      "armor": 12000,
+      "attackHitChance": 90,
+      "abilityHitChance": 90,
+      "resistList": {
+        "fire": 0, "frost": 0, "nature": 0,
+        "holy": 0, "shadow": 15, "arcane": 0
+      }
+    },
+    "phases": [],
+    "threatTable": { "player": 0, "tank": 0, "healer": 0 },
+    "audioDuration": 4000,
+    "dialog": {
+      "intro": ["An undead horse stands in her stable, eating flesh from a dead adventurer..."],
+      "defeat": [],
+      "victory": ["Victory!"]
+    },
+    "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
+  },
+
+  "abilities": {
+    "moonlit_hoofstrike": {
+      "id": "moonlit_hoofstrike",
+      "name": "Moonlit Hoofstrike",
+      "damageType": "physical",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 2200,
+      "immediateMax": 3400,
+      "duration": 0,
+      "recastTimer": 5,
+      "targetType": "highest_threat",
+      "dialogue": null,
+      "audioDuration": 2000
+    },
+    "shadow_cleave": {
+      "id": "shadow_cleave",
+      "name": "Shadow Cleave",
+      "damageType": "shadow",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 3000,
+      "immediateMax": 5000,
+      "duration": 0,
+      "recastTimer": 10,
+      "targetType": "all_allies",
+      "dialogue": "Sir Trotsalot cleaves!",
+      "audioDuration": 2000
+    },
+    "intangible_presence": {
+      "id": "intangible_presence",
+      "name": "Intangible Presence",
+      "damageType": "shadow",
+      "immediateFlag": false,
+      "recastTimer": 20,
+      "targetType": "all_allies",
+      "applyDebuff": {
+        "id": "hit_chance_reduction",
+        "reductionPercent": 50,
+        "durationTicks": 5,
+        "dispellable": true,
+        "dispelType": "magic"
+      },
+      "dialogue": null,
+      "audioDuration": 2000
+    },
+    "berserker_charge": {
+      "id": "berserker_charge",
+      "name": "Berserker Charge",
+      "damageType": "physical",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 2500,
+      "immediateMax": 4200,
+      "duration": 0,
+      "recastTimer": 24,
+      "targetType": "random_ally",
+      "applyDebuff": {
+        "id": "stun",
+        "durationTicks": 3,
+        "dispellable": false
+      },
+      "dialogue": "Sir Trotsalot charges!",
+      "audioDuration": 2000
+    }
+  }
+}

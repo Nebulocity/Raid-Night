@@ -74,7 +74,7 @@
     "critic_dagger": {
       "id": "critic_dagger",
       "name": "Critic's Dagger",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -99,7 +99,7 @@
     "grandstanding": {
       "id": "grandstanding",
       "name": "Grandstanding",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": false,
       "immediateEffect": null,
@@ -111,7 +111,7 @@
       "tickMax": 0,
       "threatPerDamage": 0,
       "recastTimer": 24,
-      "targetType": "boss_self",
+      "targetType": "self",
       "dialogue": "Romeo takes center stage!",
       "sound": "audio/ragnaros_attack.ogg",
       "audioDuration": 2000,

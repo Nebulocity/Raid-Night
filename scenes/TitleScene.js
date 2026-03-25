@@ -25,17 +25,21 @@ export default class TitleScene extends Phaser.Scene {
     const saveData = loadSaveData();
     this.registry.set('saveData', saveData);
 
-    this._createMenuButton(WIDTH / 2, HEIGHT * 0.62, 620, 160, 'New Raid Night!', () => {
+    this._createMenuButton(WIDTH / 2, HEIGHT * 0.62, 620, 160, 'New Raid', () => {
     const newSave = resetSaveData();
     this.registry.set('saveData', newSave);
     this._goToRaidSelect(0);
   });
 
-  this._createMenuButton(WIDTH / 2, HEIGHT * 0.74, 620, 160, 'Continue Raiding!', () => {
+  this._createMenuButton(WIDTH / 2, HEIGHT * 0.74, 620, 160, 'Continue', () => {
     const currentSave = loadSaveData();
     saveSaveData(currentSave);
     this.registry.set('saveData', currentSave);
     this._goToRaidSelect(TICK_MS * 2);
+  });
+
+  this._createMenuButton(WIDTH / 2, HEIGHT * 0.86, 620, 160, 'How to Play', () => {
+    this._goToHowToPlay();
   });
 }
 
@@ -46,8 +50,8 @@ export default class TitleScene extends Phaser.Scene {
   }
 
   _createMenuButton(x, y, width, height, label, onClick) {
-    const bg = this.add.rectangle(x, y, width, height, 0x1c120c, 0.92)
-      .setStrokeStyle(5, 0xd7a44a, 1)
+    const bg = this.add.rectangle(x, y, width, height, 0x000000, 0.65)
+      .setStrokeStyle(3, 0xffd700, 1)
       .setInteractive({ useHandCursor: true });
 
     const text = this.add.text(x, y, label, {
@@ -59,14 +63,15 @@ export default class TitleScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     bg.on('pointerover', () => {
-      bg.setFillStyle(0x2b1a10, 0.98);
-      bg.setStrokeStyle(5, 0xffd37a, 1);
+      bg.setFillStyle(0x1a0e2a, 1);
+      bg.setStrokeStyle(4, 0xffd700, 1);
+      bg.setAlpha(0.75);
       text.setScale(1.03);
     });
 
     bg.on('pointerout', () => {
-      bg.setFillStyle(0x1c120c, 0.92);
-      bg.setStrokeStyle(5, 0xd7a44a, 1);
+      bg.setFillStyle(0x000000, 0.65);
+      bg.setStrokeStyle(3, 0xffd700, 1);
       text.setScale(1);
     });
 
@@ -80,6 +85,13 @@ export default class TitleScene extends Phaser.Scene {
     this.cameras.main.fadeOut(400, 0, 0, 0);
     this.time.delayedCall(delayMs + 420, () => {
       this.scene.start('RaidSelectScene');
+    });
+  }
+
+  _goToHowToPlay() {
+    this.cameras.main.fadeOut(300, 0, 0, 0);
+    this.time.delayedCall(320, () => {
+      this.scene.start('HowToPlayScene');
     });
   }
 }

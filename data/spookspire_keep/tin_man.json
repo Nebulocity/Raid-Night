@@ -74,7 +74,7 @@
     "seized_hinges": {
       "id": "seized_hinges",
       "name": "Seized Hinges",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -97,7 +97,7 @@
     "oil_slick": {
       "id": "oil_slick",
       "name": "Oil Slick",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": false,
       "immediateEffect": null,

@@ -75,7 +75,7 @@
     "marked_for_the_matinee": {
       "id": "marked_for_the_matinee",
       "name": "Marked for the Matinee",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -98,7 +98,7 @@
     "feedback_screech": {
       "id": "feedback_screech",
       "name": "Feedback Screech",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -121,7 +121,7 @@
     "aisle_rake": {
       "id": "aisle_rake",
       "name": "Aisle Rake",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {

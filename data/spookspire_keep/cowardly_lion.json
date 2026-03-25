@@ -74,7 +74,7 @@
     "stage_fright": {
       "id": "stage_fright",
       "name": "Stage Fright",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {
@@ -97,7 +97,7 @@
     "nervous_pounce": {
       "id": "nervous_pounce",
       "name": "Nervous Pounce",
-      "type": "boss_mechanic",
+      "type": "mechanic",
       "manaCost": 0,
       "immediateFlag": true,
       "immediateEffect": {

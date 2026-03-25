@@ -11,139 +11,141 @@
     "stats": {
       "health": 350000,
       "maxHealth": 350000,
-      "mana": 100000,
-      "maxMana": 100000,
+      "mana": 0,
+      "maxMana": 0,
       "usesMana": false,
-      "damageRange": [
-        1500,
-        2500
-      ],
+      "damageRange": [2000, 4000],
       "attackSpeed": 3,
-      "armor": 15000,
+      "armor": 14000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
       "resistList": {
-        "fire": 25,
-        "frost": 25,
-        "nature": 25,
-        "holy": 0,
-        "shadow": 25,
-        "arcane": 25
+        "fire": 50, "frost": 0, "nature": 0,
+        "holy": 0, "shadow": 25, "arcane": 0
       }
     },
     "phases": [
       {
         "id": "phase_1",
-        "label": "Phase 1",
-        "trigger": {
-          "type": "health_percent",
-          "value": 100
-        },
+        "label": "Fel Ritual",
+        "trigger": { "type": "health_percent", "value": 100 },
         "abilityIds": [
-          "fel_stable_hex",
-          "branding_circle",
-          "hellstall_imps"
+          "shadow_bolt",
+          "sacrifice",
+          "fiendish_portal"
         ]
       }
     ],
-    "threatTable": {
-      "player": 0,
-      "tank": 0,
-      "healer": 0
-    },
+    "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": [
-        "MALVESTIAN DOOMHOOF steps forward!"
-      ],
-      "defeat": [
-        "Malvestian Doomhoof collapses in a heap of theatrical nonsense."
-      ],
-      "victory": [
-        "Victory."
-      ]
+      "intro": [],
+      "defeat": ["Malvestian Doomhoof collapses. The portal closes behind him."],
+      "victory": ["Victory."]
     },
-    "sounds": {
-      "intro": "",
-      "attack": "",
-      "hit": "",
-      "defeat": "",
-      "victory": ""
+    "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
+  },
+  "secondActor": {
+    "id": "kilwretch",
+    "name": "Kil'wretch",
+    "spriteKey": null,
+    "spriteScale": 2.5,
+    "stats": {
+      "health": 80000,
+      "maxHealth": 80000,
+      "mana": 0,
+      "maxMana": 0,
+      "usesMana": false,
+      "damageRange": [1000, 3000],
+      "attackSpeed": 2,
+      "armor": 8000,
+      "attackHitChance": 90,
+      "abilityHitChance": 90,
+      "resistList": {
+        "fire": 25, "frost": 0, "nature": 0,
+        "holy": 0, "shadow": 0, "arcane": 0
+      }
+    },
+    "spawnTrigger": { "type": "health_percent", "value": 100 },
+    "resummoned": true,
+    "resummonCooldownTicks": 30,
+    "abilityIds": ["amplify_hatred", "fire_jolt"],
+    "dialogue": {
+      "intro": ["Kil'wretch crawls through the fel portal!"]
     }
   },
   "abilities": {
-    "fel_stable_hex": {
-      "id": "fel_stable_hex",
-      "name": "Fel Stable Hex",
-      "type": "boss_mechanic",
-      "manaCost": 0,
+    "shadow_bolt": {
+      "id": "shadow_bolt",
+      "name": "Shadow Bolt",
+      "damageType": "shadow",
       "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 3000,
+      "immediateMax": 3000,
+      "duration": 0,
+      "recastTimer": 8,
+      "targetType": "highest_threat",
+      "dialogue": "Shadow Bolt!",
+      "audioDuration": 1500
+    },
+    "sacrifice": {
+      "id": "sacrifice",
+      "name": "Sacrifice",
+      "damageType": "shadow",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 8000,
+      "immediateMax": 12000,
+      "duration": 0,
+      "recastTimer": 30,
+      "targetType": "random_ally",
+      "dialogue": "Malvestian marks a sacrifice!",
+      "audioDuration": 2000
+    },
+    "fiendish_portal": {
+      "id": "fiendish_portal",
+      "name": "Fiendish Portal",
+      "immediateFlag": false,
+      "recastTimer": 60,
+      "targetType": "self",
+      "applyBuff": {
+        "id": "auto_attack_bonus",
+        "bonusDamage": 0,
+        "durationTicks": 0
       },
-      "immediateMin": 1700,
+      "dialogue": "A fel portal tears open, and Kil'wretch emerges!",
+      "audioDuration": 2000
+    },
+    "amplify_hatred": {
+      "id": "amplify_hatred",
+      "name": "Amplify Hatred",
+      "immediateFlag": false,
+      "recastTimer": 30,
+      "targetType": "random_ally",
+      "applyDebuff": {
+        "id": "fire_damage_increase",
+        "increasePercent": 20,
+        "durationTicks": 15,
+        "dispellable": true,
+        "dispelType": "magic"
+      },
+      "dialogue": "Kil'wretch amplifies your hatred of fire!",
+      "audioDuration": 2000
+    },
+    "fire_jolt": {
+      "id": "fire_jolt",
+      "name": "Fire Jolt",
+      "damageType": "fire",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 1000,
       "immediateMax": 2500,
       "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 12,
-      "targetType": "random_ally",
-      "dialogue": "Fel brands flare across the stable.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "magma_blast"
-    },
-    "branding_circle": {
-      "id": "branding_circle",
-      "name": "Branding Circle",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 1000,
-      "immediateMax": 1500,
-      "duration": 6,
-      "tickEffect": {
-        "type": "damage"
-      },
-      "tickMin": 260,
-      "tickMax": 380,
-      "threatPerDamage": 0,
-      "recastTimer": 18,
-      "targetType": "random_ally",
-      "dialogue": "A victim is dragged toward the circle.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "submerge"
-    },
-    "hellstall_imps": {
-      "id": "hellstall_imps",
-      "name": "Hellstall Imps",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 700,
-      "immediateMax": 1100,
-      "duration": 4,
-      "tickEffect": {
-        "type": "damage"
-      },
-      "tickMin": 140,
-      "tickMax": 220,
-      "threatPerDamage": 0,
-      "recastTimer": 20,
-      "targetType": "all_allies",
-      "dialogue": "A flood of tiny hooves erupts from below.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "wrath_of_ragnaros"
+      "recastTimer": 4,
+      "targetType": "random_ignore_threat",
+      "dialogue": "Kil'wretch spits fire!",
+      "audioDuration": 1500
     }
   }
 }

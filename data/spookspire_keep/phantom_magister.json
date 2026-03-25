@@ -11,137 +11,152 @@
     "stats": {
       "health": 320000,
       "maxHealth": 320000,
-      "mana": 100000,
-      "maxMana": 100000,
+      "mana": 0,
+      "maxMana": 0,
       "usesMana": false,
-      "damageRange": [
-        1500,
-        2500
-      ],
-      "attackSpeed": 3,
-      "armor": 15000,
+      "damageRange": [2000, 4000],
+      "attackSpeed": 4,
+      "armor": 12000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
       "resistList": {
-        "fire": 25,
-        "frost": 25,
-        "nature": 25,
-        "holy": 0,
-        "shadow": 25,
-        "arcane": 25
+        "fire": 25, "frost": 25, "nature": 0,
+        "holy": 0, "shadow": 0, "arcane": 50
       }
     },
     "phases": [
       {
         "id": "phase_1",
-        "label": "Phase 1",
-        "trigger": {
-          "type": "health_percent",
-          "value": 100
-        },
+        "label": "Examination",
+        "trigger": { "type": "health_percent", "value": 100 },
         "abilityIds": [
-          "spectral_fire_ring",
-          "ghostfrost_squall",
-          "final_exam"
+          "frost_bolt",
+          "fire_bolt",
+          "arcane_bolts",
+          "silence_aura",
+          "summon_ice_elemental"
+        ]
+      },
+      {
+        "id": "phase_2",
+        "label": "Pyretic Ritual",
+        "trigger": { "type": "health_percent", "value": 20 },
+        "abilityIds": [
+          "frost_bolt",
+          "fire_bolt",
+          "arcane_bolts",
+          "silence_aura",
+          "pyretic_ritual"
+        ],
+        "onEnter": [
+          { "type": "dialogue", "lines": ["The Phantom Magister begins channeling Pyretic Ritual!"] }
         ]
       }
     ],
-    "threatTable": {
-      "player": 0,
-      "tank": 0,
-      "healer": 0
-    },
+    "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": [
-        "THE PHANTOM MAGISTER steps forward!"
-      ],
-      "defeat": [
-        "The Phantom Magister collapses in a heap of theatrical nonsense."
-      ],
-      "victory": [
-        "Victory."
-      ]
+      "intro": [],
+      "defeat": ["The Phantom Magister dissipates into the ether."],
+      "victory": ["Victory."]
     },
-    "sounds": {
-      "intro": "",
-      "attack": "",
-      "hit": "",
-      "defeat": "",
-      "victory": ""
-    }
+    "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
   },
+  "summonedAdds": [
+    {
+      "id": "ice_elemental",
+      "name": "Ice Elemental",
+      "health": 50000,
+      "lifespanTicks": 45,
+      "damageType": "frost",
+      "onExpireEffect": null,
+      "onExpireMin": 0,
+      "onExpireMax": 0,
+      "onExpireTargets": "all_allies"
+    }
+  ],
   "abilities": {
-    "spectral_fire_ring": {
-      "id": "spectral_fire_ring",
-      "name": "Spectral Fire Ring",
-      "type": "boss_mechanic",
-      "manaCost": 0,
+    "frost_bolt": {
+      "id": "frost_bolt",
+      "name": "Frost Bolt",
+      "damageType": "frost",
       "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 900,
-      "immediateMax": 1400,
-      "duration": 4,
-      "tickEffect": {
-        "type": "damage"
-      },
-      "tickMin": 180,
-      "tickMax": 280,
-      "threatPerDamage": 0,
-      "recastTimer": 18,
-      "targetType": "all_allies",
-      "dialogue": "Do not move. He means it.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "wrath_of_ragnaros"
-    },
-    "ghostfrost_squall": {
-      "id": "ghostfrost_squall",
-      "name": "Ghostfrost Squall",
-      "type": "boss_mechanic",
-      "manaCost": 0,
-      "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 800,
-      "immediateMax": 1300,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 4000,
+      "immediateMax": 4000,
       "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 14,
-      "targetType": "all_allies",
-      "dialogue": "A bitter squall fills the library.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "chain_lightning"
+      "recastTimer": 6,
+      "targetType": "random_ignore_threat",
+      "dialogue": "Frost Bolt!",
+      "audioDuration": 1500
     },
-    "final_exam": {
-      "id": "final_exam",
-      "name": "Final Exam",
-      "type": "boss_mechanic",
-      "manaCost": 0,
+    "fire_bolt": {
+      "id": "fire_bolt",
+      "name": "Fire Bolt",
+      "damageType": "fire",
       "immediateFlag": true,
-      "immediateEffect": {
-        "type": "damage"
-      },
-      "immediateMin": 2600,
-      "immediateMax": 3600,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 4000,
+      "immediateMax": 4000,
       "duration": 0,
-      "tickEffect": null,
-      "tickMin": 0,
-      "tickMax": 0,
-      "threatPerDamage": 0,
-      "recastTimer": 26,
-      "targetType": "highest_threat",
-      "dialogue": "The Phantom Magister administers the final exam.",
-      "sound": "audio/ragnaros_attack.ogg",
-      "audioDuration": 2000,
-      "iconId": "magma_blast"
+      "recastTimer": 6,
+      "targetType": "random_ignore_threat",
+      "dialogue": "Fire Bolt!",
+      "audioDuration": 1500
+    },
+    "arcane_bolts": {
+      "id": "arcane_bolts",
+      "name": "Arcane Bolts",
+      "damageType": "arcane",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 4000,
+      "immediateMax": 4000,
+      "duration": 0,
+      "recastTimer": 6,
+      "targetType": "all_allies",
+      "dialogue": "Arcane Bolts strike everyone!",
+      "audioDuration": 1500
+    },
+    "silence_aura": {
+      "id": "silence_aura",
+      "name": "Silence Aura",
+      "immediateFlag": false,
+      "recastTimer": 40,
+      "targetType": "all_allies",
+      "applyDebuff": {
+        "id": "silence",
+        "durationTicks": 5,
+        "dispellable": false
+      },
+      "dialogue": "The Phantom Magister silences all spells and abilities!",
+      "audioDuration": 2000
+    },
+    "summon_ice_elemental": {
+      "id": "summon_ice_elemental",
+      "name": "Summon Ice Elemental",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "summon_add", "addId": "ice_elemental" },
+      "recastTimer": 120,
+      "targetType": "self",
+      "dialogue": "An Ice Elemental is summoned!",
+      "audioDuration": 2000
+    },
+    "pyretic_ritual": {
+      "id": "pyretic_ritual",
+      "name": "Pyretic Ritual",
+      "damageType": "fire",
+      "immediateFlag": true,
+      "immediateEffect": { "type": "damage" },
+      "immediateMin": 10000,
+      "immediateMax": 10000,
+      "duration": 0,
+      "castTimeTicks": 10,
+      "interruptible": true,
+      "recastTimer": 60,
+      "targetType": "all_allies",
+      "dialogue": "Pyretic Ritual time, my dudes!",
+      "audioDuration": 2000
     }
   }
 }
