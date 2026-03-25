@@ -37,7 +37,7 @@ window.GAME_CONFIG = {
     PLAYER: { x: 45, y: 1500, w: 400, h: 575 },
     TOTEMS: { x: 640, y: 1500, w: 400, h: 575 },
     POPUP: { x: 215, y: 1100, w: 650, h: 200 },
-    ACTION_BAR: { x: 0, y: 2200, w: 1080, h: 200 },
+    ACTION_BAR: { x: 0, y: 1960, w: 1080, h: 440 },
   },
 
   // Gameplay timing (2 seconds)
