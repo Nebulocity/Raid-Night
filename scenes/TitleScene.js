@@ -37,6 +37,10 @@ export default class TitleScene extends Phaser.Scene {
     this.registry.set('saveData', currentSave);
     this._goToRaidSelect(TICK_MS * 2);
   });
+
+  this._createMenuButton(WIDTH / 2, HEIGHT * 0.86, 620, 160, 'How to Play', () => {
+    this._goToHowToPlay();
+  });
 }
 
   _drawBackground(textureKey, width, height) {
@@ -81,6 +85,13 @@ export default class TitleScene extends Phaser.Scene {
     this.cameras.main.fadeOut(400, 0, 0, 0);
     this.time.delayedCall(delayMs + 420, () => {
       this.scene.start('RaidSelectScene');
+    });
+  }
+
+  _goToHowToPlay() {
+    this.cameras.main.fadeOut(300, 0, 0, 0);
+    this.time.delayedCall(320, () => {
+      this.scene.start('HowToPlayScene');
     });
   }
 }
