@@ -5,22 +5,29 @@
  * Three tabs: Shaman (player) | Paladin (tank) | Druid (healer).
  * Each tab displays 2-column ability cards with icon, name, description,
  * mana cost, and cooldown.
+ *
+ * borderColor: used for tab border and card border
+ * textColor:   used for tab label and card stat line text
  */
 const Phaser = window.Phaser;
 
 const TABS = [
-  { key: 'shaman',  label: 'Shaman',  characterId: 'player', color: 0x44ddbb },
-  { key: 'paladin', label: 'Paladin', characterId: 'tank',   color: 0xff88cc },
-  { key: 'druid',   label: 'Druid',   characterId: 'healer', color: 0xa0ff69 },
+  { key: 'shaman',  label: 'Shaman',  characterId: 'player', borderColor: 0x0000ff, textColor: 0x44ddbb },
+  { key: 'paladin', label: 'Paladin', characterId: 'tank',   borderColor: 0xff88cc, textColor: 0xff88cc },
+  { key: 'druid',   label: 'Druid',   characterId: 'healer', borderColor: 0xa0ff69, textColor: 0xa0ff69 },
 ];
 
 const CARD_W       = 490;
-const CARD_H       = 210;
-const CARD_PAD_X   = 30;
+const CARD_H       = 310;
+const CARD_PAD_X   = 28;
 const CARD_GAP_X   = 40;
-const CARD_GAP_Y   = 24;
-const GRID_START_Y = 420;
-const ICON_SIZE    = 72;
+const CARD_GAP_Y   = 32;
+const GRID_START_Y = 480;
+const ICON_SIZE    = 88;
+
+const TAB_W = 300;
+const TAB_H = 130;
+const TAB_Y = 290;
 
 export default class HowToPlayScene extends Phaser.Scene {
   constructor() {
@@ -46,18 +53,18 @@ export default class HowToPlayScene extends Phaser.Scene {
 
     this.add.text(WIDTH / 2, 90, 'How to Play', {
       fontFamily:      'monospace',
-      fontSize:        '72px',
+      fontSize:        '80px',
       color:           '#fff1c7',
       stroke:          '#000000',
       strokeThickness: 8,
     }).setOrigin(0.5);
 
-    this._characters  = this.cache.json.get('characters') ?? {};
-    this._abilities   = this.cache.json.get('charAbilities') ?? {};
+    this._characters = this.cache.json.get('characters') ?? {};
+    this._abilities  = this.cache.json.get('charAbilities') ?? {};
 
-    this._tabGroups   = {};
-    this._tabButtons  = [];
-    this._activeTab   = null;
+    this._tabGroups  = {};
+    this._tabButtons = [];
+    this._activeTab  = null;
 
     this._buildTabs(WIDTH);
     this._buildAllCards(WIDTH);
@@ -70,25 +77,22 @@ export default class HowToPlayScene extends Phaser.Scene {
   // Tabs
   // ===========
   _buildTabs(WIDTH) {
-    const tabW   = 300;
-    const tabH   = 100;
-    const tabY   = 240;
     const total  = TABS.length;
-    const startX = WIDTH / 2 - (total * tabW + (total - 1) * 20) / 2 + tabW / 2;
+    const startX = WIDTH / 2 - (total * TAB_W + (total - 1) * 24) / 2 + TAB_W / 2;
 
     TABS.forEach((tab, i) => {
-      const tx = startX + i * (tabW + 20);
+      const tx = startX + i * (TAB_W + 24);
 
-      const bg = this.add.rectangle(tx, tabY, tabW, tabH, 0x111111)
-        .setStrokeStyle(3, tab.color, 0.9)
+      const bg = this.add.rectangle(tx, TAB_Y, TAB_W, TAB_H, 0x111111)
+        .setStrokeStyle(3, tab.borderColor, 0.9)
         .setInteractive({ useHandCursor: true });
 
-      const label = this.add.text(tx, tabY, tab.label, {
-        fontFamily: 'monospace',
-        fontSize:   '46px',
-        color:      '#' + tab.color.toString(16).padStart(6, '0'),
-        stroke:     '#000000',
-        strokeThickness: 6,
+      const label = this.add.text(tx, TAB_Y, tab.label, {
+        fontFamily:      'monospace',
+        fontSize:        '54px',
+        color:           '#' + tab.textColor.toString(16).padStart(6, '0'),
+        stroke:          '#000000',
+        strokeThickness: 4,
       }).setOrigin(0.5);
 
       bg.on('pointerdown', () => this._switchTab(tab.key));
@@ -97,7 +101,7 @@ export default class HowToPlayScene extends Phaser.Scene {
         bg.setFillStyle(this._activeTab === tab.key ? 0x1a1a2e : 0x111111);
       });
 
-      this._tabButtons.push({ key: tab.key, bg, label, color: tab.color });
+      this._tabButtons.push({ key: tab.key, bg, label, borderColor: tab.borderColor });
     });
   }
 
@@ -117,61 +121,70 @@ export default class HowToPlayScene extends Phaser.Scene {
         const ability = this._abilities[abilityId];
         if (!ability) return;
 
-        const col  = index % cols;
-        const row  = Math.floor(index / cols);
-        const cx   = offsetX + col * (CARD_W + CARD_GAP_X) + CARD_W / 2;
-        const cy   = GRID_START_Y + row * (CARD_H + CARD_GAP_Y) + CARD_H / 2;
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        const cx  = offsetX + col * (CARD_W + CARD_GAP_X) + CARD_W / 2;
+        const cy  = GRID_START_Y + row * (CARD_H + CARD_GAP_Y) + CARD_H / 2;
 
-        this._buildAbilityCard(cx, cy, ability, tab.color, group);
+        this._buildAbilityCard(cx, cy, ability, tab.borderColor, tab.textColor, group);
       });
 
       this._tabGroups[tab.key] = group;
     });
   }
 
-  _buildAbilityCard(cx, cy, ability, accentColor, group) {
+  _buildAbilityCard(cx, cy, ability, borderColor, textColor, group) {
     const bg = this.add.rectangle(cx, cy, CARD_W, CARD_H, 0x0a0a18)
-      .setStrokeStyle(2, accentColor, 0.6);
+      .setStrokeStyle(2, borderColor, 0.6);
     group.add(bg);
 
     const iconKey = 'icon_' + ability.id;
     if (this.textures.exists(iconKey)) {
       const iconObj = this.add.image(
         cx - CARD_W / 2 + CARD_PAD_X + ICON_SIZE / 2,
-        cy,
+        cy - 16,
         iconKey
       ).setDisplaySize(ICON_SIZE, ICON_SIZE).setOrigin(0.5);
       group.add(iconObj);
     }
 
-    const textX    = cx - CARD_W / 2 + CARD_PAD_X + ICON_SIZE + 16;
-    const textMaxW = CARD_W - CARD_PAD_X - ICON_SIZE - 16 - 16;
+    const textX    = cx - CARD_W / 2 + CARD_PAD_X + ICON_SIZE + 20;
+    const textMaxW = CARD_W - CARD_PAD_X - ICON_SIZE - 20 - 16;
+    const topY     = cy - CARD_H / 2 + 18;
 
-    const nameText = this.add.text(textX, cy - CARD_H / 2 + 16, ability.name ?? ability.id, {
+    const nameText = this.add.text(textX, topY, ability.name ?? ability.id, {
       fontFamily:      'monospace',
-      fontSize:        '42px',
+      fontSize:        '34px',
       color:           '#ffffff',
       stroke:          '#000000',
       strokeThickness: 3,
     }).setOrigin(0, 0);
     group.add(nameText);
 
-    const descText = this.add.text(textX, cy - CARD_H / 2 + 56, ability.description ?? '', {
+    const descText = this.add.text(textX, topY + 46, ability.description ?? '', {
       fontFamily: 'monospace',
-      fontSize:   '32px',
+      fontSize:   '26px',
       color:      '#cccccc',
       wordWrap:   { width: textMaxW },
+      lineSpacing: 4,
     }).setOrigin(0, 0);
     group.add(descText);
 
     const costLabel = (ability.manaCost ? ability.manaCost + 'm' : 'Free') +
-      (ability.recastTicks > 0 ? '   |   ' + ability.recastTicks + 's CD' : '   |   No CD');
+      (ability.recastTicks > 0
+        ? '   |   ' + ability.recastTicks + 's CD'
+        : '   |   No CD');
 
-    const statText = this.add.text(textX, cy + CARD_H / 2 - 16, costLabel, {
-      fontFamily: 'monospace',
-      fontSize:   '32px',
-      color:      '#' + accentColor.toString(16).padStart(6, '0'),
-    }).setOrigin(0, 1);
+    const statText = this.add.text(
+      cx - CARD_W / 2 + CARD_PAD_X,
+      cy + CARD_H / 2 - 18,
+      costLabel,
+      {
+        fontFamily: 'monospace',
+        fontSize:   '28px',
+        color:      '#' + textColor.toString(16).padStart(6, '0'),
+      }
+    ).setOrigin(0, 1);
     group.add(statText);
   }
 
@@ -188,7 +201,7 @@ export default class HowToPlayScene extends Phaser.Scene {
     this._tabButtons.forEach(btn => {
       const isActive = btn.key === tabKey;
       btn.bg.setFillStyle(isActive ? 0x1a1a2e : 0x111111);
-      btn.bg.setStrokeStyle(isActive ? 4 : 2, btn.color, isActive ? 1.0 : 0.7);
+      btn.bg.setStrokeStyle(isActive ? 4 : 2, btn.borderColor, isActive ? 1.0 : 0.7);
     });
   }
 
@@ -198,7 +211,7 @@ export default class HowToPlayScene extends Phaser.Scene {
   _buildBackButton(WIDTH, HEIGHT) {
     const btn = this.add.text(85, HEIGHT * 0.96, '< BACK', {
       fontFamily:      'monospace',
-      fontSize:        '48px',
+      fontSize:        '56px',
       color:           '#ccaa66',
       stroke:          '#000000',
       strokeThickness: 4,

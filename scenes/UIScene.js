@@ -53,6 +53,7 @@ export default class UIScene extends Phaser.Scene {
     // Tooltip state
     this.activeTooltip      = null;
     this.longPressTimer     = null;
+    this.isLongPress        = false;
     // Tracks whether spell buttons are globally locked so mana dimming
     // does not fight with the locked visual state.
     this.spellButtonsLocked = false;
@@ -143,37 +144,40 @@ export default class UIScene extends Phaser.Scene {
 
   _buildActionBar(levelData) {
     const { ZONES } = window.GAME_CONFIG;
-    const ab        = ZONES.ACTION_BAR;
-    // Button sizing - all 6 buttons (2 spells + 4 totems) laid out left to right
-    // with a divider gap between them, anchored from the left edge
-    const btnSize   = 110;
-    const btnPad    = 8;
-    const btnY      = ab.y + ab.h / 2;
-    const startX    = ab.x + 8;   // left margin
+    const ab       = ZONES.ACTION_BAR;
 
-    // ========================
-    // Left side: spell buttons
-    // ========================
-    // Spell buttons driven by the player character's ability list.
-    // Max 4 buttons fit before the totem divider; slice to be safe.
+    const BTN_SIZE  = 200;
+    const BTN_GAP   = 16;
+    const ROW_GAP   = 16;
+    const HALF_W    = ab.w / 2;
+
+    // Two rows centered in the left half (spell buttons)
+    const row1Y = ab.y + BTN_SIZE / 2 + 12;
+    const row2Y = ab.y + BTN_SIZE + ROW_GAP + BTN_SIZE / 2 + 12;
+
     const spellAbilityIds = (levelData?.characters?.player?.abilityIds ?? []).slice(0, 4);
+    const spellOffsetX    = (HALF_W - (2 * BTN_SIZE + BTN_GAP)) / 2 + BTN_SIZE / 2;
 
     spellAbilityIds.forEach((abilityId, i) => {
       const ability = levelData?.abilities?.[abilityId];
-      const btnX    = startX + i * (btnSize + btnPad) + btnSize / 2;
-      const btn     = this._buildSpellButton(btnX, btnY, btnSize, abilityId, ability);
+      const col  = i % 2;
+      const row  = Math.floor(i / 2);
+      const btnX = spellOffsetX + col * (BTN_SIZE + BTN_GAP);
+      const btnY = row === 0 ? row1Y : row2Y;
+      const btn  = this._buildSpellButton(btnX, btnY, BTN_SIZE, abilityId, ability);
       this.abilityButtons.push(btn);
     });
 
-    // Divider
-    const dividerX = startX + spellAbilityIds.length * (btnSize + btnPad) + 8;
+    // Vertical divider between spell and totem halves
+    const dividerX = HALF_W;
     const divider  = this.add.graphics();
     divider.lineStyle(2, 0x554422, 0.6);
     divider.lineBetween(dividerX, ab.y + 16, dividerX, ab.y + ab.h - 16);
 
-    // ========================
-    // Right side: totem buttons
-    // ========================
+    // Two rows centered in the right half (totem buttons)
+    const TOTEM_SIZE  = 190;
+    const totemOffsetX = HALF_W + (HALF_W - (2 * TOTEM_SIZE + BTN_GAP)) / 2 + TOTEM_SIZE / 2;
+
     const totemElements = ['earth', 'fire', 'water', 'air'];
     const totemColors   = {
       earth: 0x88cc44,
@@ -181,11 +185,15 @@ export default class UIScene extends Phaser.Scene {
       water: 0x44aaff,
       air:   0xaaccff,
     };
-    const totemStartX = dividerX + 16;
+    const totemRow1Y = ab.y + TOTEM_SIZE / 2 + 12;
+    const totemRow2Y = ab.y + TOTEM_SIZE + ROW_GAP + TOTEM_SIZE / 2 + 12;
 
     totemElements.forEach((element, i) => {
-      const btnX = totemStartX + i * (btnSize + btnPad) + btnSize / 2;
-      const btn  = this._buildTotemButton(btnX, btnY, btnSize, element, totemColors[element]);
+      const col   = i % 2;
+      const row   = Math.floor(i / 2);
+      const btnX  = totemOffsetX + col * (TOTEM_SIZE + BTN_GAP);
+      const btnY  = row === 0 ? totemRow1Y : totemRow2Y;
+      const btn   = this._buildTotemButton(btnX, btnY, TOTEM_SIZE, element, totemColors[element]);
       this.totemButtons.push(btn);
     });
   }
@@ -248,23 +256,31 @@ export default class UIScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(14);
 
     bg.on('pointerdown', () => {
-      this._pressSpellButton(abilityId, ability, bg, cdOverlay);
-      if (ability?.description) {
-        this.longPressTimer = this.time.delayedCall(500, () => {
-          this._showTooltip(x, y, size, ability);
-        });
-      }
+      this.isLongPress = false;
+      this.longPressTimer = this.time.delayedCall(500, () => {
+        this.isLongPress    = true;
+        this.longPressTimer = null;
+        if (ability?.description) this._showTooltip(ability);
+      });
     });
-    bg.on('pointerup',   () => {
-      if (this.longPressTimer) { this.longPressTimer.remove(); this.longPressTimer = null; }
+    bg.on('pointerup', () => {
+      if (this.longPressTimer) {
+        this.longPressTimer.remove();
+        this.longPressTimer = null;
+      }
+      if (!this.isLongPress) {
+        this._pressSpellButton(abilityId, ability, bg, cdOverlay);
+      }
+      this.isLongPress = false;
     });
     bg.on('pointerover', () => {
       if (!this.cooldowns[abilityId]) bg.setStrokeStyle(3, 0xffd700, 1);
-      if (ability?.description) this._showTooltip(x, y, size, ability);
+      if (ability?.description) this._showTooltip(ability);
     });
-    bg.on('pointerout',  () => {
+    bg.on('pointerout', () => {
       if (!this.cooldowns[abilityId]) bg.setStrokeStyle(3, 0x4466aa, 1.0);
       if (this.longPressTimer) { this.longPressTimer.remove(); this.longPressTimer = null; }
+      this.isLongPress = false;
       this._hideTooltip();
     });
 
@@ -723,83 +739,71 @@ export default class UIScene extends Phaser.Scene {
   // ===================================
   // ABILITY TOOLTIP
   // ===================================
-  // Shows a tooltip panel above the given button with the ability description.
-  _showTooltip(btnX, btnY, btnSize, ability) {
+  // Fixed position in the center of the screen between the character zones
+  // and the action bar. Shows ability icon, name, description, cost, cooldown.
+  _showTooltip(ability) {
     this._hideTooltip();
 
-    const { WIDTH } = window.GAME_CONFIG;
-    const TOOLTIP_W  = 680;
-    const ICON_SIZE  = 72;
-    const PADDING    = 24;
-
-    const tipY   = btnY - btnSize / 2 - 20;
-    const tipCX  = Phaser.Math.Clamp(btnX, TOOLTIP_W / 2 + 10, WIDTH - TOOLTIP_W / 2 - 10);
+    const { WIDTH }   = window.GAME_CONFIG;
+    const TOOLTIP_W   = 900;
+    const ICON_SIZE   = 100;
+    const PADDING     = 32;
+    const TEXT_W      = TOOLTIP_W - PADDING * 2 - ICON_SIZE - 24;
+    const cx          = WIDTH / 2;
+    const cy          = 1750;
 
     const objects = [];
 
-    const descText = this.add.text(
-      tipCX - TOOLTIP_W / 2 + PADDING + (this.textures.exists('icon_' + ability.id) ? ICON_SIZE + 16 : 0),
-      tipY,
-      ability.description ?? '',
-      {
-        fontFamily:      'monospace',
-        fontSize:        '26px',
-        color:           '#dddddd',
-        wordWrap:        { width: TOOLTIP_W - PADDING * 2 - ICON_SIZE - 16 },
-        align:           'left',
-      }
-    ).setOrigin(0, 1).setDepth(101).setAlpha(0);
-    objects.push(descText);
+    const hasIcon   = this.textures.exists('icon_' + ability.id);
+    const textLeft  = cx - TOOLTIP_W / 2 + PADDING + (hasIcon ? ICON_SIZE + 24 : 0);
 
-    const statLine = (ability.manaCost ? ability.manaCost + 'm' : 'No cost') +
-      (ability.recastTicks > 0 ? '   |   ' + ability.recastTicks + 's cooldown' : '   |   No cooldown');
-
-    const statText = this.add.text(
-      tipCX - TOOLTIP_W / 2 + PADDING + (this.textures.exists('icon_' + ability.id) ? ICON_SIZE + 16 : 0),
-      tipY + 36,
-      statLine,
-      {
-        fontFamily: 'monospace',
-        fontSize:   '24px',
-        color:      '#88aaff',
-      }
-    ).setOrigin(0, 1).setDepth(101).setAlpha(0);
-    objects.push(statText);
-
-    const nameText = this.add.text(
-      tipCX - TOOLTIP_W / 2 + PADDING + (this.textures.exists('icon_' + ability.id) ? ICON_SIZE + 16 : 0),
-      tipY - descText.height - 12,
-      ability.name ?? ability.id,
-      {
-        fontFamily:      'monospace',
-        fontSize:        '32px',
-        color:           '#ffffff',
-        stroke:          '#000000',
-        strokeThickness: 3,
-      }
-    ).setOrigin(0, 1).setDepth(101).setAlpha(0);
+    const nameText = this.add.text(textLeft, cy - 80, ability.name ?? ability.id, {
+      fontFamily:      'monospace',
+      fontSize:        '42px',
+      color:           '#ffffff',
+      stroke:          '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0, 0).setDepth(101).setAlpha(0);
     objects.push(nameText);
 
-    const totalH = nameText.height + descText.height + statText.height + PADDING * 2 + 16;
-    const panelY = tipY - totalH / 2 + PADDING;
+    const descText = this.add.text(textLeft, cy - 80 + nameText.height + 12, ability.description ?? '', {
+      fontFamily:  'monospace',
+      fontSize:    '34px',
+      color:       '#dddddd',
+      wordWrap:    { width: TEXT_W },
+      lineSpacing: 6,
+    }).setOrigin(0, 0).setDepth(101).setAlpha(0);
+    objects.push(descText);
 
-    const panel = this.add.rectangle(tipCX, panelY, TOOLTIP_W, totalH, 0x0a0a18)
-      .setStrokeStyle(2, 0x4466aa, 1.0)
+    const statLine = (ability.manaCost ? ability.manaCost + 'm' : 'Free') +
+      (ability.recastTicks > 0 ? '   |   ' + ability.recastTicks + 's cooldown' : '   |   No cooldown');
+
+    const statText = this.add.text(textLeft, cy - 80 + nameText.height + 12 + descText.height + 14, statLine, {
+      fontFamily: 'monospace',
+      fontSize:   '32px',
+      color:      '#88aaff',
+    }).setOrigin(0, 0).setDepth(101).setAlpha(0);
+    objects.push(statText);
+
+    const totalH  = nameText.height + 12 + descText.height + 14 + statText.height + PADDING * 2;
+    const panelY  = cy - 80 + totalH / 2 - PADDING;
+
+    const panel = this.add.rectangle(cx, panelY, TOOLTIP_W, totalH, 0x050510)
+      .setStrokeStyle(3, 0x4466aa, 1.0)
       .setDepth(100)
       .setAlpha(0);
     objects.unshift(panel);
 
-    const iconKey = 'icon_' + ability.id;
-    if (this.textures.exists(iconKey)) {
+    if (hasIcon) {
       const iconObj = this.add.image(
-        tipCX - TOOLTIP_W / 2 + PADDING + ICON_SIZE / 2,
+        cx - TOOLTIP_W / 2 + PADDING + ICON_SIZE / 2,
         panelY,
-        iconKey
+        'icon_' + ability.id
       ).setDisplaySize(ICON_SIZE, ICON_SIZE).setOrigin(0.5).setDepth(101).setAlpha(0);
       objects.push(iconObj);
     }
 
-    this.tweens.add({ targets: objects, alpha: 1, duration: 120 });
+    this.tweens.add({ targets: objects, alpha: 1, duration: 150 });
     this.activeTooltip = objects;
   }
 
