@@ -12,6 +12,7 @@ const Phaser = window.Phaser; // Phaser is loaded via <script> in index.html
 import BootScene          from './scenes/BootScene.js';
 import PreloadScene       from './scenes/PreloadScene.js';
 import TitleScene         from './scenes/TitleScene.js';
+import HowToPlayScene     from './scenes/HowToPlayScene.js';
 import RaidSelectScene    from './scenes/RaidSelectScene.js';
 import RaidBossSelectScene from './scenes/RaidBossSelectScene.js';
 import BossLoadingScene   from './scenes/BossLoadingScene.js';
@@ -86,6 +87,7 @@ const config = {
     BootScene,
     PreloadScene,
     TitleScene,
+    HowToPlayScene,
     RaidSelectScene,
     RaidBossSelectScene,
     BossLoadingScene,
