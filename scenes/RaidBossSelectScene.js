@@ -22,7 +22,7 @@ const DEPTH_NAMETEXT = 4;
 // Short display names for the boss select screen.
 // Keeps the grid readable without long names wrapping badly.
 const BOSS_SHORT_NAMES = {
-  sir_trotsalot_and_nighttime:       'Sir Trotsalot',
+  sir_trotsalot:       'Sir Trotsalot',
   mortimer:                          'Mortimer',
   virtuous_lady:                       'Virtuous Lady',
   the_movie_theater:                 'The Theater',
