@@ -1201,7 +1201,7 @@ export default class GameScene extends Phaser.Scene {
       this._applyDamageToBoss(blockDmg, iconKey);
 
       // Generate threat from block
-      const blockThreat = Math.round(blockDmg * (hs.blockThreatMultiplier ?? 2));
+      const blockThreat = Math.round(blockDmg * (hs.blockThreatMultiplier ?? 1.35));
       this.addThreat('tank', blockThreat);
       this._updateThreatMeters();
 
@@ -3833,7 +3833,11 @@ export default class GameScene extends Phaser.Scene {
   addThreat(characterId, amount) {
     if (!this.threatTable) this._initThreatTable();
     if (this.threatTable[characterId] !== undefined) {
-      this.threatTable[characterId] += amount;
+      const TANK_GLOBAL_THREAT_MULTIPLIER = 5.0;
+      const finalAmount = characterId === 'tank'
+        ? Math.round(amount * TANK_GLOBAL_THREAT_MULTIPLIER)
+        : amount;
+      this.threatTable[characterId] += finalAmount;
     }
   }
 
@@ -4045,11 +4049,11 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Deal damage to boss and generate threat
-    // Tanks generate 5x threat from physical attacks (WoW tank aura)
+    // Tanks generate 1.5x threat from physical attacks (WoW taunt mechanic)
     const tankData    = slot._data;
     const damageRange = tankData?.stats?.damageRange ?? [100, 200];
     const damage      = Phaser.Math.Between(damageRange[0], damageRange[1]);
-    const TANK_THREAT_MULTIPLIER = 5;
+    const TANK_THREAT_MULTIPLIER = 3.0;
     this._applyDamageToBoss(damage, 'icon_autoAttack');
     this.addThreat('tank', Math.round(damage * TANK_THREAT_MULTIPLIER));
     this._updateThreatMeters();
