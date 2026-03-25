@@ -9,7 +9,7 @@
 const Phaser = window.Phaser;
 
 const TABS = [
-  { key: 'shaman',  label: 'Shaman',  characterId: 'player', color: 0x44ddbb },
+  { key: 'shaman',  label: 'Shaman',  characterId: 'player', color: 0x0000FF },
   { key: 'paladin', label: 'Paladin', characterId: 'tank',   color: 0xff88cc },
   { key: 'druid',   label: 'Druid',   characterId: 'healer', color: 0xa0ff69 },
 ];
@@ -85,10 +85,10 @@ export default class HowToPlayScene extends Phaser.Scene {
 
       const label = this.add.text(tx, tabY, tab.label, {
         fontFamily: 'monospace',
-        fontSize:   '38px',
+        fontSize:   '46px',
         color:      '#' + tab.color.toString(16).padStart(6, '0'),
         stroke:     '#000000',
-        strokeThickness: 4,
+        strokeThickness: 6,
       }).setOrigin(0.5);
 
       bg.on('pointerdown', () => this._switchTab(tab.key));
@@ -149,7 +149,7 @@ export default class HowToPlayScene extends Phaser.Scene {
 
     const nameText = this.add.text(textX, cy - CARD_H / 2 + 16, ability.name ?? ability.id, {
       fontFamily:      'monospace',
-      fontSize:        '28px',
+      fontSize:        '42px',
       color:           '#ffffff',
       stroke:          '#000000',
       strokeThickness: 3,
@@ -158,7 +158,7 @@ export default class HowToPlayScene extends Phaser.Scene {
 
     const descText = this.add.text(textX, cy - CARD_H / 2 + 56, ability.description ?? '', {
       fontFamily: 'monospace',
-      fontSize:   '22px',
+      fontSize:   '32px',
       color:      '#cccccc',
       wordWrap:   { width: textMaxW },
     }).setOrigin(0, 0);
@@ -169,7 +169,7 @@ export default class HowToPlayScene extends Phaser.Scene {
 
     const statText = this.add.text(textX, cy + CARD_H / 2 - 16, costLabel, {
       fontFamily: 'monospace',
-      fontSize:   '22px',
+      fontSize:   '32px',
       color:      '#' + accentColor.toString(16).padStart(6, '0'),
     }).setOrigin(0, 1);
     group.add(statText);
