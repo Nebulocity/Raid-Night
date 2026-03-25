@@ -9,7 +9,7 @@
 const Phaser = window.Phaser;
 
 const TABS = [
-  { key: 'shaman',  label: 'Shaman',  characterId: 'player', color: 0x0000FF },
+  { key: 'shaman',  label: 'Shaman',  characterId: 'player', color: 0x44ddbb },
   { key: 'paladin', label: 'Paladin', characterId: 'tank',   color: 0xff88cc },
   { key: 'druid',   label: 'Druid',   characterId: 'healer', color: 0xa0ff69 },
 ];
