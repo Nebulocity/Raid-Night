@@ -6,8 +6,9 @@
  * Browser:  auto-scales to fit viewport while keeping aspect ratio
  */
 
-// import Phaser             from 'phaser';
-const Phaser = window.Phaser;
+
+const Phaser = window.Phaser; // Phaser is loaded via <script> in index.html
+
 import BootScene          from './scenes/BootScene.js';
 import PreloadScene       from './scenes/PreloadScene.js';
 import TitleScene         from './scenes/TitleScene.js';
@@ -31,11 +32,11 @@ window.GAME_CONFIG = {
   ZONES: {
     BACKGROUND: { x: 0, y: 0, w: 1080, h: 2400 },
     BOSS: { x: 190, y: 325, w: 384, h: 384 },
-    TANK: { x: 40, y: 950, w: 400, h: 575 },
-    HEALER: { x: 640, y: 950, w: 400, h: 575 },
-    PLAYER: { x: 45, y: 1500, w: 400, h: 575 },
-    TOTEMS: { x: 640, y: 1500, w: 400, h: 575 },
-    POPUP: { x: 215, y: 1100, w: 650, h: 200 },
+    TANK: { x: 40, y: 850, w: 400, h: 575 },
+    HEALER: { x: 640, y: 850, w: 400, h: 575 },
+    PLAYER: { x: 45, y: 1310, w: 400, h: 575 },
+    TOTEMS: { x: 640, y: 1310, w: 400, h: 575 },
+    POPUP: { x: 215, y: 1050, w: 650, h: 200 },
     ACTION_BAR: { x: 0, y: 1960, w: 1080, h: 440 },
   },
 
