@@ -67,6 +67,7 @@
       },
       {
         "type": "restore_mana",
+        "target": "self",
         "amount": 1500
       }
     ]
