@@ -1382,8 +1382,8 @@ export default class GameScene extends Phaser.Scene {
     this._drainDialogueQueue();
   }
 
-  showPopup(message, color = '#ffffff', duration = 2500) {
-    this.dialogueQueue.push({ type: 'popup', message, color, duration });
+  showPopup(message, color = '#ffffff', duration = 2500, fontSize = '28px') {
+    this.dialogueQueue.push({ type: 'popup', message, color, duration, fontSize });
     this._drainDialogueQueue();
   }
 
@@ -1404,7 +1404,7 @@ export default class GameScene extends Phaser.Scene {
         () => { if (entry.onComplete) entry.onComplete(); done(); }
       );
     } else {
-      this._showPopupNow(entry.message, entry.color, entry.duration, done);
+      this._showPopupNow(entry.message, entry.color, entry.duration, done, entry.fontSize);
     }
   }
 
@@ -1481,7 +1481,7 @@ export default class GameScene extends Phaser.Scene {
     showNext();
   }
 
-  _showPopupNow(message, color = '#ffffff', duration = 2500, onComplete = null) {
+  _showPopupNow(message, color = '#ffffff', duration = 2500, onComplete = null, fontSize = '28px') {
     const zone = window.GAME_CONFIG.ZONES.POPUP;
     const cx   = zone.x + zone.w / 2;
     const cy   = zone.y + zone.h / 2;
@@ -1489,7 +1489,7 @@ export default class GameScene extends Phaser.Scene {
     const panel = this.add.rectangle(cx, cy, zone.w, zone.h * 0.6, 0x000000, 0.7)
       .setStrokeStyle(1, 0x444444, 0.8).setAlpha(0).setDepth(80);
     const text  = this.add.text(cx, cy, message, {
-      fontFamily: 'monospace', fontSize: '28px', color,
+      fontFamily: 'monospace', fontSize, color,
       align: 'center', wordWrap: { width: zone.w - 32 },
     }).setOrigin(0.5).setAlpha(0).setDepth(81);
 
@@ -2501,7 +2501,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (allDead) {
       this.time.delayedCall(2000, () => {
-        this.showPopup('DEFEAT', '#ff2222', 3000);
+        this.showPopup('DEFEAT', '#ff2222', 3000, '96px');
         this._onPartyWiped();
       });
     }

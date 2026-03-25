@@ -446,7 +446,7 @@ export default class UIScene extends Phaser.Scene {
   spawnAbilityBadge(zone, abilityId, label) {
     const iconKey   = 'icon_' + abilityId;
     const hasIcon   = this.textures.exists(iconKey);
-    const ICON_SIZE = 56;
+    const ICON_SIZE = 82;
 
     const cx = zone.x + zone.w / 2;
     const cy = zone.y + zone.h - 400;
@@ -459,28 +459,40 @@ export default class UIScene extends Phaser.Scene {
       this.tweens.add({
         targets:  oldObjects,
         alpha:    0,
-        scaleY:   1.8,
-        y:        '+=55',
-        duration: 420,
-        ease:     'Sine.easeIn',
+        y:        '-=24',
+        duration: 300,
+        ease:     'Sine.easeOut',
         onComplete: () => oldObjects.forEach(o => { try { o.destroy(); } catch (e) {} }),
       });
     }
 
     const objects = [];
+    const bgH     = 52;
+    const PAD     = 16;
 
-    const bgW   = hasIcon ? ICON_SIZE + 12 + (label.length * 14) + 20 : (label.length * 14) + 20;
-    const bgH   = 52;
+    // Create text first (invisible) so we can measure its actual rendered width
+    const nameText = this.add.text(0, -9999, label, {
+      fontFamily:      'monospace',
+      fontSize:        '42px',
+      color:           '#ffffff',
+      stroke:          '#000000',
+      strokeThickness: 3,
+    }).setOrigin(0, 0.5).setDepth(49).setAlpha(0);
+
+    const textW    = nameText.width;
+    const LEFT_PAD = 6;  // tight left inset so icon sits near the panel edge
+    const iconSlot = hasIcon ? ICON_SIZE + 8 : 0;
+    const bgW      = LEFT_PAD + iconSlot + textW + PAD;
 
     const panel = this.add.rectangle(cx, cy, bgW, bgH, 0x000000)
       .setAlpha(0.72)
       .setDepth(48);
     objects.push(panel);
 
-    let textX = cx;
+    let textX = cx - bgW / 2 + LEFT_PAD;
 
     if (hasIcon) {
-      const iconX = cx - bgW / 2 + ICON_SIZE / 2 + 8;
+      const iconX = cx - bgW / 2 + LEFT_PAD + ICON_SIZE / 2;
       const icon  = this.add.image(iconX, cy, iconKey)
         .setDisplaySize(ICON_SIZE, ICON_SIZE)
         .setOrigin(0.5)
@@ -490,13 +502,7 @@ export default class UIScene extends Phaser.Scene {
       textX = iconX + ICON_SIZE / 2 + 8;
     }
 
-    const nameText = this.add.text(textX, cy, label, {
-      fontFamily:      'monospace',
-      fontSize:        '26px',
-      color:           '#ffffff',
-      stroke:          '#000000',
-      strokeThickness: 3,
-    }).setOrigin(hasIcon ? 0 : 0.5, 0.5).setDepth(49).setAlpha(0);
+    nameText.setPosition(textX, cy);
     objects.push(nameText);
 
     this.activeBadges[badgeKey] = objects;
@@ -508,7 +514,7 @@ export default class UIScene extends Phaser.Scene {
       duration: 180,
     });
 
-    // Hold then exit: grow tall, fall, fade
+    // Hold then exit: fade out with a gentle upward drift
     this.time.delayedCall(1800, () => {
       if (this.activeBadges[badgeKey] === objects) {
         this.activeBadges[badgeKey] = null;
@@ -516,10 +522,9 @@ export default class UIScene extends Phaser.Scene {
       this.tweens.add({
         targets:  objects,
         alpha:    0,
-        scaleY:   1.8,
-        y:        '+=55',
-        duration: 420,
-        ease:     'Sine.easeIn',
+        y:        '-=24',
+        duration: 300,
+        ease:     'Sine.easeOut',
         onComplete: () => objects.forEach(o => { try { o.destroy(); } catch (e) {} }),
       });
     });
@@ -569,14 +574,14 @@ export default class UIScene extends Phaser.Scene {
 
       // Ticks remaining - small label BELOW the slot, not overlapping icon
       const durationText = this.add.text(sx, sy - SLOT_SIZE / 2 - 4, '', {
-        fontFamily: 'monospace', fontSize: '18px', color: '#ffffff',
-        stroke: '#000000', strokeThickness: 2,
+        fontFamily: 'monospace', fontSize: '26px', color: '#ffffff',
+        stroke: '#000000', strokeThickness: 3,
       }).setOrigin(0.5, 1).setDepth(DEPTH + 2).setVisible(false);
 
       // Stack badge (x2, x3) - bottom-right corner INSIDE the slot
       const stackText = this.add.text(sx + SLOT_SIZE / 2 - 2, sy + SLOT_SIZE / 2 - 2, '', {
-        fontFamily: 'monospace', fontSize: '18px', color: '#ffdd00',
-        stroke: '#000000', strokeThickness: 2,
+        fontFamily: 'monospace', fontSize: '26px', color: '#ffdd00',
+        stroke: '#000000', strokeThickness: 3,
       }).setOrigin(1, 1).setDepth(DEPTH + 2).setVisible(false);
 
       slots.push({ frame, icon, durationText, stackText });

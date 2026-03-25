@@ -75,7 +75,7 @@ const the_basement_demon = {
       defeatedPath:             bossSpriteSheet('the_basement_demon', 'magtheridax', 'magtheridax_defeated.web'),
       levelKey:                 'level_magtheridax',
       levelPath:                'data/the_basement_demon/magtheridax.json',
-      unlockedBy:               [],
+      unlockedBy:               ['magtheridax'],
     },
   ],
 };
@@ -112,7 +112,7 @@ const THE_CRACKED_MOUNTAIN = {
       defeatedPath:             bossSpriteSheet('the_cracked_mountain', 'high_chief_bonkgar', 'high_chief_bonkgar_defeated.webp'),
       levelKey:                 'level_high_chief_bonkgar',
       levelPath:                'data/the_cracked_mountain/high_chief_bonkgar.json',
-      unlockedBy:               [],
+      unlockedBy:               ['grull_the_wyrm_whacker'],
     },
     {
       id:                       'grull_the_wyrm_whacker',

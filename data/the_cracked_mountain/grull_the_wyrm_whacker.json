@@ -77,9 +77,7 @@
         "Grull whacked many wyrms. Now Grull whack you.",
         "YOU ARE SMALLER THAN WYRM. THIS WILL BE QUICK."
       ],
-      "defeat": [
-        "Grull... whacked. This is... embarrassing."
-      ],
+      "defeat": [],
       "victory": [
         "GRULL IS UNDEFEATED. GRULL IS LEGEND. GRULL NEED SNACK."
       ]
