@@ -26,6 +26,12 @@ window.GAME_CONFIG = {
   WIDTH: 1080,
   HEIGHT: 2400,
 
+  FONTS: {
+    BASE:        'Cinzel, serif',
+    DECORATIVE:  'Cinzel Decorative, serif',
+    TITLE:       'Cinzel Decorative Bold, serif' 
+  },
+
   // Zones: these are areas of the screen that we'll plug game components into.
   // Each zone: { x, y, w, h } in the default 1080x2400 coordinate space.
   // x/y = top-left corner of the zone.

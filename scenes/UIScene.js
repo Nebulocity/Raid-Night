@@ -63,6 +63,7 @@ export default class UIScene extends Phaser.Scene {
   // create
   // ======
   create() {
+    const { FONTS } = window.GAME_CONFIG;
     const { WIDTH, ZONES } = window.GAME_CONFIG;
 
     // Action bar background
@@ -255,9 +256,18 @@ export default class UIScene extends Phaser.Scene {
       stroke: '#000000', strokeThickness: 5,
     }).setOrigin(0.5).setDepth(14);
 
+    // Mana overlay - shown centered on the button when player can't afford the ability
+    const manaOverlay = this.add.text(x, y, 'MANA', {
+      fontFamily:      'Cinzel, serif',
+      fontSize:        '36px',
+      color:           '#ff2222',
+      stroke:          '#000000',
+      strokeThickness: 5,
+    }).setOrigin(0.5).setDepth(15).setVisible(false);
+
     bg.on('pointerdown', () => {
       this.isLongPress = false;
-      this.longPressTimer = this.time.delayedCall(500, () => {
+      this.longPressTimer = this.time.delayedCall(1500, () => {
         this.isLongPress    = true;
         this.longPressTimer = null;
         if (ability?.description) this._showTooltip(ability);
@@ -284,7 +294,7 @@ export default class UIScene extends Phaser.Scene {
       this._hideTooltip();
     });
 
-    return { bg, icon, label, manaLabel, cdOverlay, cdText, abilityId, abilityDef: ability, size };
+    return { bg, icon, label, manaLabel, manaOverlay, cdOverlay, cdText, abilityId, abilityDef: ability, size };
   }
 
   _pressSpellButton(abilityId, ability, bg, cdOverlay) {
@@ -491,7 +501,7 @@ export default class UIScene extends Phaser.Scene {
     const ICON_SIZE = 56;
 
     const cx = zone.x + zone.w / 2;
-    const cy = zone.y + zone.h - 400;
+    const cy = zone.y + zone.h - 350;
 
     const badgeKey = 'badge_' + zone.x + '_' + zone.y;
 
@@ -708,12 +718,14 @@ export default class UIScene extends Phaser.Scene {
         btn.manaDimmed = true;
         btn.bg.setAlpha(0.45);
         btn.bg.setStrokeStyle(3, 0x553333, 0.8);
-        if (btn.manaLabel) btn.manaLabel.setColor('#ff6644');
+        if (btn.manaLabel)   btn.manaLabel.setColor('#ff6644');
+        if (btn.manaOverlay) btn.manaOverlay.setVisible(true);
       } else if (canAfford && btn.manaDimmed) {
         btn.manaDimmed = false;
         btn.bg.setAlpha(1.0);
         btn.bg.setStrokeStyle(3, 0x4466aa, 1.0);
-        if (btn.manaLabel) btn.manaLabel.setColor('#66aaff');
+        if (btn.manaLabel)   btn.manaLabel.setColor('#66aaff');
+        if (btn.manaOverlay) btn.manaOverlay.setVisible(false);
       }
     });
   }

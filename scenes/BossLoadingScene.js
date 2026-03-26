@@ -9,12 +9,15 @@ const Phaser = window.Phaser;
 import { RAID_CATALOG } from '../data/raidCatalog.js';
 
 export default class BossLoadingScene extends Phaser.Scene {
+  
   constructor() {
     super({ key: 'BossLoadingScene' });
   }
 
   // init - resolve which boss we're loading
   init() {
+    const { FONTS } = window.GAME_CONFIG;
+
     const selectedRaidId = this.registry.get('selectedRaidId') || 'spookspire_keep';
     const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot';
 
@@ -26,6 +29,7 @@ export default class BossLoadingScene extends Phaser.Scene {
 
   // preload - load level JSON, then queue boss-specific assets
   preload() {
+    const { FONTS } = window.GAME_CONFIG;
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
     const cx = WIDTH / 2;
 
@@ -57,7 +61,7 @@ export default class BossLoadingScene extends Phaser.Scene {
     const nameY = bossSprite ? bossY - (bossSprite.height / 2) - 100 : HEIGHT * 0.20;
 
     this.add.text(cx, nameY, bossName, {
-      fontFamily: 'Cinzel Decorative, serif',
+      fontFamily: FONTS.DECORATIVE,
       fontSize:   '64px',
       color:      '#fff1c7',
       stroke:     '#000000',
@@ -72,8 +76,10 @@ export default class BossLoadingScene extends Phaser.Scene {
     console.log('cx: ', cx, 'barW: ',barW, 'barX: ', barX);
 
     this.add.text(cx, barY - 44, 'Preparing encounter...', {
-      fontFamily: 'Cinzel, serif', fontSize: '28px',
-      color: '#c8a96e', align: 'center',
+      fontFamily: FONTS.BASE, 
+      fontSize: '28px',
+      color: '#c8a96e', 
+      align: 'center',
     }).setOrigin(0.5);
 
     this.add.rectangle(cx, barY + barH / 2, barW + 8, barH + 8, 0x222222).setOrigin(0.5);

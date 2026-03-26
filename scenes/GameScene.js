@@ -22,6 +22,8 @@ export default class GameScene extends Phaser.Scene {
   // init
   // ====
   init() {
+    const { FONTS } = window.GAME_CONFIG;
+    
     this.levelData          = this.registry.get('levelData');
     this.entitySlots        = {};
     this.tickCount          = 0;
@@ -3068,9 +3070,11 @@ export default class GameScene extends Phaser.Scene {
 
     const zone = window.GAME_CONFIG.ZONES[casterId.toUpperCase()];
     const ui   = this.scene.get('UIScene');
+
     if (ui?.spawnAbilityBadge && zone) {
       ui.spawnAbilityBadge(zone, abilityId, ability.name ?? abilityId);
     }
+    
     this.showAbilityDialogue(abilityId);
 
     console.log('[' + casterId + '] ' + abilityId + ' | mana: ' + slot.currentMana + '/' + maxMana);

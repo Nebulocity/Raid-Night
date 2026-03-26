@@ -25,6 +25,8 @@ export default class RaidSelectScene extends Phaser.Scene {
   }
 
   create() {
+
+    const { FONTS } = window.GAME_CONFIG;
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
     const saveData = loadSaveData();
     this.registry.set('saveData', saveData);
@@ -41,7 +43,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     const titleY = HEIGHT * 0.10;
 
     this.add.text(WIDTH / 2, titleY, 'Choose Your Raid!', {
-      fontFamily: 'Cinzel Decorative, serif',
+      fontFamily: FONTS.DECORATIVE,
       fontSize:   '64px',
       color:      '#fff1c7',
       stroke:     '#000000',
@@ -49,7 +51,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     const tokenText = this.add.text(WIDTH / 2, titleY + 90, 'Raid Wipe Tokens Left: ' + saveData.raidWipeTokensLeft, {
-      fontFamily: 'Cinzel, serif',
+      fontFamily: FONTS.BASE,
       fontSize:   '44px',
       color:      '#f3e6c2',
       stroke:     '#000000',
@@ -84,6 +86,9 @@ export default class RaidSelectScene extends Phaser.Scene {
   // Draws one full-width raid button row centerd on btnY.
   // Layout: [thumb] [name + boss count] on a dark rounded panel.
   _createRaidButton(WIDTH, btnY, raid, unlocked, saveData) {
+
+    const { FONTS } = window.GAME_CONFIG;
+
     const alpha    = unlocked ? 1.0 : 0.42;
     const btnW     = WIDTH - BTN_PADDING * 2;
     const btnX     = WIDTH / 2;
@@ -117,7 +122,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     const textW = btnW - textX - BTN_PADDING;
 
     this.add.text(textX, btnY - 30, raid.name, {
-      fontFamily:      'Cinzel, serif',
+      fontFamily:      FONTS.BASE,
       fontSize:        '48px',
       color:           '#fff1c7',
       stroke:          '#000000',
@@ -140,7 +145,7 @@ export default class RaidSelectScene extends Phaser.Scene {
     const progressColor  = raidCleared ? '#ffd700' : '#aaaaaa';
 
     this.add.text(textX, btnY + 50, progressLabel, {
-      fontFamily:      'Cinzel, serif',
+      fontFamily:      FONTS.BASE,
       fontSize:        '36px',
       color:           progressColor,
       stroke:          '#000000',
@@ -149,7 +154,7 @@ export default class RaidSelectScene extends Phaser.Scene {
 
     if (!unlocked) {
       this.add.text(btnX, btnY + BTN_HEIGHT / 2 + 18, 'Locked', {
-        fontFamily: 'Cinzel, serif',
+        fontFamily: FONTS.BASE,
         fontSize:   '28px',
         color:      '#bbbbbb',
         stroke:     '#000000',
@@ -195,10 +200,11 @@ export default class RaidSelectScene extends Phaser.Scene {
   }
 
   _drawBackButton() {
+    const { FONTS } = window.GAME_CONFIG;
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
 
     const btn = this.add.text(85, HEIGHT * 0.96, '< BACK', {
-      fontFamily:      'Cinzel, serif',
+      fontFamily:      FONTS.BASE,
       fontSize:        '48px',
       color:           '#ccaa66',
       stroke:          '#000000',
