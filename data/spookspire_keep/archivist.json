@@ -9,8 +9,8 @@
     "id": "archivist",
     "name": "The Archivist",
     "stats": {
-      "health": 340000,
-      "maxHealth": 340000,
+      "health": 1000000,
+      "maxHealth": 1000000,
       "mana": 0,
       "maxMana": 0,
       "usesMana": false,
@@ -62,7 +62,8 @@
           {
             "type": "dialogue",
             "lines": [
-              "The Archivist begins absorbing the knowledge of forbidden tomes!"
+              "The Archivist begins absorbing the knowledge of forbidden tomes!",
+              "He is vulnerable (damage inreased by x10)!"
             ]
           }
         ]
@@ -82,7 +83,7 @@
           {
             "type": "dialogue",
             "lines": [
-              "The Archivist stops summoning tomes and attacks relentlessly!"
+              "The Archivist enrages!"
             ]
           }
         ]
@@ -198,7 +199,7 @@
       "duration": 0,
       "recastTimer": 5,
       "targetType": "second_highest_threat",
-      "dialogue": "Vengeful beams fly without pause!",
+      "dialogue": "Vengeful beams erupt from his eyes!",
       "audioDuration": 1500
     },
     "lore_absorption": {
@@ -212,7 +213,7 @@
       "targetType": "self",
       "castStartBuff": {
         "id": "damage_increase_cast",
-        "multiplier": 3
+        "multiplier": 10
       },
       "dialogue": "The Archivist begins casting Lore Absorption!",
       "audioDuration": 3000
