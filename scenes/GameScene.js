@@ -1491,7 +1491,7 @@ export default class GameScene extends Phaser.Scene {
     const panel = this.add.rectangle(cx, cy, zone.w, zone.h * 0.6, 0x000000, 0.7)
       .setStrokeStyle(1, 0x444444, 0.8).setAlpha(0).setDepth(80);
     const text  = this.add.text(cx, cy, message, {
-      fontFamily: 'Cinzel, serif', fontSize: '28px', color,
+      fontFamily: FONTS.DECORATIVE, fontSize: '32px', color,
       align: 'center', wordWrap: { width: zone.w - 32 },
     }).setOrigin(0.5).setAlpha(0).setDepth(81);
 
