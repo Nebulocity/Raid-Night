@@ -190,7 +190,7 @@
       "applyDebuff": {
         "id": "mana_burn",
         "manaBurnPercent": 5,
-        "manaBurnDamageMultiplier": 5,
+        "manaBurnDamageMultiplier": 3.2,
         "dispellable": false
       },
       "dialogue": "Baroness Silvania burns your mana!",
