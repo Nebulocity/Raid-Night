@@ -9,8 +9,8 @@
     "id": "mortimer",
     "name": "Mortimer",
     "stats": {
-      "health": 400000,
-      "maxHealth": 400000,
+      "health": 600000,
+      "maxHealth": 600000,
       "mana": 0,
       "maxMana": 0,
       "usesMana": false,
@@ -55,7 +55,7 @@
     "enrage": {
       "trigger": { "type": "health_percent", "value": 30 },
       "attackSpeedMultiplier": 0.5,
-      "damageMultiplier": 1.5
+      "damageMultiplier": 3
     },
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
