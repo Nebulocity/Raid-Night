@@ -37,8 +37,8 @@ const INSTRUCTION_CARDS = [
     body:  'Defeat all bosses in the raid before your party is wiped out. Some bosses require others to be defeated before they become available..',
   },
   {
-    title: 'Taking Turns',
-    body:  'Every tick, the boss attacks your party. Choose an ability before the tick resolves to fight back, heal, or protect your allies.',
+    title: 'Abilities',
+    body:  'Press and hold an ability for 3 seconds to see a description of that ability.',
   },
   {
     title: 'Mana',
