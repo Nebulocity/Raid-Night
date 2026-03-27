@@ -61,7 +61,7 @@
     "audioDuration": 4000,
     "dialog": {
       "intro": ["The golden statue of a virtuous Lady steps forward, eyes vacant and burning!"],
-      "defeat": [],
+      "defeat": ["Free, at last..."],
       "victory": ["Victory!"]
     },
     "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
@@ -98,7 +98,7 @@
       "tickMax": 1500,
       "recastTimer": 12,
       "targetType": "highest_threat",
-      "dialogue": "Holy flames engulf the target!",
+      "dialogue": "Holy flames engulf you!",
       "audioDuration": 2000
     },
     "virtuous_wrath": {
