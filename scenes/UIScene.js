@@ -285,7 +285,9 @@ export default class UIScene extends Phaser.Scene {
     });
     bg.on('pointerover', () => {
       if (!this.cooldowns[abilityId]) bg.setStrokeStyle(3, 0xffd700, 1);
-      if (ability?.description) this._showTooltip(ability);
+      // I'm not sure if Phaser exposes the pointer type(mouse/press from mobile, etc).
+      // For now, long-press on mobile shows the tooltip, browsers will have to click-and-hold, for now.
+      // if (ability?.description) this._showTooltip(ability);
     });
     bg.on('pointerout', () => {
       if (!this.cooldowns[abilityId]) bg.setStrokeStyle(3, 0x4466aa, 1.0);
