@@ -9,14 +9,14 @@
     "id": "archivist",
     "name": "The Archivist",
     "stats": {
-      "health": 1000000,
-      "maxHealth": 1000000,
+      "health": 2350000,
+      "maxHealth": 2350000,
       "mana": 0,
       "maxMana": 0,
       "usesMana": false,
       "damageRange": [
-        2000,
-        4000
+        3500,
+        6000
       ],
       "attackSpeed": 3,
       "armor": 13000,
@@ -51,19 +51,16 @@
         "trigger": {
           "type": "summons_count",
           "addId": "haunted_tome",
-          "value": 10
+          "value": 9
         },
         "abilityIds": [
-          "magic_infusion",
-          "vengeful_beam",
           "lore_absorption"
         ],
         "onEnter": [
           {
             "type": "dialogue",
             "lines": [
-              "The Archivist begins absorbing the knowledge of forbidden tomes!",
-              "He is vulnerable (damage inreased by x10)!"
+              "The Archivist begins casting Lore Absorption!"
             ]
           }
         ]
@@ -72,12 +69,11 @@
         "id": "phase_3",
         "label": "Enrage",
         "trigger": {
-          "type": "health_percent",
-          "value": 15
+          "type": "cast_complete",
+          "abilityId": "lore_absorption"
         },
         "abilityIds": [
-          "vengeful_beam_rapid",
-          "magic_infusion"
+          "vengeful_beam_rapid"
         ],
         "onEnter": [
           {
@@ -89,13 +85,22 @@
         ]
       }
     ],
+    "animations": {
+      "casting": {
+        "key": "the_archivist_lore_absorption",
+        "startFrame": 0,
+        "endFrame": 11,
+        "frameRate": 12,
+        "repeat": -1
+      }
+    },
     "enrage": {
       "trigger": {
-        "type": "health_percent",
-        "value": 15
+        "type": "cast_complete",
+        "abilityId": "lore_absorption"
       },
-      "damageMultiplier": 1.0,
-      "extraAutoAttackDamage": 1000
+      "damageMultiplier": 3.0,
+      "extraAutoAttackDamage": 1500
     },
     "threatTable": {
       "player": 0,
@@ -124,7 +129,7 @@
     {
       "id": "haunted_tome",
       "name": "Haunted Tome",
-      "health": 20000,
+      "health": 40000,
       "lifespanTicks": 9,
       "damageType": "arcane",
       "onExpireEffect": {
@@ -149,10 +154,10 @@
         "type": "summon_add",
         "addId": "haunted_tome"
       },
-      "recastTimer": 10,
+      "recastTimer": 15,
       "targetType": "self",
-      "dialogue": "A Haunted Tome materializes!",
-      "audioDuration": 2000
+      "dialogue": "A Haunted Tome appears!",
+      "audioDuration": 1000
     },
     "magic_infusion": {
       "id": "magic_infusion",
@@ -162,12 +167,12 @@
       "targetType": "self",
       "applyBuff": {
         "id": "auto_attack_bonus",
-        "bonusDamage": 1000,
+        "bonusDamage": 3000,
         "damageType": "arcane",
         "durationTicks": 20,
         "dispellable": false
       },
-      "dialogue": "The Archivist infuses himself with arcane magic!",
+      "dialogue": null,
       "audioDuration": 2000
     },
     "vengeful_beam": {
@@ -178,12 +183,12 @@
       "immediateEffect": {
         "type": "damage"
       },
-      "immediateMin": 4435,
-      "immediateMax": 5999,
+      "immediateMin": 4500,
+      "immediateMax": 6500,
       "duration": 0,
       "recastTimer": 10,
-      "targetType": "second_highest_threat",
-      "dialogue": "A vengeful beam of arcane energy lances out!",
+      "targetType": "random_ally",
+      "dialogue": "A beam of arcane energy lances out!",
       "audioDuration": 2000
     },
     "vengeful_beam_rapid": {
@@ -194,11 +199,11 @@
       "immediateEffect": {
         "type": "damage"
       },
-      "immediateMin": 4435,
-      "immediateMax": 5999,
+      "immediateMin": 4500,
+      "immediateMax": 6000,
       "duration": 0,
-      "recastTimer": 5,
-      "targetType": "second_highest_threat",
+      "recastTimer": 1,
+      "targetType": "all_allies",
       "dialogue": "Vengeful beams erupt from his eyes!",
       "audioDuration": 1500
     },
@@ -207,16 +212,16 @@
       "name": "Lore Absorption",
       "damageType": "arcane",
       "immediateFlag": false,
-      "castTimeTicks": 10,
-      "interruptible": true,
-      "recastTimer": 60,
+      "castTimeTicks": 20,
+      "interruptible": false,
+      "recastTimer": 999999,
       "targetType": "self",
       "castStartBuff": {
         "id": "damage_increase_cast",
-        "multiplier": 10
+        "multiplier": 16
       },
-      "dialogue": "The Archivist begins casting Lore Absorption!",
-      "audioDuration": 3000
+      "dialogue": null,
+      "audioDuration": 1000
     }
   }
 }

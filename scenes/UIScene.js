@@ -32,28 +32,28 @@ export default class UIScene extends Phaser.Scene {
   // init
   // ====
   init() {
-    this.abilityButtons = [];
-    this.totemButtons = [];
-    this.tickCount = 0;
-    this.levelData = null;
+    this.abilityButtons  = [];
+    this.totemButtons    = [];
+    this.tickCount       = 0;
+    this.levelData       = null;
     // Tracks active cooldowns: { abilityId -> { endsAt, durationMs, overlay, text } }
-    this.cooldowns = {};
+    this.cooldowns       = {};
     // Tracks Y stagger offset per zone key to prevent floating text overlap
-    this.floatOffsets = {};
+    this.floatOffsets    = {};
     // Per-tick lock for Lightning Bolt (disabled after cast until next tick)
-    this.lbLocked = false;
+    this.lbLocked        = false;
     // Buff bar slot objects per character: { player, tank, healer }
-    this.buffBars = {};
+    this.buffBars        = {};
     // Tracks the currently displayed ability badge per caster zone key.
     // When a new badge arrives for the same zone, the old one is destroyed first.
-    this.activeBadges = {};
+    this.activeBadges    = {};
     // Boss cast bar objects -- built once, shown/hidden as needed
-    this.bossCastBar = null;
-    this.bossCastTween = null;
+    this.bossCastBar     = null;
+    this.bossCastTween   = null;
     // Tooltip state
-    this.activeTooltip = null;
-    this.longPressTimer = null;
-    this.isLongPress = false;
+    this.activeTooltip      = null;
+    this.longPressTimer     = null;
+    this.isLongPress        = false;
     // Tracks whether spell buttons are globally locked so mana dimming
     // does not fight with the locked visual state.
     this.spellButtonsLocked = false;
@@ -67,7 +67,7 @@ export default class UIScene extends Phaser.Scene {
     const { WIDTH, ZONES } = window.GAME_CONFIG;
 
     // Action bar background
-    const ab = ZONES.ACTION_BAR;
+    const ab   = ZONES.ACTION_BAR;
     const abBg = this.add.graphics();
     abBg.fillStyle(0x000000, 0.85);
     abBg.fillRect(ab.x, ab.y, ab.w, ab.h);
@@ -77,9 +77,9 @@ export default class UIScene extends Phaser.Scene {
     // Tick counter label
     this._tickLabel = this.add.text(WIDTH - 20, ab.y + 10, 'TICK 0', {
       fontFamily: 'Cinzel, serif',
-      fontSize: '20px',
-      color: '#445544',
-      align: 'right',
+      fontSize:   '20px',
+      color:      '#445544',
+      align:      'right',
     }).setOrigin(1, 0);
 
     // Try to grab level data immediately from registry (already set by GameScene)
@@ -145,56 +145,56 @@ export default class UIScene extends Phaser.Scene {
 
   _buildActionBar(levelData) {
     const { ZONES } = window.GAME_CONFIG;
-    const ab = ZONES.ACTION_BAR;
+    const ab       = ZONES.ACTION_BAR;
 
-    const BTN_SIZE = 200;
-    const BTN_GAP = 16;
-    const ROW_GAP = 16;
-    const HALF_W = ab.w / 2;
+    const BTN_SIZE  = 200;
+    const BTN_GAP   = 16;
+    const ROW_GAP   = 16;
+    const HALF_W    = ab.w / 2;
 
     // Two rows centered in the left half (spell buttons)
     const row1Y = ab.y + BTN_SIZE / 2 + 12;
     const row2Y = ab.y + BTN_SIZE + ROW_GAP + BTN_SIZE / 2 + 12;
 
     const spellAbilityIds = (levelData?.characters?.player?.abilityIds ?? []).slice(0, 4);
-    const spellOffsetX = (HALF_W - (2 * BTN_SIZE + BTN_GAP)) / 2 + BTN_SIZE / 2;
+    const spellOffsetX    = (HALF_W - (2 * BTN_SIZE + BTN_GAP)) / 2 + BTN_SIZE / 2;
 
     spellAbilityIds.forEach((abilityId, i) => {
       const ability = levelData?.abilities?.[abilityId];
-      const col = i % 2;
-      const row = Math.floor(i / 2);
+      const col  = i % 2;
+      const row  = Math.floor(i / 2);
       const btnX = spellOffsetX + col * (BTN_SIZE + BTN_GAP);
       const btnY = row === 0 ? row1Y : row2Y;
-      const btn = this._buildSpellButton(btnX, btnY, BTN_SIZE, abilityId, ability);
+      const btn  = this._buildSpellButton(btnX, btnY, BTN_SIZE, abilityId, ability);
       this.abilityButtons.push(btn);
     });
 
     // Vertical divider between spell and totem halves
     const dividerX = HALF_W;
-    const divider = this.add.graphics();
+    const divider  = this.add.graphics();
     divider.lineStyle(2, 0x554422, 0.6);
     divider.lineBetween(dividerX, ab.y + 16, dividerX, ab.y + ab.h - 16);
 
     // Two rows centered in the right half (totem buttons)
-    const TOTEM_SIZE = 190;
+    const TOTEM_SIZE  = 190;
     const totemOffsetX = HALF_W + (HALF_W - (2 * TOTEM_SIZE + BTN_GAP)) / 2 + TOTEM_SIZE / 2;
 
     const totemElements = ['earth', 'fire', 'water', 'air'];
-    const totemColors = {
+    const totemColors   = {
       earth: 0x88cc44,
-      fire: 0xff6622,
+      fire:  0xff6622,
       water: 0x44aaff,
-      air: 0xaaccff,
+      air:   0xaaccff,
     };
     const totemRow1Y = ab.y + TOTEM_SIZE / 2 + 12;
     const totemRow2Y = ab.y + TOTEM_SIZE + ROW_GAP + TOTEM_SIZE / 2 + 12;
 
     totemElements.forEach((element, i) => {
-      const col = i % 2;
-      const row = Math.floor(i / 2);
-      const btnX = totemOffsetX + col * (TOTEM_SIZE + BTN_GAP);
-      const btnY = row === 0 ? totemRow1Y : totemRow2Y;
-      const btn = this._buildTotemButton(btnX, btnY, TOTEM_SIZE, element, totemColors[element]);
+      const col   = i % 2;
+      const row   = Math.floor(i / 2);
+      const btnX  = totemOffsetX + col * (TOTEM_SIZE + BTN_GAP);
+      const btnY  = row === 0 ? totemRow1Y : totemRow2Y;
+      const btn   = this._buildTotemButton(btnX, btnY, TOTEM_SIZE, element, totemColors[element]);
       this.totemButtons.push(btn);
     });
   }
@@ -228,9 +228,9 @@ export default class UIScene extends Phaser.Scene {
     }
 
     // Ability name label below icon
-    const name = ability?.name || abilityId;
+    const name      = ability?.name || abilityId;
     const shortName = name.length > 14 ? name.substring(0, 13) + '...' : name;
-    const label = this.add.text(x, y + size / 2 - 4, shortName, {
+    const label     = this.add.text(x, y + size / 2 - 4, shortName, {
       fontFamily: 'Cinzel, serif', fontSize: '18px', color: '#ffffff',
       stroke: '#000000', strokeThickness: 2, align: 'center',
     }).setOrigin(0.5, 1).setDepth(12);
@@ -258,54 +258,40 @@ export default class UIScene extends Phaser.Scene {
 
     // Mana overlay - shown centered on the button when player can't afford the ability
     const manaOverlay = this.add.text(x, y, 'MANA', {
-      fontFamily: 'Cinzel, serif',
-      fontSize: '36px',
-      color: '#ff2222',
-      stroke: '#000000',
+      fontFamily:      'Cinzel, serif',
+      fontSize:        '36px',
+      color:           '#ff2222',
+      stroke:          '#000000',
       strokeThickness: 5,
     }).setOrigin(0.5).setDepth(15).setVisible(false);
 
-    bg.on('pointerdown', (pointer) => {
-      // Long-press timer is touch-only; mouse users get hover instead
-      if (!pointer.wasTouch) return;
-
+    bg.on('pointerdown', () => {
       this.isLongPress = false;
-      this.longPressTimer = this.time.delayedCall(1000, () => {
-        this.isLongPress = true;
+      this.longPressTimer = this.time.delayedCall(500, () => {
+        this.isLongPress    = true;
         this.longPressTimer = null;
         if (ability?.description) this._showTooltip(ability);
       });
     });
-
-    bg.on('pointerup', (pointer) => {
+    bg.on('pointerup', () => {
       if (this.longPressTimer) {
         this.longPressTimer.remove();
         this.longPressTimer = null;
       }
-
-      if (this.isLongPress) {
-        // Display the tooltip.
-        this.isLongPress = false;
-        return;
+      if (!this.isLongPress) {
+        this._pressSpellButton(abilityId, ability, bg, cdOverlay);
       }
-
-      this._pressSpellButton(abilityId, ability, bg, cdOverlay);
+      this.isLongPress = false;
     });
-
-    bg.on('pointerover', (pointer) => {
+    bg.on('pointerover', () => {
       if (!this.cooldowns[abilityId]) bg.setStrokeStyle(3, 0xffd700, 1);
-
-      // Tooltip on hover is mouse-only; touch users use the long-press path
-      if (!pointer.wasTouch && ability?.description) this._showTooltip(ability);
+      if (ability?.description) this._showTooltip(ability);
     });
-
-    bg.on('pointerout', (pointer) => {
+    bg.on('pointerout', () => {
       if (!this.cooldowns[abilityId]) bg.setStrokeStyle(3, 0x4466aa, 1.0);
       if (this.longPressTimer) { this.longPressTimer.remove(); this.longPressTimer = null; }
       this.isLongPress = false;
-
-      // Only auto-hide on mouse-out; touch dismissal is handled by pointerup
-      if (!pointer.wasTouch) this._hideTooltip();
+      this._hideTooltip();
     });
 
     return { bg, icon, label, manaLabel, manaOverlay, cdOverlay, cdText, abilityId, abilityDef: ability, size };
@@ -321,9 +307,9 @@ export default class UIScene extends Phaser.Scene {
 
     // Start visual cooldown.
     // New schema uses recastTicks (ticks x TICK_MS = ms); legacy uses recastTimer (seconds).
-    const TICK_MS = window.GAME_CONFIG.TICK_MS;
+    const TICK_MS  = window.GAME_CONFIG.TICK_MS;
     const recastMs = ((ability?.recastTicks ?? 0) * TICK_MS)
-      || ((ability?.recastTimer ?? 0) * 1000);
+                   || ((ability?.recastTimer  ?? 0) * 1000);
     if (recastMs > 0) {
       this._startCooldown(abilityId, recastMs, ability, cdOverlay);
     }
@@ -355,7 +341,7 @@ export default class UIScene extends Phaser.Scene {
 
     bg.on('pointerdown', () => this._pressTotemButton(element, bg));
     bg.on('pointerover', () => bg.setStrokeStyle(2, 0xffd700, 1));
-    bg.on('pointerout', () => bg.setStrokeStyle(2, color, 0.9));
+    bg.on('pointerout',  () => bg.setStrokeStyle(2, color, 0.9));
 
     return { bg, element };
   }
@@ -366,9 +352,9 @@ export default class UIScene extends Phaser.Scene {
     // Map element to the first matching ability for that slot
     const elementAbilityMap = {
       earth: 'strength_of_earth_totem',
-      fire: 'totem_of_wrath',
+      fire:  'totem_of_wrath',
       water: 'windfury_totem',
-      air: 'wrath_of_air_totem',
+      air:   'wrath_of_air_totem',
     };
 
     const abilityId = elementAbilityMap[element];
@@ -385,7 +371,7 @@ export default class UIScene extends Phaser.Scene {
   // ===================================
 
   _startCooldown(abilityId, durationMs, ability, cdOverlay) {
-    const now = Date.now();
+    const now    = Date.now();
     const endsAt = now + durationMs;
 
     // Find the button entry to update its cdText
@@ -395,8 +381,8 @@ export default class UIScene extends Phaser.Scene {
       endsAt,
       durationMs,
       cdOverlay,
-      cdText: btnEntry?.cdText,
-      btn: btnEntry,
+      cdText:   btnEntry?.cdText,
+      btn:      btnEntry,
     };
 
     // Show overlay at full height immediately
@@ -419,14 +405,14 @@ export default class UIScene extends Phaser.Scene {
       if (remaining <= 0) {
         // Cooldown expired
         if (cd.cdOverlay) cd.cdOverlay.setVisible(false);
-        if (cd.cdText) cd.cdText.setText('');
-        if (cd.btn?.bg) cd.btn.bg.setStrokeStyle(2, 0x334466, 0.9);
+        if (cd.cdText)    cd.cdText.setText('');
+        if (cd.btn?.bg)   cd.btn.bg.setStrokeStyle(2, 0x334466, 0.9);
         delete this.cooldowns[abilityId];
         return;
       }
 
       // Shrink the overlay height proportionally to time remaining
-      const pct = remaining / cd.durationMs;
+      const pct     = remaining / cd.durationMs;
       const btnSize = cd.btn?.size ?? 110;
       if (cd.cdOverlay) {
         cd.cdOverlay.setDisplaySize(btnSize, Math.ceil(btnSize * pct));
@@ -451,25 +437,25 @@ export default class UIScene extends Phaser.Scene {
   spawnFloatingText(zone, value, type = 'damage', iconKey = null) {
     const colors = {
       damage: '#ff4422',
-      heal: '#44ff88',
-      miss: '#888888',
-      crit: '#ffdd00',
-      mana: '#4488ff',
+      heal:   '#44ff88',
+      miss:   '#888888',
+      crit:   '#ffdd00',
+      mana:   '#4488ff',
     };
 
     const cx = zone.x + Phaser.Math.Between(20, zone.w - 20);
     // Stagger Y so simultaneous floats don't overlap
     const zoneKey = zone.x + '_' + zone.y;
-    const offset = (this.floatOffsets[zoneKey] ?? 0);
+    const offset  = (this.floatOffsets[zoneKey] ?? 0);
     this.floatOffsets[zoneKey] = (offset + 52) % 156;  // 3 rows of 52px then reset
     const cy = zone.y + zone.h * 0.4 + offset;
 
     const prefix = (type === 'heal' || type === 'mana') ? '+' : type === 'miss' ? '' : '-';
-    const label = type === 'miss' ? 'MISS' : prefix + value.toLocaleString();
+    const label  = type === 'miss' ? 'MISS' : prefix + value.toLocaleString();
     const isBossZone = zone === window.GAME_CONFIG.ZONES.BOSS;
     const fSize = type === 'crit' ? '64px' : isBossZone ? '64px' : '42px';
     // const fSize  = type === 'crit' ? '52px' : '42px';
-    const color = colors[type] || '#ffffff';
+    const color  = colors[type] || '#ffffff';
 
     const objects = [];
 
@@ -477,8 +463,8 @@ export default class UIScene extends Phaser.Scene {
     let iconOffsetX = 0;
     if (iconKey && this.textures.exists(iconKey)) {
       const ICON_SIZE = 56;
-      iconOffsetX = (ICON_SIZE / 2) + 4;
-      const icon = this.add.image(cx - iconOffsetX, cy, iconKey)
+      iconOffsetX     = (ICON_SIZE / 2) + 4;
+      const icon      = this.add.image(cx - iconOffsetX, cy, iconKey)
         .setDisplaySize(ICON_SIZE, ICON_SIZE)
         .setOrigin(1, 0.5)
         .setDepth(50)
@@ -487,20 +473,20 @@ export default class UIScene extends Phaser.Scene {
     }
 
     const text = this.add.text(cx + (iconOffsetX > 0 ? 4 : 0), cy, label, {
-      fontFamily: 'Cinzel, serif',
-      fontSize: fSize,
-      color: color,
-      stroke: '#000000',
+      fontFamily:      'Cinzel, serif',
+      fontSize:        fSize,
+      color:           color,
+      stroke:          '#000000',
       strokeThickness: 5,
     }).setOrigin(iconOffsetX > 0 ? 0 : 0.5, 0.5).setDepth(50);
     objects.push(text);
 
     this.tweens.add({
-      targets: objects,
-      y: '+=140',
-      alpha: 0,
+      targets:  objects,
+      y:        '+=140',
+      alpha:    0,
       duration: 1400,
-      ease: 'Sine.easeOut',
+      ease:     'Sine.easeOut',
       onComplete: () => objects.forEach(o => o.destroy()),
     });
   }
@@ -510,8 +496,8 @@ export default class UIScene extends Phaser.Scene {
   // If a badge is already showing for this caster, it is replaced immediately.
   // On exit the badge grows vertically, falls, and fades out.
   spawnAbilityBadge(zone, abilityId, label) {
-    const iconKey = 'icon_' + abilityId;
-    const hasIcon = this.textures.exists(iconKey);
+    const iconKey   = 'icon_' + abilityId;
+    const hasIcon   = this.textures.exists(iconKey);
     const ICON_SIZE = 56;
 
     const cx = zone.x + zone.w / 2;
@@ -523,20 +509,20 @@ export default class UIScene extends Phaser.Scene {
       const oldObjects = this.activeBadges[badgeKey];
       this.activeBadges[badgeKey] = null;
       this.tweens.add({
-        targets: oldObjects,
-        alpha: 0,
-        scaleY: 1.8,
-        y: '+=55',
+        targets:  oldObjects,
+        alpha:    0,
+        scaleY:   1.8,
+        y:        '+=55',
         duration: 420,
-        ease: 'Sine.easeIn',
-        onComplete: () => oldObjects.forEach(o => { try { o.destroy(); } catch (e) { } }),
+        ease:     'Sine.easeIn',
+        onComplete: () => oldObjects.forEach(o => { try { o.destroy(); } catch (e) {} }),
       });
     }
 
     const objects = [];
 
-    const bgW = hasIcon ? ICON_SIZE + 12 + (label.length * 14) + 20 : (label.length * 14) + 20;
-    const bgH = 52;
+    const bgW   = hasIcon ? ICON_SIZE + 12 + (label.length * 14) + 20 : (label.length * 14) + 20;
+    const bgH   = 52;
 
     const panel = this.add.rectangle(cx, cy, bgW, bgH, 0x000000)
       .setAlpha(0.72)
@@ -547,7 +533,7 @@ export default class UIScene extends Phaser.Scene {
 
     if (hasIcon) {
       const iconX = cx - bgW / 2 + ICON_SIZE / 2 + 8;
-      const icon = this.add.image(iconX, cy, iconKey)
+      const icon  = this.add.image(iconX, cy, iconKey)
         .setDisplaySize(ICON_SIZE, ICON_SIZE)
         .setOrigin(0.5)
         .setDepth(49)
@@ -557,10 +543,10 @@ export default class UIScene extends Phaser.Scene {
     }
 
     const nameText = this.add.text(textX, cy, label, {
-      fontFamily: 'Cinzel, serif',
-      fontSize: '26px',
-      color: '#ffffff',
-      stroke: '#000000',
+      fontFamily:      'Cinzel, serif',
+      fontSize:        '26px',
+      color:           '#ffffff',
+      stroke:          '#000000',
       strokeThickness: 3,
     }).setOrigin(hasIcon ? 0 : 0.5, 0.5).setDepth(49).setAlpha(0);
     objects.push(nameText);
@@ -569,8 +555,8 @@ export default class UIScene extends Phaser.Scene {
 
     // Fade in
     this.tweens.add({
-      targets: objects,
-      alpha: 1,
+      targets:  objects,
+      alpha:    1,
       duration: 180,
     });
 
@@ -580,13 +566,13 @@ export default class UIScene extends Phaser.Scene {
         this.activeBadges[badgeKey] = null;
       }
       this.tweens.add({
-        targets: objects,
-        alpha: 0,
-        scaleY: 1.8,
-        y: '+=55',
+        targets:  objects,
+        alpha:    0,
+        scaleY:   1.8,
+        y:        '+=55',
         duration: 420,
-        ease: 'Sine.easeIn',
-        onComplete: () => objects.forEach(o => { try { o.destroy(); } catch (e) { } }),
+        ease:     'Sine.easeIn',
+        onComplete: () => objects.forEach(o => { try { o.destroy(); } catch (e) {} }),
       });
     });
   }
@@ -601,17 +587,17 @@ export default class UIScene extends Phaser.Scene {
     // Prevent duplicate build if called twice
     if (this.buffBars[characterId]) return;
 
-    const MAX_SLOTS = 6;
-    const ICON_SIZE = 24;   // icon image size
-    const SLOT_SIZE = 24;   // total slot footprint including border
-    const SLOT_PAD = 6;
-    const ROW_W = MAX_SLOTS * (SLOT_SIZE + SLOT_PAD) - SLOT_PAD;
+    const MAX_SLOTS  = 6;
+    const ICON_SIZE  = 24;   // icon image size
+    const SLOT_SIZE  = 24;   // total slot footprint including border
+    const SLOT_PAD   = 6;
+    const ROW_W      = MAX_SLOTS * (SLOT_SIZE + SLOT_PAD) - SLOT_PAD;
     // Align left edge of buff row to nameplate left edge (nameplate starts at zone.x - 10)
-    const startX = zone.x + 30;
+    const startX     = zone.x + 30;
     // Row of icons sits just above the nameplate (nameplate at zone.y + 480)
     // Icons centered at rowY, ticks label sits 6px below the icon bottom
-    const rowY = zone.y + 435;
-    const DEPTH = 45;
+    const rowY       = zone.y + 435;
+    const DEPTH      = 45;
 
     const slots = [];
 
@@ -715,8 +701,8 @@ export default class UIScene extends Phaser.Scene {
   _updateManaDimming() {
     if (this.spellButtonsLocked) return;
 
-    const gameScene = this.scene.get('GameScene');
-    const playerSlot = gameScene?.entitySlots?.player;
+    const gameScene   = this.scene.get('GameScene');
+    const playerSlot  = gameScene?.entitySlots?.player;
     if (!playerSlot) return;
 
     const currentMana = playerSlot.currentMana ?? 0;
@@ -725,20 +711,20 @@ export default class UIScene extends Phaser.Scene {
       if (!btn?.bg) return;
       if (this.cooldowns[btn.abilityId]) return;
 
-      const cost = btn.abilityDef?.manaCost ?? 0;
-      const canAfford = currentMana >= cost;
+      const cost       = btn.abilityDef?.manaCost ?? 0;
+      const canAfford  = currentMana >= cost;
 
       if (!canAfford && !btn.manaDimmed) {
         btn.manaDimmed = true;
         btn.bg.setAlpha(0.45);
         btn.bg.setStrokeStyle(3, 0x553333, 0.8);
-        if (btn.manaLabel) btn.manaLabel.setColor('#ff6644');
+        if (btn.manaLabel)   btn.manaLabel.setColor('#ff6644');
         if (btn.manaOverlay) btn.manaOverlay.setVisible(true);
       } else if (canAfford && btn.manaDimmed) {
         btn.manaDimmed = false;
         btn.bg.setAlpha(1.0);
         btn.bg.setStrokeStyle(3, 0x4466aa, 1.0);
-        if (btn.manaLabel) btn.manaLabel.setColor('#66aaff');
+        if (btn.manaLabel)   btn.manaLabel.setColor('#66aaff');
         if (btn.manaOverlay) btn.manaOverlay.setVisible(false);
       }
     });
@@ -770,33 +756,33 @@ export default class UIScene extends Phaser.Scene {
   _showTooltip(ability) {
     this._hideTooltip();
 
-    const { WIDTH } = window.GAME_CONFIG;
-    const TOOLTIP_W = 900;
-    const ICON_SIZE = 100;
-    const PADDING = 32;
-    const TEXT_W = TOOLTIP_W - PADDING * 2 - ICON_SIZE - 24;
-    const cx = WIDTH / 2;
-    const cy = 1750;
+    const { WIDTH }   = window.GAME_CONFIG;
+    const TOOLTIP_W   = 900;
+    const ICON_SIZE   = 100;
+    const PADDING     = 32;
+    const TEXT_W      = TOOLTIP_W - PADDING * 2 - ICON_SIZE - 24;
+    const cx          = WIDTH / 2;
+    const cy          = 1750;
 
     const objects = [];
 
-    const hasIcon = this.textures.exists('icon_' + ability.id);
-    const textLeft = cx - TOOLTIP_W / 2 + PADDING + (hasIcon ? ICON_SIZE + 24 : 0);
+    const hasIcon   = this.textures.exists('icon_' + ability.id);
+    const textLeft  = cx - TOOLTIP_W / 2 + PADDING + (hasIcon ? ICON_SIZE + 24 : 0);
 
     const nameText = this.add.text(textLeft, cy - 80, ability.name ?? ability.id, {
-      fontFamily: 'Cinzel, serif',
-      fontSize: '42px',
-      color: '#ffffff',
-      stroke: '#000000',
+      fontFamily:      'Cinzel, serif',
+      fontSize:        '42px',
+      color:           '#ffffff',
+      stroke:          '#000000',
       strokeThickness: 4,
     }).setOrigin(0, 0).setDepth(101).setAlpha(0);
     objects.push(nameText);
 
     const descText = this.add.text(textLeft, cy - 80 + nameText.height + 12, ability.description ?? '', {
-      fontFamily: 'Cinzel, serif',
-      fontSize: '34px',
-      color: '#dddddd',
-      wordWrap: { width: TEXT_W },
+      fontFamily:  'Cinzel, serif',
+      fontSize:    '34px',
+      color:       '#dddddd',
+      wordWrap:    { width: TEXT_W },
       lineSpacing: 6,
     }).setOrigin(0, 0).setDepth(101).setAlpha(0);
     objects.push(descText);
@@ -806,13 +792,13 @@ export default class UIScene extends Phaser.Scene {
 
     const statText = this.add.text(textLeft, cy - 80 + nameText.height + 12 + descText.height + 14, statLine, {
       fontFamily: 'Cinzel, serif',
-      fontSize: '32px',
-      color: '#88aaff',
+      fontSize:   '32px',
+      color:      '#88aaff',
     }).setOrigin(0, 0).setDepth(101).setAlpha(0);
     objects.push(statText);
 
-    const totalH = nameText.height + 12 + descText.height + 14 + statText.height + PADDING * 2;
-    const panelY = cy - 80 + totalH / 2 - PADDING;
+    const totalH  = nameText.height + 12 + descText.height + 14 + statText.height + PADDING * 2;
+    const panelY  = cy - 80 + totalH / 2 - PADDING;
 
     const panel = this.add.rectangle(cx, panelY, TOOLTIP_W, totalH, 0x050510)
       .setStrokeStyle(3, 0x4466aa, 1.0)
@@ -838,10 +824,10 @@ export default class UIScene extends Phaser.Scene {
     const toDestroy = this.activeTooltip;
     this.activeTooltip = null;
     this.tweens.add({
-      targets: toDestroy,
-      alpha: 0,
+      targets:  toDestroy,
+      alpha:    0,
       duration: 100,
-      onComplete: () => toDestroy.forEach(o => { try { o.destroy(); } catch (e) { } }),
+      onComplete: () => toDestroy.forEach(o => { try { o.destroy(); } catch (e) {} }),
     });
   }
 
@@ -854,20 +840,21 @@ export default class UIScene extends Phaser.Scene {
     const { WIDTH, ZONES } = window.GAME_CONFIG;
     const bossZone = ZONES.BOSS;
 
-    const barW = 600;
-    const barH = 36;
-    const cx = WIDTH / 2;
-    const cy = bossZone.y + 30;
+    const barW  = 600;
+    const barH  = 36;
+    const cx    = WIDTH / 2;
+    const cy    = bossZone.y + 30;
 
     const track = this.add.rectangle(cx, cy, barW, barH, 0x111111)
       .setStrokeStyle(2, 0x6622aa, 0.9)
       .setDepth(70)
       .setAlpha(0);
 
-    const fill = this.add.rectangle(cx - barW / 2, cy, 0, barH - 6, 0xcc3300)
+    const fill = this.add.rectangle(cx - barW / 2, cy, barW - 4, barH - 6, 0xcc3300)
       .setOrigin(0, 0.5)
       .setDepth(71)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setScale(0, 1);
 
     const label = this.add.text(cx, cy, '', {
       fontFamily: 'Cinzel, serif', fontSize: '22px', color: '#ffffff',
@@ -888,17 +875,17 @@ export default class UIScene extends Phaser.Scene {
       this.bossCastTween = null;
     }
 
-    bar.fill.setDisplaySize(0, bar.fill.height);
+    bar.fill.setScale(0, 1);
     bar.label.setText('CASTING: ' + abilityName.toUpperCase());
     bar.track.setAlpha(1);
     bar.fill.setAlpha(1);
     bar.label.setAlpha(1);
 
     this.bossCastTween = this.tweens.add({
-      targets: bar.fill,
-      displayWidth: bar.barW - 4,
+      targets:  bar.fill,
+      scaleX:   1,
       duration: durationMs,
-      ease: 'Linear',
+      ease:     'Linear',
     });
   }
 
@@ -918,10 +905,10 @@ export default class UIScene extends Phaser.Scene {
     }
 
     this.tweens.add({
-      targets: [bar.track, bar.fill, bar.label],
-      alpha: 0,
+      targets:  [bar.track, bar.fill, bar.label],
+      alpha:    0,
       duration: 300,
-      delay: interrupted ? 600 : 0,
+      delay:    interrupted ? 600 : 0,
     });
   }
 
@@ -945,10 +932,10 @@ export default class UIScene extends Phaser.Scene {
 
     this.tweens.add({ targets: [panel, text], alpha: 1, duration: 400 });
     this.tweens.add({
-      targets: [panel, text],
-      alpha: 0,
+      targets:  [panel, text],
+      alpha:    0,
       duration: 500,
-      delay: 2000,
+      delay:    2000,
       onComplete: () => { panel.destroy(); text.destroy(); },
     });
   }
@@ -959,13 +946,13 @@ export default class UIScene extends Phaser.Scene {
 
   _abilityColor(type) {
     const map = {
-      'damage_direct': 0x993322,
-      'damage_aoe': 0xcc4422,
-      'heal': 0x228844,
+      'damage_direct':  0x993322,
+      'damage_aoe':     0xcc4422,
+      'heal':           0x228844,
       'heal_over_time': 0x22aa55,
-      'debuff': 0x553388,
-      'totem_buff': 0x885522,
-      'totem_absorb': 0x445566,
+      'debuff':         0x553388,
+      'totem_buff':     0x885522,
+      'totem_absorb':   0x445566,
     };
     return map[type] || 0x334455;
   }

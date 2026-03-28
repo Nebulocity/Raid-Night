@@ -92,6 +92,15 @@ export default class GameScene extends Phaser.Scene {
     // lifespanTimer, index }. Built dynamically as adds are spawned.
     this.summonedAddSlots = [];
 
+    // Cumulative count of how many times each add type has been summoned
+    // during this encounter. Keyed by addDef.id. Used for summons_count phase
+    // triggers (e.g. The Archivist phase 2 after 10 haunted tomes).
+    this.totalSummonsByAddId = {};
+
+    // Set of ability ids whose casts have fully completed this encounter.
+    // Used by cast_complete phase triggers.
+    this.completedCastAbilityIds = new Set();
+
     // Active boss buffs: { buffId: { ...params } }
     // Includes vanished, auto_attack_bonus, extra_auto_chance, enrage.
     this.bossBuffs = {};
@@ -1955,6 +1964,8 @@ export default class GameScene extends Phaser.Scene {
     const TICK_MS = window.GAME_CONFIG.TICK_MS;
     const index = this.summonedAddSlots.length;
 
+    this.totalSummonsByAddId[addDef.id] = (this.totalSummonsByAddId[addDef.id] ?? 0) + 1;
+
     const addSlot = this._buildAddSlot(addDef, index);
     if (!addSlot) return;
 
@@ -1991,43 +2002,98 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // Builds the display elements for a summoned add.
-  // Adds are shown in a horizontal row inside the BOSS zone.
-  // Each add is 160px wide with a small HP bar and countdown timer.
+  // Adds with an idleKey get a sprite centered in the boss zone with a
+  // nameplate and HP bar above them. The countdown timer is rendered on
+  // top of the sprite so it is always readable.
   _buildAddSlot(addDef, index) {
-    const zone = window.GAME_CONFIG.ZONES.BOSS;
-    const slotW = 160;
-    const startX = zone.x + 20;
-    const cx = startX + index * (slotW + 12) + slotW / 2;
-    const cy = zone.y + zone.h - 80;
+    const { ZONES } = window.GAME_CONFIG;
+    const zone = ZONES.BOSS;
 
-    const barW = slotW - 8;
-    const barH = 18;
+    const spriteKey = addDef.idleKey ?? null;
+    const spriteScale = addDef.spriteScale ?? 1.875;
+    const frameH = 384;
+    const spriteDisplayH = frameH * spriteScale;
 
-    const bg = this.add.rectangle(cx, cy - 10, slotW, 60, 0x000000, 0.7)
-      .setStrokeStyle(1, 0xaa3300, 0.8)
-      .setDepth(10);
+    const spawnPadX = 80;
+    const spawnPadTop = 100;
+    const spawnPadBottom = 40;
 
-    const nameText = this.add.text(cx, cy - 30, addDef.name || '???', {
-      fontFamily: 'Cinzel, serif', fontSize: '14px', color: '#ffaa44',
-    }).setOrigin(0.5, 0.5).setDepth(11);
+    const cx = Phaser.Math.Between(
+      zone.x + spawnPadX,
+      zone.x + zone.w - spawnPadX
+    );
 
-    const hpBar = this._buildBossHealthBar(cx, cy - 10, barW, barH, 0xcc2200);
-    if (hpBar.track) hpBar.track.setDepth(11);
-    if (hpBar.fill) hpBar.fill.setDepth(12);
+    const spawnMinY = zone.y + spawnPadTop + spriteDisplayH / 2;
+    const spawnMaxY = zone.y + zone.h - spawnPadBottom + spriteDisplayH / 2;
+    const spriteCy = Phaser.Math.Between(spawnMinY, spawnMaxY);
+
+    const nameplateY = spriteCy - 160;
+    const hpBarY = nameplateY + 36;
+
+    let sprite = null;
+    if (spriteKey && this.textures.exists(spriteKey)) {
+      const animKey = spriteKey + '_add_idle';
+      if (!this.anims.exists(animKey)) {
+        this.anims.create({
+          key: animKey,
+          frames: this.anims.generateFrameNumbers(spriteKey, {
+            start: addDef.idleFrameStart ?? 0,
+            end:   addDef.idleFrameEnd   ?? 11,
+          }),
+          frameRate: addDef.idleFrameRate ?? 8,
+          repeat: -1,
+        });
+      }
+
+      sprite = this.add.sprite(cx, spriteCy, spriteKey, 0)
+        .setScale(spriteScale)
+        .setOrigin(0.5, 0.5)
+        .setDepth(5)
+        .setAlpha(0);
+
+      sprite.play(animKey);
+
+      this.tweens.add({
+        targets:  sprite,
+        alpha:    1,
+        duration: 500,
+        ease:     'Sine.easeOut',
+      });
+    }
+
+    const barW = 320;
+    const barH = 24;
+
+    const nameText = this.add.text(cx, nameplateY, addDef.name || '???', {
+      fontFamily:      'Cinzel, serif',
+      fontSize:        '28px',
+      color:           '#f50808',
+      stroke:          '#00ff15',
+      strokeThickness: 3,
+    }).setOrigin(0.5, 0.5).setDepth(15);
+
+    const hpBar = this._buildBossHealthBar(cx, hpBarY, barW, barH, 0xcc2200);
+    if (hpBar.track) hpBar.track.setDepth(14);
+    if (hpBar.fill)  hpBar.fill.setDepth(15);
     if (hpBar.valueText) hpBar.valueText.setVisible(false);
     hpBar.maxValue = addDef.health ?? 1;
 
-    const countdownText = this.add.text(cx, cy + 14, String(addDef.lifespanTicks ?? 9), {
-      fontFamily: 'Cinzel, serif', fontSize: '16px', color: '#ff4422',
-    }).setOrigin(0.5, 0.5).setDepth(11);
+    const countdownText = this.add.text(cx, spriteCy, String(addDef.lifespanTicks ?? 9), {
+      fontFamily:      'Cinzel, serif',
+      fontSize:        '64px',
+      color:           '#ff4422',
+      stroke:          '#000000',
+      strokeThickness: 5,
+    }).setOrigin(0.5, 0.5).setDepth(16);
 
-    return { bg, nameText, hpBar, countdownText, currentHealth: addDef.health ?? 1 };
+    return { sprite, nameText, hpBar, countdownText, currentHealth: addDef.health ?? 1 };
   }
 
   // Hides and destroys all display elements for an add slot.
   _destroyAddSlot(addSlot) {
     if (!addSlot) return;
     if (addSlot.lifespanTimer) { try { addSlot.lifespanTimer.remove(); } catch (e) { } }
+    addSlot.sprite?.destroy();
     addSlot.bg?.destroy();
     addSlot.nameText?.destroy();
     addSlot.hpBar?.track?.destroy();
@@ -2107,7 +2173,8 @@ export default class GameScene extends Phaser.Scene {
   _tickSummonedAdds() {
     this.summonedAddSlots = this.summonedAddSlots.filter(slot => {
       if (!slot || (slot.currentHealth ?? 0) <= 0) return false;
-      if (!slot.bg?.scene) return false;
+      const anchor = slot.sprite ?? slot.bg ?? null;
+      if (!anchor?.scene) return false;
       return true;
     });
   }
@@ -2346,6 +2413,11 @@ export default class GameScene extends Phaser.Scene {
     this.bossIsCasting = true;
     this.bossCurrentCast = { abilityId, ability };
 
+    if (ability.castStartBuff) {
+      this.bossBuffs[ability.castStartBuff.id] = { ...ability.castStartBuff };
+      console.log('[Boss] castStartBuff applied:', ability.castStartBuff.id);
+    }
+
     console.log('[Boss] Casting', ability.name ?? abilityId, 'for', ability.castTimeTicks, 'ticks');
 
     const uiScene = this.scene.get('UIScene');
@@ -2353,14 +2425,35 @@ export default class GameScene extends Phaser.Scene {
       uiScene.showBossCastBar(ability.name ?? abilityId, castDurationMs);
     }
 
+    const castingAnimKey = this._getActiveActorData()?.id + '_casting';
+    const bossSprite = this.entitySlots.boss?.sprite;
+    if (bossSprite && this.anims.exists(castingAnimKey)) {
+      bossSprite.playReverse(castingAnimKey);
+    }
+
     this.bossCurrentCastTimer = this.time.delayedCall(castDurationMs, () => {
       if (!this.bossIsCasting) return;
 
       this.bossIsCasting = false;
+
+      const completedAbility = this.bossCurrentCast?.ability;
       this.bossCurrentCast = null;
       this.bossCurrentCastTimer = null;
 
+      if (completedAbility?.castStartBuff) {
+        delete this.bossBuffs[completedAbility.castStartBuff.id];
+        console.log('[Boss] castStartBuff cleared:', completedAbility.castStartBuff.id);
+      }
+
       if (uiScene?.hideBossCastBar) uiScene.hideBossCastBar();
+
+      const completedBossSprite = this.entitySlots.boss?.sprite;
+      const completedIdleKey = this._getActiveActorData()?.id + '_idle';
+      if (completedBossSprite && this.anims.exists(completedIdleKey)) {
+        completedBossSprite.play(completedIdleKey);
+      }
+
+      this.completedCastAbilityIds.add(abilityId);
 
       this._resolveBossAbilityEffect(abilityId, ability);
     });
@@ -2383,6 +2476,11 @@ export default class GameScene extends Phaser.Scene {
       this.bossCurrentCastTimer = null;
     }
 
+    if (ability?.castStartBuff) {
+      delete this.bossBuffs[ability.castStartBuff.id];
+      console.log('[Boss] castStartBuff cleared on interrupt:', ability.castStartBuff.id);
+    }
+
     const abilityName = ability?.name ?? this.bossCurrentCast?.abilityId ?? 'ability';
     console.log('[Boss] Cast interrupted:', abilityName);
 
@@ -2391,6 +2489,12 @@ export default class GameScene extends Phaser.Scene {
 
     const uiScene = this.scene.get('UIScene');
     if (uiScene?.hideBossCastBar) uiScene.hideBossCastBar(true);
+
+    const interruptedBossSprite = this.entitySlots.boss?.sprite;
+    const interruptedIdleKey = this._getActiveActorData()?.id + '_idle';
+    if (interruptedBossSprite && this.anims.exists(interruptedIdleKey)) {
+      interruptedBossSprite.play(interruptedIdleKey);
+    }
 
     return true;
   }
@@ -3299,6 +3403,13 @@ export default class GameScene extends Phaser.Scene {
     // Vanished buff -- boss is immune to all damage
     if (this.bossBuffs?.vanished) return;
 
+    // Active summoned adds absorb all incoming damage until they are dead.
+    // The character AI still "attacks the boss" but the damage lands on the add.
+    if (this.summonedAddSlots.length > 0) {
+      this._applyDamageToAdd(0, damage, iconKey, damageType);
+      return;
+    }
+
     if (!DAMAGE_TYPES.has(damageType)) {
       console.warn('[GameScene] Unknown damageType:', damageType, '-- defaulting to physical');
       damageType = 'physical';
@@ -3711,7 +3822,18 @@ export default class GameScene extends Phaser.Scene {
     const hpPct = current / maxHp;
     const triggerPct = (enrageDef.trigger?.value ?? 30) / 100;
 
-    if (hpPct <= triggerPct) {
+    const triggerType = enrageDef.trigger?.type ?? 'health_percent';
+
+    let shouldEnrage = false;
+
+    if (triggerType === 'health_percent') {
+      shouldEnrage = hpPct <= triggerPct;
+    } else if (triggerType === 'cast_complete') {
+      const requiredAbilityId = enrageDef.trigger?.abilityId ?? '';
+      shouldEnrage = this.completedCastAbilityIds.has(requiredAbilityId);
+    }
+
+    if (shouldEnrage) {
       this._applyBossBuff('enrage', {
         damageMultiplier: enrageDef.damageMultiplier ?? 1,
         attackSpeedMultiplier: enrageDef.attackSpeedMultiplier ?? 1,
@@ -3724,7 +3846,7 @@ export default class GameScene extends Phaser.Scene {
         3000
       );
 
-      console.log('[Enrage] Triggered at', Math.round(hpPct * 100) + '% HP');
+      console.log('[Enrage] Triggered by', triggerType);
     }
   }
 
@@ -4408,6 +4530,18 @@ export default class GameScene extends Phaser.Scene {
         const actorId = phase.trigger?.actorId ?? 'secondActor';
         const slot = this.entitySlots[actorId];
         if ((slot?.currentHealth ?? 0) > 0) resolved = phase;
+      }
+
+      if (triggerType === 'summons_count') {
+        const addId = phase.trigger?.addId ?? '';
+        const threshold = phase.trigger?.value ?? 0;
+        const totalSummoned = this.totalSummonsByAddId[addId] ?? 0;
+        if (totalSummoned >= threshold) resolved = phase;
+      }
+
+      if (triggerType === 'cast_complete') {
+        const requiredAbilityId = phase.trigger?.abilityId ?? '';
+        if (this.completedCastAbilityIds.has(requiredAbilityId)) resolved = phase;
       }
     }
 

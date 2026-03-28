@@ -264,7 +264,7 @@ const SPOOKSPIRE_KEEP = {
       defeatedPath:             bossSpriteSheet('spookspire_keep', 'aether_drake', 'aether_drake_defeated.webp'),
       levelKey:                 'level_aether_drake',
       levelPath:                'data/spookspire_keep/aether_drake.json',
-      unlockedBy:               ['the_archivist'],
+      unlockedBy:               ['aether_drake', 'the_archivist'],
     },
     {
       id:                       'phantom_magister',

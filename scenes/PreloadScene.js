@@ -188,28 +188,23 @@ export default class PreloadScene extends Phaser.Scene {
 
     this.load.spritesheet('the_archivist_idle',      'assets/raids/spookspire_keep/bosses/the_archivist/the_archivist_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('the_archivist_attacking', 'assets/raids/spookspire_keep/bosses/the_archivist/the_archivist_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('the_archivist_defeated',  'assets/raids/spookspire_keep/bosses/the_archivist/the_archivist_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('the_archivist_lore_absorption', 'assets/raids/spookspire_keep/bosses/the_archivist/the_archivist_lore_absorption.webp',  { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('haunted_tome_idle',        'assets/raids/spookspire_keep/bosses/the_archivist/haunted_tome_idle.webp',          { frameWidth: 384, frameHeight: 384 });
 
     this.load.spritesheet('aether_drake_idle',      'assets/raids/spookspire_keep/bosses/aether_drake/aether_drake_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('aether_drake_attacking', 'assets/raids/spookspire_keep/bosses/aether_drake/aether_drake_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('aether_drake_defeated',  'assets/raids/spookspire_keep/bosses/aether_drake/aether_drake_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
 
     this.load.spritesheet('phantom_magister_idle',      'assets/raids/spookspire_keep/bosses/phantom_magister/phatnom_magister_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('phantom_magister_attacking', 'assets/raids/spookspire_keep/bosses/phantom_magister/phatnom_magister_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('phantom_magister_defeated',  'assets/raids/spookspire_keep/bosses/phantom_magister/phatnom_magister_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
 
     this.load.spritesheet('malvestian_doomhoof_idle',      'assets/raids/spookspire_keep/bosses/malvestian_doomhoof/malvestian_doomhoof_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('malvestian_doomhoof_attacking', 'assets/raids/spookspire_keep/bosses/attacmalvestian_doomhoofking/malvestian_doomhoof_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('malvestian_doomhoof_defeated',  'assets/raids/spookspire_keep/bosses/malvestian_doomhoof/malvestian_doomhoof_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
 
     this.load.spritesheet('prince_malarkey_idle',      'assets/raids/spookspire_keep/bosses/prince_malarkey/prince_malarkey_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('prince_malarkey_attacking', 'assets/raids/spookspire_keep/bosses/prince_malarkey/prince_malarkey_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('prince_malarkey_defeated',  'assets/raids/spookspire_keep/bosses/prince_malarkey/prince_malarkey_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
     
     this.load.spritesheet('dreadwing_idle',      'assets/raids/spookspire_keep/bosses/dreadwing/dreadwing_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('dreadwing_attacking', 'assets/raids/spookspire_keep/bosses/dreadwing/dreadwing_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
-    // this.load.spritesheet('dreadwing_defeated',  'assets/raids/spookspire_keep/bosses/dreadwing/dreadwing_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
   }
 
   // ============================================================
