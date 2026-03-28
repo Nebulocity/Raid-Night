@@ -140,7 +140,7 @@
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": ["An undead horse stands in her stable, eating flesh from a dead adventurer..."],
+      "intro": ["Nighttime stands in her stable, eating flesh from a dead adventurer..."],
       "defeat": [],
       "victory": ["Victory!"]
     },
