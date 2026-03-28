@@ -55,7 +55,7 @@
     "enrage": {
       "trigger": { "type": "health_percent", "value": 30 },
       "attackSpeedMultiplier": 0.5,
-      "damageMultiplier": 3
+      "damageMultiplier": 2
     },
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 6000,
@@ -135,7 +135,7 @@
         "durationTicks": 10,
         "dispellable": false
       },
-      "dialogue": "Mortimer garrotes a victim from the shadows!",
+      "dialogue": "Mortimer garrotes {target} from the shadows!",
       "audioDuration": 2000
     },
     "mortimer_blind": {
@@ -150,7 +150,7 @@
         "dispellable": true,
         "dispelType": "magic"
       },
-      "dialogue": "Mortimer blinds you!",
+      "dialogue": "Mortimer blinds {target}!",
       "audioDuration": 2000
     },
     "mortimer_gouge": {
@@ -164,7 +164,7 @@
         "durationTicks": 8,
         "dispellable": false
       },
-      "dialogue": "Mortimer gouges you!",
+      "dialogue": "Mortimer gouges {target}!",
       "audioDuration": 2000
     },
     "mortimer_berserk_dagger": {
@@ -178,7 +178,7 @@
       "duration": 0,
       "recastTimer": 10,
       "targetType": "random_ally",
-      "dialogue": "Mortimer berserks and hurls a dagger!",
+      "dialogue": null,
       "audioDuration": 1500
     },
     "guest_mana_burn": {
@@ -193,7 +193,7 @@
         "manaBurnDamageMultiplier": 3.2,
         "dispellable": false
       },
-      "dialogue": "Baroness Silvania burns your mana!",
+      "dialogue": "Baroness Silvania burns {target}'s mana!",
       "audioDuration": 2000
     },
     "guest_shadow_word_pain": {
@@ -213,7 +213,7 @@
         "dispellable": true,
         "dispelType": "disease"
       },
-      "dialogue": "Lady Caitlin afflicts you with Shadow Word: Pain!",
+      "dialogue": "Lady Caitlin curses {target}!",
       "audioDuration": 2000
     },
     "guest_hammer_of_justice": {
@@ -232,7 +232,7 @@
         "durationTicks": 3,
         "dispellable": false
       },
-      "dialogue": "Baron Rolph Dragger stuns the tank!",
+      "dialogue": "Baron Rolph Dragger stuns {target}k!",
       "audioDuration": 2000
     },
     "guest_mortal_strike": {
@@ -253,7 +253,7 @@
         "dispellable": true,
         "dispelType": "magic"
       },
-      "dialogue": "Lord Darin Robbins lands a Mortal Strike! Healing is reduced!",
+      "dialogue": "Lord Darin Robbins lands a mortal wound on {target}!",
       "audioDuration": 2000
     }
   }

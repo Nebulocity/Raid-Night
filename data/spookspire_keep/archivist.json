@@ -154,7 +154,7 @@
         "type": "summon_add",
         "addId": "haunted_tome"
       },
-      "recastTimer": 15,
+      "recastTimer": 12,
       "targetType": "self",
       "dialogue": "A Haunted Tome appears!",
       "audioDuration": 1000
@@ -188,7 +188,7 @@
       "duration": 0,
       "recastTimer": 10,
       "targetType": "random_ally",
-      "dialogue": "A beam of arcane energy lances out!",
+      "dialogue": "A beam of arcane energy strikes {target}!",
       "audioDuration": 2000
     },
     "vengeful_beam_rapid": {
@@ -204,7 +204,7 @@
       "duration": 0,
       "recastTimer": 1,
       "targetType": "all_allies",
-      "dialogue": "Vengeful beams erupt from his eyes!",
+      "dialogue": null,
       "audioDuration": 1500
     },
     "lore_absorption": {

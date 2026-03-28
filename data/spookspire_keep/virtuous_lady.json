@@ -98,7 +98,7 @@
       "tickMax": 1500,
       "recastTimer": 12,
       "targetType": "highest_threat",
-      "dialogue": "Holy flames engulf you!",
+      "dialogue": "Holy flames engulf {target}!",
       "audioDuration": 2000
     },
     "virtuous_wrath": {
@@ -107,8 +107,8 @@
       "damageType": "holy",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 2500,
-      "immediateMax": 4200,
+      "immediateMin": 1500,
+      "immediateMax": 3200,
       "duration": 0,
       "recastTimer": 12,
       "targetType": "all_allies",
@@ -121,15 +121,15 @@
       "damageType": "holy",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 3700,
-      "immediateMax": 5200,
+      "immediateMin": 2000,
+      "immediateMax": 3500,
       "duration": 8,
       "tickEffect": { "type": "damage" },
       "tickMin": 1000,
       "tickMax": 1500,
       "recastTimer": 20,
       "targetType": "all_allies",
-      "dialogue": "Virtuous Repentance!",
+      "dialogue": "Virtuous Repentance on {target}!",
       "audioDuration": 2000
     }
   }

@@ -1356,20 +1356,36 @@ export default class GameScene extends Phaser.Scene {
 
   // Show dialogue triggered by an ability being used.
   // Reads ability.dialogue from the JSON (string or array).
-  showAbilityDialogue(abilityId) {
+  // Accepts an optional targets array; any {target} token in the dialogue
+  // string is replaced with the character's name (single target) or
+  // "the group" (AoE). Falls back to "someone" when targets is empty.
+  showAbilityDialogue(abilityId, targets = []) {
     const ability = this.levelData?.abilities?.[abilityId];
     if (!ability?.dialogue && !ability?.sound) return;
 
     this._playSound(ability.sound);
 
     if (ability.dialogue) {
-      const lines = Array.isArray(ability.dialogue) ? ability.dialogue : [ability.dialogue];
+      const targetLabel = this._resolveDialogueTargetLabel(targets);
+      const rawLines = Array.isArray(ability.dialogue) ? ability.dialogue : [ability.dialogue];
+      const lines = rawLines.map(l => l.replace(/\{target\}/g, targetLabel));
       const fadeMs = 350;
       // Use the ability's own audioDuration, not the boss intro duration
       const holdMs = ability.audioDuration ?? 3000;
       const holdPerLine = Math.max(500, (holdMs / lines.length) - (fadeMs * 2));
       this.showDialogueSequence(lines, '#ffaa44', holdPerLine, fadeMs);
     }
+  }
+
+  // Resolves a target id array into a human-readable label for dialogue substitution.
+  // Single target  → the character's display name (e.g. "Wrenley")
+  // Multiple / AoE → "the group"
+  // Empty          → "someone"  (safe fallback when no targets are passed)
+  _resolveDialogueTargetLabel(targets = []) {
+    if (!targets || targets.length === 0) return 'someone';
+    if (targets.length > 1) return 'the group';
+    const name = this.entitySlots[targets[0]]?._data?.name;
+    return name ?? 'someone';
   }
 
   // ==============================================
@@ -2397,7 +2413,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.playBossAttack();
-    this.showAbilityDialogue(abilityId);
+    this.showAbilityDialogue(abilityId, targets);
   }
 
   // =====================================
