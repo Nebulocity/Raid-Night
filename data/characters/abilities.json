@@ -196,8 +196,8 @@
       {
         "type": "damage",
         "damageType": "nature",
-        "min": 100000,
-        "max": 100000,
+        "min": 500,
+        "max": 1000,
         "target": "current_target"
       },
       {

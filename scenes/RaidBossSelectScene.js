@@ -138,7 +138,7 @@ export default class RaidBossSelectScene extends Phaser.Scene {
       const buttonY = gridTop + rowGap * (rowIndex + 1);
       rowBosses.forEach((boss, colIndex) => {
         const buttonX  = colGap * (colIndex + 1);
-        const unlocked = true; // isBossUnlocked(saveData, raid.id, boss.id);
+        const unlocked = isBossUnlocked(saveData, raid.id, boss.id);
         const defeated = (saveData.defeatedBossIds?.[raid.id] ?? []).includes(boss.id);
         this._drawBossButton(buttonX, buttonY, boss, raid, saveData, unlocked, defeated, buttonSize);
       });
