@@ -270,7 +270,7 @@ export default class UIScene extends Phaser.Scene {
       if (!pointer.wasTouch) return;
 
       this.isLongPress = false;
-      this.longPressTimer = this.time.delayedCall(3000, () => {
+      this.longPressTimer = this.time.delayedCall(1000, () => {
         this.isLongPress = true;
         this.longPressTimer = null;
         if (ability?.description) this._showTooltip(ability);
