@@ -283,11 +283,13 @@ export default class UIScene extends Phaser.Scene {
         this.longPressTimer = null;
       }
 
-      if (!this.isLongPress) {
-        this._pressSpellButton(abilityId, ability, bg, cdOverlay);
+      if (this.isLongPress) {
+        // Display the tooltip.
+        this.isLongPress = false;
+        return;
       }
 
-      this.isLongPress = false;
+      this._pressSpellButton(abilityId, ability, bg, cdOverlay);
     });
 
     bg.on('pointerover', (pointer) => {
