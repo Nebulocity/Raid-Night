@@ -1414,6 +1414,8 @@ export default class GameScene extends Phaser.Scene {
   // Internal display methods -- call showDialogueSequence / showPopup instead.
   // =======================
   _showDialogueSequenceNow(lines, color = '#ffffff', holdMs = 2200, fadeMs = 350, onComplete = null) {
+    const { FONTS } = window.GAME_CONFIG;
+
     if (!lines || lines.length === 0) {
       if (onComplete) onComplete();
       return;
@@ -1428,7 +1430,7 @@ export default class GameScene extends Phaser.Scene {
     const panel = this.add.rectangle(cx, cy - 250, zone.w, zone.h, 0x000000, 0.78)
       .setStrokeStyle(2, 0xff4400, 0.85)
       .setAlpha(0)
-      .setDepth(80);
+      .setDepth(92);
 
     this.tweens.add({ targets: panel, alpha: 1, duration: fadeMs });
 
@@ -1451,14 +1453,16 @@ export default class GameScene extends Phaser.Scene {
       lineIndex++;
 
       const text = this.add.text(cx, cy - 250, line, {
-        fontFamily: 'Cinzel, serif',
+        fontFamily: FONTS.DECORATIVE,
         fontSize:   '42px',
         color:      color,
         align:      'center',
         wordWrap:   { width: zone.w - 48 },
         stroke:     '#000000',
         strokeThickness: 3,
-      }).setOrigin(0.5).setAlpha(0).setDepth(81);
+      }).setOrigin(0.5)
+      .setAlpha(0)
+      .setDepth(93);
 
       this.tweens.add({
         targets:  text,
@@ -1484,6 +1488,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   _showPopupNow(message, color = '#ffffff', duration = 2500, onComplete = null) {
+    const { FONTS } = window.GAME_CONFIG;
     const zone = window.GAME_CONFIG.ZONES.POPUP;
     const cx   = zone.x + zone.w / 2;
     const cy   = zone.y + zone.h / 2;

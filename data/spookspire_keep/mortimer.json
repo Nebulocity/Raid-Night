@@ -58,10 +58,10 @@
       "damageMultiplier": 3
     },
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
-    "audioDuration": 4000,
+    "audioDuration": 6000,
     "dialog": {
-      "intro": ["Hm, unannounced visitors. Preparations must be made..."],
-      "defeat": [],
+      "intro": ["Hm, unannounced visitors. Preparations must be made...", "Guests, would kindly assistt in entertain our visitors?"],
+      "defeat": ["Alas, the meal service must condlude..."],
       "victory": ["Victory!"]
     },
     "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
