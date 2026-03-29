@@ -71,8 +71,10 @@ export default class GameScene extends Phaser.Scene {
     this.secondActorSpawned = false;
     this.secondActorDamageTaken = 0;
     this.secondActorAbilityCooldowns = {};
+    this.portalSummonActive = false;
     this.secondActorAbilityLockoutUntil = 0;
     this.secondActorResummonCooldownUntil = 0;
+    this.activeSacrifice = null;
 
     // Boss cast state. Set when an ability with castTimeTicks > 0 begins.
     // Cleared on completion or interrupt.
@@ -465,6 +467,18 @@ export default class GameScene extends Phaser.Scene {
         }, def.key);
       });
     }
+
+    // If the second actor has a portal sprite, register its looping animation.
+    // The animation key matches the texture key (e.g. 'malvestian_portal').
+    const portalKey = secondActorData?.portalKey;
+    if (portalKey) {
+      this._safeCreateAnim({
+        key: portalKey,
+        frames: anims.generateFrameNumbers(portalKey, { start: 0, end: 11 }),
+        frameRate: 8,
+        repeat: -1,
+      }, portalKey);
+    }
   }
 
   // ======================
@@ -520,11 +534,17 @@ export default class GameScene extends Phaser.Scene {
     const bossData = encounterActors?.[0] ?? this.levelData?.boss;
     const spriteKey = bossData?.spriteKey;
     const idleAnimKey = bossData ? bossData.id + '_idle' : 'default_idle';
-    const hasSecondActor = !!this.levelData?.secondActor;
+    const secondActorData = this.levelData?.secondActor;
+    // "hasSecondActor" means the second actor is ON SCREEN from the very start.
+    // If the second actor has a spawnTrigger it starts hidden, so the boss gets
+    // the full solo layout and shifts over later when the second actor appears.
+    const secondActorStartsHidden = !!secondActorData?.spawnTrigger;
+    const hasSecondActor = !!secondActorData && !secondActorStartsHidden;
 
-    // When sharing the screen with a second actor, Mortimer moves to the left
-    // half at a smaller scale. When solo he stays centered at full scale.
-    const cx = hasSecondActor ? 270 : ((zone.x + zone.w / 2) + 160);
+    // When sharing the screen with a second actor from the start, the boss sits
+    // on the left half at a smaller scale. Solo = centered at full scale.
+    const sharedCx = 270;
+    const cx = hasSecondActor ? sharedCx : ((zone.x + zone.w / 2) + 160);
     const cy = (zone.y + zone.h / 2) + 200;
     const spriteScale = hasSecondActor ? 2.0 : (bossData?.spriteScale || 3);
     const barW = hasSecondActor ? 460 : 600;
@@ -571,15 +591,21 @@ export default class GameScene extends Phaser.Scene {
       delay: 500,
     });
 
-    this.entitySlots.boss = { sprite: bossSprite, nameText, titlePanel, hpBar };
+    this.entitySlots.boss = {
+      sprite: bossSprite, nameText, titlePanel, hpBar,
+      // Non-null only when the boss starts solo but gains a second actor later.
+      // Used by _shiftBossToSharedLayout() to know where/how to move the sprite.
+      sharedCx:    secondActorStartsHidden ? sharedCx : null,
+      sharedScale: secondActorStartsHidden ? 2.0 : null,
+    };
   }
 
   // =================
   // Second actor slot
   // =================
   // Placed on the right half of the screen (cx=810) at a smaller scale.
-  // The second actor has no HP bar and is not a damage target -- they are
-  // a persistent nuisance for the duration of the encounter.
+  // If the actor has redirectsPlayerDamage=true, a nameplate and HP bar are
+  // built for it so players can track its health as they wail on it.
   // Sprite renders at depth 2 so it always appears in front of the primary boss.
   _buildSecondActorSlot(zone) {
     const actorData = this.levelData?.secondActor;
@@ -596,18 +622,63 @@ export default class GameScene extends Phaser.Scene {
       sprite = this.add.sprite(cx, cy, spriteKey, 0)
         .setScale(spriteScale)
         .setOrigin(0.5, 0.5)
-        .setDepth(1);
+        .setDepth(2);
 
       if (this.anims.exists(idleAnimKey)) {
         sprite.play(idleAnimKey);
       }
     }
 
+    // If the actor has a portal key, create a hidden portal sprite at the same
+    // position. It will be revealed by _fadeInWithPixelate when the portal opens.
+    let portalSprite = null;
+    const portalKey = actorData.portalKey ?? null;
+    if (portalKey && this.textures.exists(portalKey)) {
+      portalSprite = this.add.sprite(cx, cy, portalKey, 0)
+        .setScale(spriteScale)
+        .setOrigin(0.5, 0.5)
+        .setDepth(1)
+        .setAlpha(0);
+      if (this.anims.exists(portalKey)) {
+        portalSprite.play(portalKey);
+      }
+    }
+
+    // Build a nameplate and HP bar if this actor soaks all player damage.
+    // Everything starts hidden (alpha=0) and is shown by _setSecondActorVisible.
+    let nameText = null;
+    let titlePanel = null;
+    let hpBar = null;
+    if (actorData.redirectsPlayerDamage) {
+      const nameplateY = zone.y + 80;
+      const barW = 380;
+
+      nameText = this.add.text(cx, nameplateY, actorData.name || '???', {
+        fontFamily: 'Cinzel Decorative, serif',
+        fontSize: '34px',
+        color: '#ff9966',
+      }).setOrigin(0.5, 1).setAlpha(0).setDepth(1);
+
+      const padding = 14;
+      titlePanel = this.add.rectangle(
+        cx, nameplateY - nameText.height / 2 - padding / 4,
+        nameText.width + padding * 2, nameText.height + padding,
+        0x000000
+      ).setAlpha(0).setStrokeStyle(2, 0x993300, 1.0).setOrigin(0.5, 0.5);
+
+      hpBar = this._buildBossHealthBar(cx, nameplateY + 36, barW, 36, 0xff3300);
+      hpBar.maxValue = actorData.stats?.maxHealth ?? 1;
+      hpBar.track?.setAlpha(0);
+      hpBar.fill?.setAlpha(0);
+      hpBar.valueText?.setAlpha(0);
+    }
+
     this.entitySlots.secondActor = {
       sprite,
-      nameText: null,
-      titlePanel: null,
-      hpBar: null,
+      portalSprite,
+      nameText,
+      titlePanel,
+      hpBar,
       currentHealth: actorData.stats?.maxHealth ?? 0,
       nuisance: !!actorData.nuisance,
       _data: actorData,
@@ -645,6 +716,50 @@ export default class GameScene extends Phaser.Scene {
       slot.hpBar.valueText?.setAlpha(alpha);
     }
   }
+
+  // Fades a sprite in from fully transparent over the given duration (ms).
+  // If the renderer supports postFX (WebGL), also animates a pixelate effect
+  // from blocky to sharp, giving a "materializing" look. Falls back gracefully
+  // in canvas mode -- you just get a plain alpha fade. No big deal.
+  _fadeInWithPixelate(sprite, duration) {
+    sprite.setAlpha(0);
+    this.tweens.add({ targets: sprite, alpha: 1, duration, ease: 'Sine.easeOut' });
+
+    if (sprite.postFX) {
+      const PIXEL_START = 48;
+      const pixFX = sprite.postFX.addPixelate(PIXEL_START);
+      this.tweens.addCounter({
+        from: PIXEL_START,
+        to: 0,
+        duration,
+        ease: 'Sine.easeOut',
+        onUpdate: (tween) => { pixFX.amount = Math.round(tween.getValue()); },
+        onComplete: () => { sprite.postFX.remove(pixFX); },
+      });
+    }
+  }
+
+  // Slides the boss sprite from its solo center position to the left-side shared
+  // position when a second actor appears mid-fight. Only fires once -- the stored
+  // sharedCx/sharedScale values are cleared after use so it can't run again.
+  _shiftBossToSharedLayout() {
+    const slot = this.entitySlots.boss;
+    if (!slot?.sprite || slot.sharedCx == null) return;
+
+    const newCx    = slot.sharedCx;
+    const newScale = slot.sharedScale ?? 2.0;
+
+    this.tweens.add({
+      targets:  slot.sprite,
+      x:        newCx,
+      duration: 1200,
+      ease:     'Sine.easeInOut',
+    });
+
+    slot.sharedCx    = null;
+    slot.sharedScale = null;
+  }
+
   _buildPlayerSlot(zone) {
     const cx = zone.x + zone.w / 2;
     const cy = zone.y + zone.h - 60;
@@ -1093,7 +1208,6 @@ export default class GameScene extends Phaser.Scene {
     const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
     const activeActorData = this._getActiveActorData();
     const bossName = activeActorData?.name ?? 'Boss';
-    console.log('[Boss]', bossName, 'attacks', targetName + '!');
 
     this._playSound(activeActorData?.attackSound);
 
@@ -1110,7 +1224,7 @@ export default class GameScene extends Phaser.Scene {
     const bossData2 = this.entitySlots.boss?._data;
     const missChance = bossData2?.stats?.missChance ?? 0;
     if (missChance > 0 && Phaser.Math.Between(1, 100) <= missChance) {
-      console.log('[Boss] Attack MISSED', targetName + '!');
+      console.log('[Boss]', bossName, 'auto ->', targetName, '| MISSED');
       const uiMiss = this.scene.get('UIScene');
       if (uiMiss?.spawnFloatingText) {
         uiMiss.spawnFloatingText(window.GAME_CONFIG.ZONES[targetId.toUpperCase()], 'MISS', 'miss');
@@ -1137,6 +1251,12 @@ export default class GameScene extends Phaser.Scene {
     const damage = Math.round((baseDamage + autoBonus + autoBonus2) * (this.bossDamageMultiplier ?? 1) * enrageMultiplier);
     this._applyDamageToCharacter(targetId, damage, 'icon_autoAttack', 'physical');
 
+    const dmgMult = this.bossDamageMultiplier ?? 1;
+    const modStr = (dmgMult !== 1 || enrageMultiplier !== 1)
+      ? ' [dmgMult=' + dmgMult + ' enrage=' + enrageMultiplier + ']'
+      : '';
+    console.log('[Boss]', bossName, 'auto ->', targetName, '|', damage, 'physical' + modStr);
+
     // Tank generates passive threat just by being the target
     this.addThreat('tank', 50);
     this._updateThreatMeters();
@@ -1144,10 +1264,11 @@ export default class GameScene extends Phaser.Scene {
     // extra_auto_chance buff -- proc a free second auto-attack
     const extraAutoChance = this.bossBuffs?.extra_auto_chance?.chance ?? 0;
     if (extraAutoChance > 0 && Phaser.Math.Between(1, 100) <= extraAutoChance) {
-      console.log('[Boss] Extra auto-attack proc!');
       const extraTarget = this.getHighestThreatTarget();
+      const extraTargetName = this.entitySlots[extraTarget]?._data?.name ?? extraTarget;
       const extraDamage = Math.round((baseDamage + autoBonus + autoBonus2) * (this.bossDamageMultiplier ?? 1) * enrageMultiplier);
       this._applyDamageToCharacter(extraTarget, extraDamage, 'icon_autoAttack', 'physical');
+      console.log('[Boss]', bossName, 'extra auto proc ->', extraTargetName, '|', extraDamage, 'physical' + modStr);
     }
   }
 
@@ -1218,17 +1339,12 @@ export default class GameScene extends Phaser.Scene {
 
       // Consume one charge
       hs.charges--;
-      console.log('[Tank] Holy Shield BLOCK - charges left:', hs.charges,
-        'dealt', blockDmg, 'to boss, threat', blockThreat);
 
       if (hs.charges <= 0) {
         hs.active = false;
-        console.log('[Tank] Holy Shield - all charges consumed');
       }
 
       this._emitBuffUpdate('tank');
-    } else {
-      console.log('[' + characterId + '] BLOCK (base ' + baseBlock + '%)');
     }
 
     return true;
@@ -1614,7 +1730,6 @@ export default class GameScene extends Phaser.Scene {
     }
     this.gameRunning = true;
     this.tickerStartedAt = Date.now();
-    console.log('[GameScene] Tick started, delay:', delay, 'ms');
     this.events.emit('combat-start');
     this.tickTimer = this.time.addEvent({
       delay: delay, loop: true,
@@ -1638,8 +1753,8 @@ export default class GameScene extends Phaser.Scene {
     this._tickAuras();
     this._tickEnrage();
     this._tickPlayerAutoAttack();
-    this._tickTankAutoAttack();
     this._tickTankAbilities();
+    this._tickTankAutoAttack();
     this._tickHealerAI();
     this._tickManaRegen();
 
@@ -1655,7 +1770,6 @@ export default class GameScene extends Phaser.Scene {
   // Fires playBossAttack() every <attackSpeed> ticks as defined in the JSON.
   // attackSpeed: 1 = every tick, 2 = every 2 ticks, 3 = every 3 ticks, etc.
   _tickBossAutoAttack() {
-    console.log("[Boss] Attacking");
     if (this.bossDialoguePlaying) return;
     if (this.bossIsCasting) return;
     if (this.bossBuffs?.vanished) return;
@@ -1729,6 +1843,17 @@ export default class GameScene extends Phaser.Scene {
       // Only fire special abilities (non-zero recastTimer means it's special)
       if (!ability.recastTimer || ability.recastTimer <= 0) continue;
 
+      if (ability.requiresPortalInactive && this.portalSummonActive) continue;
+
+      if (ability.requiresSecondActorDead) {
+        // A second actor that has never been spawned counts as dead --
+        // otherwise the initial currentHealth value (maxHealth) would
+        // permanently block abilities like Fiendish Portal from ever firing.
+        const secondActorAlive = this.secondActorSpawned &&
+          (this.entitySlots.secondActor?.currentHealth ?? 0) > 0;
+        if (secondActorAlive) continue;
+      }
+
       const lastUsed = this.bossAbilityCooldowns[abilityId] ?? 0;
       const recastMs = ability.recastTimer * 1000;
       const now = Date.now();
@@ -1774,7 +1899,7 @@ export default class GameScene extends Phaser.Scene {
 
     const actorName = slot._data.name ?? 'Second Actor';
     const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
-    console.log('[SecondActor]', actorName, 'attacks', targetName, 'for', damage);
+    console.log('[SecondActor]', actorName, 'auto ->', targetName, '|', damage, 'physical');
 
     const uiScene = this.scene.get('UIScene');
     if (uiScene?.spawnAbilityBadge) {
@@ -1820,7 +1945,6 @@ export default class GameScene extends Phaser.Scene {
       if (now - lastUsed >= recastMs) {
         this.secondActorAbilityCooldowns[abilityId] = now;
         this.secondActorAbilityLockoutUntil = now + POST_ABILITY_LOCKOUT_MS;
-        console.log('[SecondActor]', slot._data.name, 'uses', ability.name ?? abilityId);
 
         const uiScene = this.scene.get('UIScene');
         if (uiScene?.spawnAbilityBadge) {
@@ -1828,7 +1952,7 @@ export default class GameScene extends Phaser.Scene {
           uiScene.spawnAbilityBadge(secondActorZone, abilityId, ability.name ?? abilityId);
         }
 
-        this._fireBossAbility(abilityId, ability);
+        this._fireBossAbility(abilityId, ability, slot._data.name);
         break;
       }
     }
@@ -1957,9 +2081,29 @@ export default class GameScene extends Phaser.Scene {
     if (!slot) return;
 
     slot.currentHealth = 0;
-    this._setSecondActorVisible(false);
+
+    // Fade everything out smoothly instead of snapping to invisible.
+    const DEATH_FADE = 800;
+    const fadeTargets = [slot.sprite, slot.nameText, slot.titlePanel,
+      slot.hpBar?.track, slot.hpBar?.fill, slot.hpBar?.valueText,
+    ].filter(Boolean);
+    if (fadeTargets.length) {
+      this.tweens.add({ targets: fadeTargets, alpha: 0, duration: DEATH_FADE });
+    }
 
     console.log('[SecondActor] Died:', actorData?.name);
+
+    const onDeathBuff = this.levelData?.boss?.onSecondActorDeathBuff;
+    if (onDeathBuff) {
+      this._applyBossBuff('enrage', {
+        damageMultiplier:      onDeathBuff.damageMultiplier ?? 1,
+        attackSpeedMultiplier: onDeathBuff.attackSpeedMultiplier ?? 1,
+        extraAutoAttackDamage: 0,
+      }, onDeathBuff.durationTicks ?? 0);
+      if (onDeathBuff.message) {
+        this.showPopup(onDeathBuff.message, '#ff4444', 3000);
+      }
+    }
 
     if (actorData?.resummoned) {
       const cooldownTicks = actorData.resummonCooldownTicks ?? 30;
@@ -2197,8 +2341,8 @@ export default class GameScene extends Phaser.Scene {
 
   // Fire a specific boss ability - plays animation if one is defined,
   // shows dialogue, plays sound.
-  _fireBossAbility(abilityId, ability) {
-    const bossName = this._getActiveActorData()?.name ?? 'Boss';
+  _fireBossAbility(abilityId, ability, sourceName = null) {
+    const bossName = sourceName ?? this._getActiveActorData()?.name ?? 'Boss';
     const abilityName = ability.name ?? abilityId;
     const targetType = ability.targetType;
     const isAoE = targetType === 'all_allies';
@@ -2215,7 +2359,7 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
 
-    this._resolveBossAbilityEffect(abilityId, ability);
+    this._resolveBossAbilityEffect(abilityId, ability, sourceName);
   }
 
   // =====================================
@@ -2224,24 +2368,14 @@ export default class GameScene extends Phaser.Scene {
   // Executes the actual damage, healing, and DoT for a boss ability.
   // Called directly for instant abilities, or deferred by _beginBossCast
   // for cast-time abilities once the cast completes.
-  _resolveBossAbilityEffect(abilityId, ability) {
-    const bossName = this._getActiveActorData()?.name ?? 'Boss';
+  _resolveBossAbilityEffect(abilityId, ability, sourceName = null) {
+    const bossName = sourceName ?? this._getActiveActorData()?.name ?? 'Boss';
+    const logTag = sourceName ? '[SecondActor]' : '[Boss]';
     const abilityName = ability.name ?? abilityId;
     const targetType = ability.targetType;
     const isAoE = targetType === 'all_allies';
     const TICK_MS = window.GAME_CONFIG.TICK_MS;
     const damageType = ability.damageType ?? 'physical';
-
-    const singleTargetId = isAoE ? null : this.getHighestThreatTarget();
-    const singleTargetName = singleTargetId
-      ? (this.entitySlots[singleTargetId]?._data?.name ?? singleTargetId)
-      : null;
-
-    if (isAoE) {
-      console.log('[Boss]', bossName, 'uses', abilityName, 'on the party!');
-    } else {
-      console.log('[Boss]', bossName, 'uses', abilityName, 'on', singleTargetName + '!');
-    }
 
     const resolveTargets = () => {
       if (targetType === 'all_allies') return ['player', 'tank', 'healer'];
@@ -2289,6 +2423,20 @@ export default class GameScene extends Phaser.Scene {
     const iconKey = this.textures.exists('icon_' + (ability.iconId || abilityId))
       ? 'icon_' + (ability.iconId || abilityId)
       : 'icon_autoAttack';
+
+    // Log non-damage abilities now; damage abilities log themselves below with the final rolled value.
+    const isDamageAbility = (ability.immediateFlag && (ability.immediateMin || ability.immediateMax))
+      || (ability.duration > 0 && ability.tickMin);
+    if (!isDamageAbility) {
+      if (isAoE) {
+        console.log(logTag, bossName, 'uses', abilityName, '| party');
+      } else if (targetType !== 'boss_self' && targets.length > 0) {
+        const logTarget = this.entitySlots[targets[0]]?._data?.name ?? targets[0];
+        console.log(logTag, bossName, 'uses', abilityName, '->', logTarget);
+      } else {
+        console.log(logTag, bossName, 'uses', abilityName);
+      }
+    }
 
     if (ability.selfBuff?.damageMultiplier) {
       this.bossDamageMultiplier = ability.selfBuff.damageMultiplier;
@@ -2350,15 +2498,125 @@ export default class GameScene extends Phaser.Scene {
       } else {
         console.warn('[GameScene] summon_add: no summonedAdd definition found for id:', addId);
       }
+    } else if (ability.immediateEffect?.type === 'summon_second_actor') {
+      const actorData = this.levelData?.secondActor;
+      const secondSlot = this.entitySlots.secondActor;
+      if (actorData && secondSlot) {
+        const isAlreadyAlive = this.secondActorSpawned && (secondSlot.currentHealth ?? 0) > 0;
+        if (!isAlreadyAlive) {
+          secondSlot.currentHealth = actorData.stats?.maxHealth ?? 0;
+          if (secondSlot.hpBar) {
+            secondSlot.hpBar.maxValue = secondSlot.currentHealth;
+            this._setBossHealthBar(secondSlot.hpBar, 1.0);
+          }
+          // secondActorSpawned stays false until Kil'wretch is actually on screen
+          // so his abilities and auto-attacks don't run during the portal sequence.
+
+          const portalSprite = secondSlot.portalSprite ?? null;
+          if (portalSprite) {
+            // Mark the portal as active so Sacrifice is blocked during the sequence.
+            this.portalSummonActive = true;
+
+            // Step 1: Malvestian slides left to clear the right side of the screen.
+            this._shiftBossToSharedLayout();
+
+            // Step 2: once he's out of the way, the portal fades in.
+            this.time.delayedCall(1400, () => {
+              if (!this.gameRunning) return;
+              this._fadeInWithPixelate(portalSprite, 2000);
+
+              // Step 3: a few seconds later Kil'wretch crawls out of the portal.
+              this.time.delayedCall(5000, () => {
+                if (!this.gameRunning) return;
+
+                // Sprite materializes with the same pixelated fade.
+                if (secondSlot.sprite) {
+                  this._fadeInWithPixelate(secondSlot.sprite, 2000);
+                }
+
+                // Nameplate and HP bar fade in alongside the sprite.
+                if (secondSlot.nameText) {
+                  this.tweens.add({ targets: secondSlot.nameText, alpha: 1, duration: 800 });
+                }
+                if (secondSlot.titlePanel) {
+                  this.tweens.add({ targets: secondSlot.titlePanel, alpha: 0.65, duration: 800 });
+                }
+                if (secondSlot.hpBar) {
+                  const barParts = [secondSlot.hpBar.track, secondSlot.hpBar.fill, secondSlot.hpBar.valueText].filter(Boolean);
+                  this.tweens.add({ targets: barParts, alpha: 1, duration: 800 });
+                }
+
+                // Intro dialogue fires as he starts to appear.
+                const rawIntro = actorData.dialogue?.intro ?? (actorData.name + ' joins the fight!');
+                const introLines = Array.isArray(rawIntro) ? rawIntro : [rawIntro];
+                this.showDialogueSequence(introLines, '#ff9966');
+
+                // Once he is fully visible, enable combat and fade out the portal.
+                // Keeping secondActorSpawned false until the fade completes prevents
+                // him from attacking or being targeted while still materializing.
+                this.time.delayedCall(2000, () => {
+                  if (!this.gameRunning) return;
+                  this.secondActorSpawned = true;
+                  this.tweens.add({
+                    targets: portalSprite, alpha: 0, duration: 600,
+                    onComplete: () => { this.portalSummonActive = false; },
+                  });
+                });
+              });
+            });
+          } else {
+            // No portal -- just show the actor normally.
+            this._setSecondActorVisible(true);
+            const rawIntro = actorData.dialogue?.intro ?? (actorData.name + ' joins the fight!');
+            const introLines = Array.isArray(rawIntro) ? rawIntro : [rawIntro];
+            this.showDialogueSequence(introLines, '#ff9966');
+          }
+        }
+      }
+    } else if (ability.immediateEffect?.type === 'sacrifice') {
+      const targetId = targets[0];
+      if (targetId) {
+        const requiredDamage = ability.immediateEffect.requiredDamage ?? 10000;
+        const durationTicks = ability.immediateEffect.durationTicks ?? 6;
+        const bossHealthSnapshot = this.entitySlots.boss?.currentHealth ?? 0;
+        const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
+
+        this.activeSacrifice = { targetId, requiredDamage, bossHealthSnapshot };
+        this.showPopup(targetName + ' is marked for Sacrifice!', '#cc44cc', 3000);
+
+        this.time.delayedCall(durationTicks * TICK_MS, () => {
+          if (!this.gameRunning || !this.activeSacrifice) return;
+          const { targetId, requiredDamage, bossHealthSnapshot } = this.activeSacrifice;
+          this.activeSacrifice = null;
+          const bossHealthCurrent = this.entitySlots.boss?.currentHealth ?? 0;
+          const damageDealtToBoss = bossHealthSnapshot - bossHealthCurrent;
+          if (damageDealtToBoss < requiredDamage) {
+            const targetSlot = this.entitySlots[targetId];
+            if (targetSlot && (targetSlot.currentHealth ?? 0) > 0) {
+              this._applyDamageToCharacter(targetId, targetSlot.currentHealth, iconKey, 'shadow');
+              this.showPopup('The sacrifice is complete!', '#cc0000', 3000);
+            }
+          } else {
+            this.showPopup('The sacrifice is broken!', '#44cc44', 3000);
+          }
+        });
+      }
     } else if (ability.immediateFlag && (ability.immediateMin || ability.immediateMax)) {
       const immediateDamage = Phaser.Math.Between(ability.immediateMin ?? 0, ability.immediateMax ?? ability.immediateMin ?? 0);
       targets.forEach((targetId) => {
         if (!targetId) return;
-        this._applyDamageToCharacter(targetId, Math.round(immediateDamage * (this.bossDamageMultiplier ?? 1)), iconKey, damageType);
+        const finalHit = Math.round(immediateDamage * (this.bossDamageMultiplier ?? 1));
+        this._applyDamageToCharacter(targetId, finalHit, iconKey, damageType);
+        const hitTargetName = this.entitySlots[targetId]?._data?.name ?? targetId;
+        console.log(logTag, bossName, 'uses', abilityName, '->', hitTargetName, '|', finalHit, damageType);
       });
     }
 
     if (ability.duration > 0 && ability.tickMin) {
+      const dotTargetList = targets.map(t => this.entitySlots[t]?._data?.name ?? t).join(', ');
+      console.log(logTag, bossName, 'uses', abilityName, '->', dotTargetList,
+        '|', ability.tickMin + '-' + (ability.tickMax ?? ability.tickMin), damageType,
+        'x' + ability.duration, 'ticks');
       let ticks = 0;
       const dotTimer = this.time.addEvent({
         delay: TICK_MS,
@@ -2412,7 +2670,6 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    this.playBossAttack();
     this.showAbilityDialogue(abilityId, targets);
   }
 
@@ -2672,14 +2929,6 @@ export default class GameScene extends Phaser.Scene {
     this.combatLog.push(entry);
     this.events.emit('combat-log-entry', entry);
 
-    console.log(
-      '[CombatLog] T' + entry.tick +
-      ' | ' + sourceName +
-      ' -> ' + targetName +
-      ' | ' + abilityName +
-      ' | ' + damage + ' ' + damageType +
-      ' | HP left: ' + entry.targetHpAfter
-    );
   }
 
   // =====================================
@@ -2847,7 +3096,6 @@ export default class GameScene extends Phaser.Scene {
           const selfDmg = Math.round(sourceVal * (eff.amountPct ?? 0));
           if (selfDmg > 0) {
             this._applyDamageToCharacter(casterId, selfDmg, iconKey);
-            console.log('[' + casterId + '] ' + ability.id + ' self-damage: ' + selfDmg);
           }
           effectResults[i] = selfDmg;
           break;
@@ -2904,7 +3152,6 @@ export default class GameScene extends Phaser.Scene {
               const zone = window.GAME_CONFIG.ZONES[tid.toUpperCase()] ?? window.GAME_CONFIG.ZONES.PLAYER;
               uiScene.spawnFloatingText(zone, amount, 'mana', iconKey);
             }
-            console.log('[' + casterId + '] restore_mana -> ' + tid + ' +' + amount);
           }
           break;
         }
@@ -2929,7 +3176,6 @@ export default class GameScene extends Phaser.Scene {
               if (tid === 'healer' && this.anims.exists('healer_idle')) slot.sprite.play('healer_idle');
             }
             this.showPopup((slot._data?.name ?? tid) + ' returns to life!', '#aaffaa', 3000);
-            console.log('[' + casterId + '] Awaken -> ' + tid, restHp + 'hp', restMp + 'mana');
           }
           break;
         }
@@ -2947,7 +3193,6 @@ export default class GameScene extends Phaser.Scene {
             delete this.charHoTs[tid][hotId];
             this._emitBuffUpdate(tid);
             if (remaining > 0) this._applyHealToCharacter(tid, remaining, ability.id);
-            console.log('[' + casterId + '] Spirit Surge consumed ' + hotId + ' on ' + tid + ' for ' + remaining);
           }
           break;
         }
@@ -2957,9 +3202,12 @@ export default class GameScene extends Phaser.Scene {
             const allThreat = Object.values(this.threatTable ?? {});
             const maxThreat = (allThreat.length ? Math.max(...allThreat) : 0) + 10000;
             if (!this.threatTable) this.threatTable = {};
+            console.log('[Threat] Provoke fired by', casterId,
+              '| before:', JSON.stringify(this.threatTable),
+              '| setting to', maxThreat);
             this.threatTable[casterId] = maxThreat;
             this._updateThreatMeters();
-            console.log('[' + casterId + '] Provoke -- threat set to ' + maxThreat);
+            console.log('[Threat] After Provoke:', JSON.stringify(this.threatTable));
           }
           break;
         }
@@ -3117,7 +3365,6 @@ export default class GameScene extends Phaser.Scene {
             );
             const bloomHeal = bloomBase * (eff.onExpire.multiplier === 'stack_count' ? bloomStacks : 1);
             this._applyHealToCharacter(targetId, bloomHeal, ability.id);
-            console.log('[' + casterId + '] ' + ability.id + ' bloom: ' + bloomHeal + ' (' + bloomStacks + 'x)');
           }
           if (this.charHoTs[targetId]) delete this.charHoTs[targetId][hotId];
           this._emitBuffUpdate(targetId);
@@ -3126,10 +3373,9 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.charHoTs[targetId][hotId] = { stacks, tickHeal, ticksLeft, timer: hotTimer };
-    this.addThreat(casterId, Math.round(tickHeal * eff.durationTicks * stacks * 0.1));
+    // Threat is generated per tick inside the timer callback; don't add it again here.
     this._updateThreatMeters();
     this._emitBuffUpdate(targetId);
-    console.log('[' + casterId + '] ' + ability.id + ' HoT -> ' + targetId + ' (' + stacks + ' stack(s), ' + tickHeal + '/tick)');
   }
 
   // Apply a mana-over-time (quicken).
@@ -3144,7 +3390,6 @@ export default class GameScene extends Phaser.Scene {
       ? Math.round(maxMana * 0.10 / 20)
       : Math.round(eff.amountPerTick ?? 0);
 
-    console.log('[' + casterId + '] Quicken -> ' + targetId + ' ' + tickRestore + '/tick x' + duration);
     let ticks = 0;
     const timer = this.time.addEvent({
       delay: TICK_MS, loop: true,
@@ -3206,7 +3451,6 @@ export default class GameScene extends Phaser.Scene {
 
     this.showAbilityDialogue(abilityId);
 
-    console.log('[' + casterId + '] ' + abilityId + ' | mana: ' + slot.currentMana + '/' + maxMana);
     return true;
   }
 
@@ -3426,6 +3670,16 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
 
+    // If a second actor is alive and redirects player damage to itself,
+    // all hits land on it instead of the boss. Kill Kil'wretch first!
+    const secondSlotCheck = this.entitySlots.secondActor;
+    if (this.levelData?.secondActor?.redirectsPlayerDamage &&
+        this.secondActorSpawned &&
+        (secondSlotCheck?.currentHealth ?? 0) > 0) {
+      this._applyDamageToSecondActor(damage, iconKey, damageType);
+      return;
+    }
+
     if (!DAMAGE_TYPES.has(damageType)) {
       console.warn('[GameScene] Unknown damageType:', damageType, '-- defaulting to physical');
       damageType = 'physical';
@@ -3535,7 +3789,6 @@ export default class GameScene extends Phaser.Scene {
       ...params,
     };
 
-    console.log('[Debuff]', debuffId, '->', characterId, 'for', durationTicks, 'ticks');
 
     if (characterId === 'player') {
       this.events.emit('player-debuff-update', this.charDebuffs.player);
@@ -3571,13 +3824,9 @@ export default class GameScene extends Phaser.Scene {
         const idx = shields.indexOf(shield);
         if (idx !== -1) {
           shields.splice(idx, 1);
-          console.log('[Shield] Expired on', characterId);
         }
       });
     }
-
-    console.log('[Shield] Applied to', characterId, '-- absorbs', shield.absorbAmount,
-      shield.damageType === 'all' ? '(all types)' : '(' + shield.damageType + ')');
   }
 
   // Runs incoming damage through the character's shield queue.
@@ -3607,7 +3856,6 @@ export default class GameScene extends Phaser.Scene {
 
       if (shield.remaining <= 0) {
         toRemove.push(i);
-        console.log('[Shield] Consumed on', characterId);
       }
     }
 
@@ -3647,7 +3895,6 @@ export default class GameScene extends Phaser.Scene {
       if (!allowedTypes.includes(dispelType)) continue;
 
       delete debuffs[debuffId];
-      console.log('[Dispel] Removed', debuffId, 'from', characterId);
       removed = true;
       if (!removeAll) break;
     }
@@ -3684,8 +3931,6 @@ export default class GameScene extends Phaser.Scene {
     const TICK_MS = window.GAME_CONFIG.TICK_MS;
     const tickDamage = Math.round(totalDamage / Math.max(1, durationTicks));
     let ticks = 0;
-
-    console.log('[Bleed] ->', characterId, tickDamage + '/tick x' + durationTicks);
 
     const bleedTimer = this.time.addEvent({
       delay: TICK_MS,
@@ -3787,7 +4032,6 @@ export default class GameScene extends Phaser.Scene {
         if (debuffs[debuffId].ticksLeft <= 0) {
           if (debuffId === 'gouge') this._onGougeExpired(characterId);
           delete debuffs[debuffId];
-          console.log('[Debuff]', debuffId, 'expired on', characterId);
           if (characterId === 'player') {
             this.events.emit('player-debuff-update', this.charDebuffs.player);
           }
@@ -4004,9 +4248,12 @@ export default class GameScene extends Phaser.Scene {
     if (!this.threatTable) this._initThreatTable();
     if (this.threatTable[characterId] !== undefined) {
       const TANK_GLOBAL_THREAT_MULTIPLIER = 5.0;
+      const HEALER_GLOBAL_THREAT_MULTIPLIER = 0.8;
       const finalAmount = characterId === 'tank'
         ? Math.round(amount * TANK_GLOBAL_THREAT_MULTIPLIER)
-        : amount;
+        : characterId === 'healer'
+          ? Math.round(amount * HEALER_GLOBAL_THREAT_MULTIPLIER)
+          : amount;
       this.threatTable[characterId] += finalAmount;
     }
   }
@@ -4040,6 +4287,7 @@ export default class GameScene extends Phaser.Scene {
         highestId = id;
       }
     }
+    console.log('[Threat] Target picked:', highestId, '| table:', JSON.stringify(this.threatTable));
     return highestId;
   }
 
@@ -4094,7 +4342,6 @@ export default class GameScene extends Phaser.Scene {
   // Fires playPlayerAutoAttack() every <attackSpeed> ticks as defined
   // in the player JSON data. attackSpeed: 2 = every 2 ticks, etc.
   _tickPlayerAutoAttack() {
-    console.log("[Player] Attacking");
     const playerData = this.entitySlots.player?._data;
     if (!playerData) return;
     if ((this.entitySlots.player?.currentHealth ?? 0) <= 0) return;
@@ -4242,7 +4489,6 @@ export default class GameScene extends Phaser.Scene {
 
     const attackSpeed = Math.round(healerData.stats?.attackSpeed ?? 2);
     if (this.tickCount % attackSpeed === 0) {
-      console.log('[Healer] Auto-attack tick', this.tickCount, 'speed', attackSpeed);
       this.playHealerAutoAttack();
     }
   }
@@ -4271,7 +4517,6 @@ export default class GameScene extends Phaser.Scene {
     this._applyDamageToBoss(damage, 'icon_autoAttack');
     this.addThreat('healer', damage);
     this._updateThreatMeters();
-    console.log('[Healer] Auto-attack for', damage, '-> threat', Math.round(damage * TANK_THREAT_MULTIPLIER));
   }
 
   // ====================
@@ -4406,7 +4651,6 @@ export default class GameScene extends Phaser.Scene {
     const maxMana = playerSlot.manaBar?.maxValue ?? 1;
     const mana = playerSlot.currentMana ?? maxMana;
     if (mana < ability.manaCost) {
-      console.log('[Player] Not enough mana for', abilityId, '-', mana, '/', ability.manaCost);
       return;
     }
 
@@ -4431,14 +4675,12 @@ export default class GameScene extends Phaser.Scene {
         this._applyDamageToBoss(damage, 'icon_' + abilityId);
         this.addThreat('player', Math.round(damage * (ability.threatPerDamage ?? 1.0)));
         this._updateThreatMeters();
-        console.log('[Player]', abilityId, 'hit', hit + 1, 'of', hitCount, 'for', damage);
       });
     }
   }
 
   _onPlayerAbility(abilityId) {
     if (this._hasDebuff('player', 'stun')) {
-      console.log('[Player] Stunned -- ability blocked:', abilityId);
       return;
     }
 
@@ -4446,7 +4688,6 @@ export default class GameScene extends Phaser.Scene {
 
     // Silence blocks spells and abilities but not auto-attacks
     if (this._hasDebuff('player', 'silence') && ability?.effects) {
-      console.log('[Player] Silenced -- ability blocked:', abilityId);
       return;
     }
 
@@ -4458,7 +4699,6 @@ export default class GameScene extends Phaser.Scene {
 
     // Legacy fallback (totem abilities still go through old path)
     this._recordCast('player');
-    console.log('[GameScene] Ability (legacy):', abilityId);
 
     const uiForPlayer = this.scene.get('UIScene');
     if (uiForPlayer?.spawnAbilityBadge) {

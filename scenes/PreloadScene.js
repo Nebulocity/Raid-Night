@@ -138,6 +138,12 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.spritesheet('sir_trotsalot_mounted_attacking',      'assets/raids/spookspire_keep/bosses/sir_trotsalot/sir_trotsalot_mounted_attacking.webp',           { frameWidth: 384, frameHeight: 384 });
     // this.load.spritesheet('sir_trotsalot_mounted_defeated',  'assets/raids/spookspire_keep/bosses/sir_trotsalot/sir_trotsalot_mounted_defeated.webp',   { frameWidth: 384, frameHeight: 384 });
     
+    this.load.spritesheet('malvestian_doomhoof_idle',      'assets/raids/spookspire_keep/bosses/malvestian_doomhoof/malvestian_doomhoof_idle.webp',      { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('malvestian_doomhoof_attacking', 'assets/raids/spookspire_keep/bosses/malvestian_doomhoof/malvestian_doomhoof_attacking.webp', { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('kilwretch_idle',      'assets/raids/spookspire_keep/bosses/malvestian_doomhoof/kilwretch_idle.webp',      { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('kilwretch_attacking', 'assets/raids/spookspire_keep/bosses/malvestian_doomhoof/kilwretch_attacking.webp', { frameWidth: 384, frameHeight: 384 });
+    this.load.spritesheet('malvestian_portal',   'assets/raids/spookspire_keep/bosses/malvestian_doomhoof/portal.webp',              { frameWidth: 384, frameHeight: 384 });
+
     this.load.spritesheet('mortimer_idle',      'assets/raids/spookspire_keep/bosses/mortimer/mortimer_idle.webp',      { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('mortimer_attacking', 'assets/raids/spookspire_keep/bosses/mortimer/mortimer_attacking.webp', { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('mortimer_defeated',  'assets/raids/spookspire_keep/bosses/mortimer/mortimer_defeated.webp',  { frameWidth: 384, frameHeight: 384 });
@@ -196,9 +202,6 @@ export default class PreloadScene extends Phaser.Scene {
 
     this.load.spritesheet('phantom_magister_idle',      'assets/raids/spookspire_keep/bosses/phantom_magister/phatnom_magister_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('phantom_magister_attacking', 'assets/raids/spookspire_keep/bosses/phantom_magister/phatnom_magister_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
-
-    this.load.spritesheet('malvestian_doomhoof_idle',      'assets/raids/spookspire_keep/bosses/malvestian_doomhoof/malvestian_doomhoof_idle.webp',           { frameWidth: 384, frameHeight: 384 });
-    this.load.spritesheet('malvestian_doomhoof_attacking', 'assets/raids/spookspire_keep/bosses/attacmalvestian_doomhoofking/malvestian_doomhoof_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
 
     this.load.spritesheet('prince_malarkey_idle',      'assets/raids/spookspire_keep/bosses/prince_malarkey/prince_malarkey_idle.webp',           { frameWidth: 384, frameHeight: 384 });
     this.load.spritesheet('prince_malarkey_attacking', 'assets/raids/spookspire_keep/bosses/prince_malarkey/prince_malarkey_attacking.webp',  { frameWidth: 384, frameHeight: 384 });
