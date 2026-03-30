@@ -9,12 +9,15 @@ const Phaser = window.Phaser;
 import { RAID_CATALOG } from '../data/raidCatalog.js';
 
 export default class BossLoadingScene extends Phaser.Scene {
+  
   constructor() {
     super({ key: 'BossLoadingScene' });
   }
 
   // init - resolve which boss we're loading
   init() {
+    const { FONTS } = window.GAME_CONFIG;
+
     const selectedRaidId = this.registry.get('selectedRaidId') || 'spookspire_keep';
     const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot';
 
@@ -26,6 +29,7 @@ export default class BossLoadingScene extends Phaser.Scene {
 
   // preload - load level JSON, then queue boss-specific assets
   preload() {
+    const { FONTS } = window.GAME_CONFIG;
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
     const cx = WIDTH / 2;
 
@@ -57,7 +61,7 @@ export default class BossLoadingScene extends Phaser.Scene {
     const nameY = bossSprite ? bossY - (bossSprite.height / 2) - 100 : HEIGHT * 0.20;
 
     this.add.text(cx, nameY, bossName, {
-      fontFamily: 'monospace',
+      fontFamily: FONTS.DECORATIVE,
       fontSize:   '64px',
       color:      '#fff1c7',
       stroke:     '#000000',
@@ -71,8 +75,10 @@ export default class BossLoadingScene extends Phaser.Scene {
     const barX  = cx - barW / 2;
 
     this.add.text(cx, barY - 44, 'Preparing encounter...', {
-      fontFamily: 'monospace', fontSize: '28px',
-      color: '#c8a96e', align: 'center',
+      fontFamily: FONTS.BASE, 
+      fontSize: '28px',
+      color: '#c8a96e', 
+      align: 'center',
     }).setOrigin(0.5);
 
     this.add.rectangle(cx, barY + barH / 2, barW + 8, barH + 8, 0x222222).setOrigin(0.5);
@@ -81,10 +87,9 @@ export default class BossLoadingScene extends Phaser.Scene {
     this._barShimmer = this.add.rectangle(barX, barY, 0, 3,  0xffd700).setOrigin(0, 0).setAlpha(0.6);
 
     this._statusText = this.add.text(cx, barY + 44, 'Loading...', {
-      fontFamily: 'monospace', fontSize: '22px', color: '#555555', align: 'center',
+      fontFamily: 'Cinzel, serif', fontSize: '22px', color: '#555555', align: 'center',
     }).setOrigin(0.5);
 
-    // - Wire up loader events -------------------------------
     this.load.on('progress', (value) => {
       if (this._barFill) {
         this._barFill.width    = barW * value;
@@ -102,7 +107,7 @@ export default class BossLoadingScene extends Phaser.Scene {
       if (this._statusText) this._statusText.setText('Ready!');
     });
 
-    // - Queue the level JSON --------------------------------
+    // Level data
     const { levelKey, levelPath } = this.bossMeta;
     if (!levelKey || !levelPath) return;
 
@@ -113,7 +118,7 @@ export default class BossLoadingScene extends Phaser.Scene {
 
     this.load.json(levelKey, levelPath);
 
-    // Load character roster and ability definitions
+    // Load character roster and abilities
     if (!this.cache.json.exists('characters')) {
       this.load.json('characters', 'data/characters/characters.json');
     }
@@ -195,15 +200,7 @@ export default class BossLoadingScene extends Phaser.Scene {
           endFrame:   11,
           frameRate:  12,
           repeat:     0,
-        },
-        defeated: {
-          ...(boss.animations?.defeated || {}),
-          key:        this.bossMeta.defeatedKey,
-          startFrame: 0,
-          endFrame:   11,
-          frameRate:  10,
-          repeat:     0,
-        },
+        }
       },
     };
 

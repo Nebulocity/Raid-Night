@@ -140,7 +140,7 @@
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": ["An undead horse stands in her stable, eating flesh from a dead adventurer..."],
+      "intro": ["Nighttime stands in her stable, eating flesh from a dead adventurer..."],
       "defeat": [],
       "victory": ["Victory!"]
     },
@@ -173,7 +173,7 @@
       "duration": 0,
       "recastTimer": 10,
       "targetType": "all_allies",
-      "dialogue": "Sir Trotsalot cleaves!",
+      "dialogue": "Sir Trotsalot cleaves the group!",
       "audioDuration": 2000
     },
     "intangible_presence": {
@@ -209,7 +209,7 @@
         "durationTicks": 3,
         "dispellable": false
       },
-      "dialogue": "Sir Trotsalot charges!",
+      "dialogue": "Sir Trotsalot charges at {target}!",
       "audioDuration": 2000
     }
   }

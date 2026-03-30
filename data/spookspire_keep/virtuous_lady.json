@@ -10,12 +10,12 @@
     "name": "Virtuous Lady",
     "spriteScale": 4,
     "stats": {
-      "health": 500000,
-      "maxHealth": 500000,
+      "health": 800000,
+      "maxHealth": 800000,
       "mana": 0,
       "maxMana": 0,
       "usesMana": false,
-      "damageRange": [1300, 2700],
+      "damageRange": [1600, 2300],
       "attackSpeed": 3,
       "armor": 13000,
       "attackHitChance": 90,
@@ -53,15 +53,15 @@
       }
     ],
     "enrage": {
-      "trigger": { "type": "health_percent", "value": 10 },
-      "damageMultiplier": 2.0,
-      "attackSpeedMultiplier": 1.0
+      "trigger": { "type": "health_percent", "value": 30 },
+      "damageMultiplier": 1.5,
+      "attackSpeedMultiplier": 2.0
     },
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": ["The golden statue of a virtuous Lady steps forward, eyes vacant and burning!"],
-      "defeat": [],
+      "intro": ["A huge golden statue of a virtuous Lady steps forward, her icy glare staring down at you!"],
+      "defeat": ["Free, at last..."],
       "victory": ["Victory!"]
     },
     "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
@@ -77,9 +77,9 @@
       "immediateMax": 0,
       "duration": 10,
       "tickEffect": { "type": "damage" },
-      "tickMin": 300,
-      "tickMax": 500,
-      "recastTimer": 20,
+      "tickMin": 1200,
+      "tickMax": 1700,
+      "recastTimer": 15,
       "targetType": "all_allies",
       "dialogue": "The ground burns with holy fire!",
       "audioDuration": 2000
@@ -90,15 +90,15 @@
       "damageType": "fire",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 3000,
-      "immediateMax": 5000,
+      "immediateMin": 2000,
+      "immediateMax": 3000,
       "duration": 6,
       "tickEffect": { "type": "damage" },
       "tickMin": 1500,
       "tickMax": 1500,
       "recastTimer": 12,
       "targetType": "highest_threat",
-      "dialogue": "Holy flames engulf the target!",
+      "dialogue": "Holy flames engulf {target}!",
       "audioDuration": 2000
     },
     "virtuous_wrath": {
@@ -107,8 +107,8 @@
       "damageType": "holy",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 3000,
-      "immediateMax": 3000,
+      "immediateMin": 1500,
+      "immediateMax": 3200,
       "duration": 0,
       "recastTimer": 12,
       "targetType": "all_allies",
@@ -122,14 +122,14 @@
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
       "immediateMin": 2000,
-      "immediateMax": 3000,
+      "immediateMax": 3500,
       "duration": 8,
       "tickEffect": { "type": "damage" },
       "tickMin": 1000,
       "tickMax": 1500,
-      "recastTimer": 40,
+      "recastTimer": 20,
       "targetType": "all_allies",
-      "dialogue": "Virtuous Repentance!",
+      "dialogue": "Virtuous Repentance on {target}!",
       "audioDuration": 2000
     }
   }

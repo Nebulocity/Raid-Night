@@ -9,13 +9,13 @@
     "id": "malvestian_doomhoof",
     "name": "Malvestian Doomhoof",
     "stats": {
-      "health": 350000,
-      "maxHealth": 350000,
+      "health": 1500000,
+      "maxHealth": 1500000,
       "mana": 0,
       "maxMana": 0,
       "usesMana": false,
-      "damageRange": [2000, 4000],
-      "attackSpeed": 3,
+      "damageRange": [1500, 3000],
+      "attackSpeed": 2,
       "armor": 14000,
       "attackHitChance": 90,
       "abilityHitChance": 90,
@@ -30,33 +30,41 @@
         "label": "Fel Ritual",
         "trigger": { "type": "health_percent", "value": 100 },
         "abilityIds": [
-          "shadow_bolt",
+          "fiendish_portal",
           "sacrifice",
-          "fiendish_portal"
+          "shadow_bolt"
         ]
+
       }
     ],
+    "onSecondActorDeathBuff": {
+      "damageMultiplier": 1.5,
+      "durationTicks": 10,
+      "message": "Malvestian Doomhoof enrages with Hateful Tears!"
+    },
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 4000,
     "dialog": {
-      "intro": [],
-      "defeat": ["Malvestian Doomhoof collapses. The portal closes behind him."],
-      "victory": ["Victory."]
+      "intro": ["Malvestian Doomhoof greets you with a devilish grin!"],
+      "defeat": ["Malvestian Doomhoof collapses in a heap of theatrical nonsense. The portal closes behind him."],
+      "victory": ["Your corpses will feed the portal."]
     },
     "sounds": { "intro": "", "attack": "", "hit": "", "defeat": "", "victory": "" }
   },
   "secondActor": {
     "id": "kilwretch",
     "name": "Kil'wretch",
-    "spriteKey": null,
+    "spriteKey": "kilwretch_idle",
+    "portalKey": "malvestian_portal",
+    "redirectsPlayerDamage": true,
     "spriteScale": 2.5,
     "stats": {
-      "health": 80000,
-      "maxHealth": 80000,
+      "health": 150000,
+      "maxHealth": 150000,
       "mana": 0,
       "maxMana": 0,
       "usesMana": false,
-      "damageRange": [1000, 3000],
+      "damageRange": [2000, 3000],
       "attackSpeed": 2,
       "armor": 8000,
       "attackHitChance": 90,
@@ -66,10 +74,24 @@
         "holy": 0, "shadow": 0, "arcane": 0
       }
     },
-    "spawnTrigger": { "type": "health_percent", "value": 100 },
-    "resummoned": true,
-    "resummonCooldownTicks": 30,
+    "spawnTrigger": { "type": "manual" },
     "abilityIds": ["amplify_hatred", "fire_jolt"],
+    "animations": {
+      "idle": {
+        "key": "kilwretch_idle",
+        "startFrame": 0,
+        "endFrame": 11,
+        "frameRate": 6,
+        "repeat": -1
+      },
+      "attacking": {
+        "key": "kilwretch_attacking",
+        "startFrame": 0,
+        "endFrame": 11,
+        "frameRate": 12,
+        "repeat": 0
+      }
+    },
     "dialogue": {
       "intro": ["Kil'wretch crawls through the fel portal!"]
     }
@@ -82,46 +104,44 @@
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
       "immediateMin": 3000,
-      "immediateMax": 3000,
+      "immediateMax": 5000,
       "duration": 0,
-      "recastTimer": 8,
+      "recastTimer": 5,
       "targetType": "highest_threat",
-      "dialogue": "Shadow Bolt!",
+      "dialogue": null,
       "audioDuration": 1500
     },
     "sacrifice": {
       "id": "sacrifice",
       "name": "Sacrifice",
       "damageType": "shadow",
-      "immediateFlag": true,
-      "immediateEffect": { "type": "damage" },
-      "immediateMin": 8000,
-      "immediateMax": 12000,
+      "immediateEffect": {
+        "type": "sacrifice",
+        "requiredDamage": 5000,
+        "durationTicks": 9
+      },
       "duration": 0,
-      "recastTimer": 30,
+      "recastTimer": 20,
+      "requiresPortalInactive": true,
+      "requiresSecondActorDead": true,
       "targetType": "random_ally",
-      "dialogue": "Malvestian marks a sacrifice!",
+      "dialogue": null,
       "audioDuration": 2000
     },
     "fiendish_portal": {
       "id": "fiendish_portal",
       "name": "Fiendish Portal",
-      "immediateFlag": false,
-      "recastTimer": 60,
-      "targetType": "self",
-      "applyBuff": {
-        "id": "auto_attack_bonus",
-        "bonusDamage": 0,
-        "durationTicks": 0
-      },
-      "dialogue": "A fel portal tears open, and Kil'wretch emerges!",
+      "immediateEffect": { "type": "summon_second_actor" },
+      "recastTimer": 45,
+      "requiresSecondActorDead": true,
+      "targetType": "boss_self",
+      "dialogue": "A fel portal tears open!",
       "audioDuration": 2000
     },
     "amplify_hatred": {
       "id": "amplify_hatred",
       "name": "Amplify Hatred",
-      "immediateFlag": false,
-      "recastTimer": 30,
+      "recastTimer": 15,
       "targetType": "random_ally",
       "applyDebuff": {
         "id": "fire_damage_increase",
@@ -130,7 +150,7 @@
         "dispellable": true,
         "dispelType": "magic"
       },
-      "dialogue": "Kil'wretch amplifies your hatred of fire!",
+      "dialogue": null,
       "audioDuration": 2000
     },
     "fire_jolt": {
@@ -139,12 +159,13 @@
       "damageType": "fire",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 1000,
-      "immediateMax": 2500,
+      "immediateMin": 2500,
+      "immediateMax": 3200,
       "duration": 0,
-      "recastTimer": 4,
+      "recastTimer": 2,
       "targetType": "random_ignore_threat",
-      "dialogue": "Kil'wretch spits fire!",
+      "playAttackAnim": true,
+      "dialogue": null,
       "audioDuration": 1500
     }
   }

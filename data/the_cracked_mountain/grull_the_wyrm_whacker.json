@@ -7,7 +7,7 @@
   },
   "assets": {
     "background": {
-      "key": "bg_encounter_grull_the_wyrm_whacker",
+      "key": "bg_grull_the_wyrm_whacker",
       "path": "assets/raids/the_cracked_mountain/backgrounds/bg_grull_the_wyrm_whacker.webp"
     },
     "spritesheets": [
@@ -20,12 +20,6 @@
       {
         "key": "grull_the_wyrm_whacker_attacking",
         "path": "assets/raids/the_cracked_mountain/bosses/grull_the_wyrm_whacker/grull_the_wyrm_whacker_attacking.webp",
-        "frameWidth": 256,
-        "frameHeight": 256
-      },
-      {
-        "key": "grull_the_wyrm_whacker_defeated",
-        "path": "assets/raids/the_cracked_mountain/bosses/grull_the_wyrm_whacker/grull_the_wyrm_whacker_defeated.webp",
         "frameWidth": 256,
         "frameHeight": 256
       }
@@ -110,13 +104,6 @@
         "startFrame": 0,
         "endFrame": 15,
         "frameRate": 12,
-        "repeat": 0
-      },
-      "defeated": {
-        "key": "grull_the_wyrm_whacker_defeated",
-        "startFrame": 0,
-        "endFrame": 15,
-        "frameRate": 10,
         "repeat": 0
       }
     }

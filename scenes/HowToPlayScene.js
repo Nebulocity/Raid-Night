@@ -1,16 +1,24 @@
-/**
- * HowToPlayScene.js
- *
- * Shows the full ability list for each party member.
- * Three tabs: Shaman (player) | Paladin (tank) | Druid (healer).
- * Each tab displays full-width horizontal ability cards stacked vertically.
- *
- * borderColor: used for tab border and card border
- * textColor:   used for tab label and card stat line text
- */
 const Phaser = window.Phaser;
 
-const TABS = [
+const SILVER = 0xd0d0d0;
+
+const TAB_W   = 300;
+const TAB_H   = 130;
+const TAB_GAP = 24;
+
+const TAB_ROW_ONE_Y = 290;
+const TAB_ROW_TWO_Y = TAB_ROW_ONE_Y + TAB_H + TAB_GAP;
+
+const INSTRUCTIONS_TAB = {
+  key:         'instructions',
+  label:       'Instructions',
+  borderColor: SILVER,
+  textColor:   SILVER,
+};
+
+const INSTRUCTIONS_TAB_W = TAB_W * 3 + TAB_GAP * 2;
+
+const CHARACTER_TABS = [
   { key: 'shaman',  label: 'Shaman',  characterId: 'player', borderColor: 0x0000ff, textColor: 0x44ddbb },
   { key: 'paladin', label: 'Paladin', characterId: 'tank',   borderColor: 0xff88cc, textColor: 0xff88cc },
   { key: 'druid',   label: 'Druid',   characterId: 'healer', borderColor: 0xa0ff69, textColor: 0xa0ff69 },
@@ -19,13 +27,32 @@ const TABS = [
 const CARD_MARGIN  = 30;
 const CARD_H       = 230;
 const CARD_GAP_Y   = 24;
-const GRID_START_Y = 490;
+const GRID_START_Y = TAB_ROW_TWO_Y + TAB_H / 2 + 60;
 const ICON_SIZE    = 110;
 const CARD_PAD_X   = 28;
 
-const TAB_W = 300;
-const TAB_H = 130;
-const TAB_Y = 290;
+const INSTRUCTION_CARDS = [
+  {
+    title: 'The Goal',
+    body:  'Defeat all bosses in the raid before your party is wiped out. Some bosses require others to be defeated before they become available..',
+  },
+  {
+    title: 'Abilities',
+    body:  'Press and hold an ability for 3 seconds to see a description of that ability.',
+  },
+  {
+    title: 'Mana',
+    body:  'Characters regenerate 3% of their total mana every 2 seconds after 5 seconds of not using an ability or spell.',
+  },
+  {
+    title: 'Cooldowns',
+    body:  'Powerful abilities have cooldowns shown on the ability card. Plan around them to avoid gaps in your rotation.',
+  },
+  {
+    title: 'Raid Wipe Tokens',
+    body:  'When your party is defeated you spend one Raid Wipe Token to try again. When you run out of tokens, the raid is over.',
+  },
+];
 
 export default class HowToPlayScene extends Phaser.Scene {
   constructor() {
@@ -42,6 +69,7 @@ export default class HowToPlayScene extends Phaser.Scene {
   }
 
   create() {
+    const { FONTS } = window.GAME_CONFIG;
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
 
     this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000);
@@ -50,8 +78,7 @@ export default class HowToPlayScene extends Phaser.Scene {
       .setTint(0x555555);
 
     this.add.text(WIDTH / 2, 90, 'How to Play', {
-      fontFamily:      'monospace',
-      font:            'Menlo',
+      fontFamily:      FONTS.DECORATIVE,
       fontSize:        '80px',
       color:           '#fff1c7',
       stroke:          '#000000',
@@ -69,25 +96,65 @@ export default class HowToPlayScene extends Phaser.Scene {
     this._buildAllCards(WIDTH);
     this._buildBackButton(WIDTH, HEIGHT);
 
-    this._switchTab(TABS[0].key);
+    this._switchTab(INSTRUCTIONS_TAB.key);
   }
 
-  // ===========
-  // Tabs
-  // ===========
-  _buildTabs(WIDTH) {
-    const total  = TABS.length;
-    const startX = WIDTH / 2 - (total * TAB_W + (total - 1) * 24) / 2 + TAB_W / 2;
+  // ==================
+  // Tab building
+  // ==================
 
-    TABS.forEach((tab, i) => {
-      const tx = startX + i * (TAB_W + 24);
+  _buildTabs(width) {
+    this._buildInstructionsTab(width);
+    this._buildCharacterTabs(width);
+  }
 
-      const bg = this.add.rectangle(tx, TAB_Y, TAB_W, TAB_H, 0x111111)
+  _buildInstructionsTab(width) {
+    const { FONTS } = window.GAME_CONFIG;
+    const tx = width / 2;
+
+    const bg = this.add.rectangle(tx, TAB_ROW_ONE_Y, INSTRUCTIONS_TAB_W, TAB_H, 0x111111)
+      .setStrokeStyle(3, INSTRUCTIONS_TAB.borderColor, 0.9)
+      .setInteractive({ useHandCursor: true });
+
+    const silverHex = '#' + INSTRUCTIONS_TAB.textColor.toString(16).padStart(6, '0');
+
+    const label = this.add.text(tx, TAB_ROW_ONE_Y, INSTRUCTIONS_TAB.label, {
+      fontFamily:      FONTS.DECORATIVE,
+      fontSize:        '54px',
+      color:           silverHex,
+      stroke:          '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0.5);
+
+    bg.on('pointerdown', () => this._switchTab(INSTRUCTIONS_TAB.key));
+    bg.on('pointerover', () => bg.setFillStyle(0x1a0e2a));
+    bg.on('pointerout',  () => {
+      bg.setFillStyle(this._activeTab === INSTRUCTIONS_TAB.key ? 0x1a1a2e : 0x111111);
+    });
+
+    this._tabButtons.push({
+      key:         INSTRUCTIONS_TAB.key,
+      bg,
+      label,
+      borderColor: INSTRUCTIONS_TAB.borderColor,
+    });
+  }
+
+  _buildCharacterTabs(width) {
+    const { FONTS } = window.GAME_CONFIG;
+    const tabCount = CHARACTER_TABS.length;
+    const rowTotalWidth = tabCount * TAB_W + (tabCount - 1) * TAB_GAP;
+    const startX = width / 2 - rowTotalWidth / 2 + TAB_W / 2;
+
+    CHARACTER_TABS.forEach((tab, i) => {
+      const tx = startX + i * (TAB_W + TAB_GAP);
+
+      const bg = this.add.rectangle(tx, TAB_ROW_TWO_Y, TAB_W, TAB_H, 0x111111)
         .setStrokeStyle(3, tab.borderColor, 0.9)
         .setInteractive({ useHandCursor: true });
 
-      const label = this.add.text(tx, TAB_Y, tab.label, {
-        fontFamily:      'monospace',
+      const label = this.add.text(tx, TAB_ROW_TWO_Y, tab.label, {
+        fontFamily:      FONTS.DECORATIVE,
         fontSize:        '54px',
         color:           '#' + tab.textColor.toString(16).padStart(6, '0'),
         stroke:          '#000000',
@@ -104,13 +171,16 @@ export default class HowToPlayScene extends Phaser.Scene {
     });
   }
 
-  // ===========
-  // Cards
-  // ===========
-  _buildAllCards(WIDTH) {
-    const cardW = WIDTH - CARD_MARGIN * 2;
+  // ==================
+  // Card building
+  // ==================
 
-    TABS.forEach(tab => {
+  _buildAllCards(width) {
+    const cardW = width - CARD_MARGIN * 2;
+
+    this._tabGroups[INSTRUCTIONS_TAB.key] = this._buildInstructionsGroup(width, cardW);
+
+    CHARACTER_TABS.forEach(tab => {
       const group      = this.add.group();
       const character  = this._characters[tab.characterId];
       const abilityIds = character?.abilityIds ?? [];
@@ -120,14 +190,61 @@ export default class HowToPlayScene extends Phaser.Scene {
         if (!ability) return;
 
         const cy = GRID_START_Y + index * (CARD_H + CARD_GAP_Y) + CARD_H / 2;
-        this._buildAbilityCard(WIDTH / 2, cy, cardW, ability, tab.borderColor, tab.textColor, group);
+        this._buildAbilityCard(width / 2, cy, cardW, ability, tab.borderColor, tab.textColor, group);
       });
 
       this._tabGroups[tab.key] = group;
     });
   }
 
+  _buildInstructionsGroup(width, cardW) {
+    const group = this.add.group();
+
+    INSTRUCTION_CARDS.forEach((card, index) => {
+      const cy = GRID_START_Y + index * (CARD_H + CARD_GAP_Y) + CARD_H / 2;
+      this._buildInstructionsCard(width / 2, cy, cardW, card.title, card.body, group);
+    });
+
+    return group;
+  }
+
+  _buildInstructionsCard(cx, cy, cardW, title, body, group) {
+    const { FONTS } = window.GAME_CONFIG;
+    const bg = this.add.rectangle(cx, cy, cardW, CARD_H, 0x0a0a18)
+      .setStrokeStyle(2, SILVER, 0.5);
+    group.add(bg);
+
+    const topY = cy - CARD_H / 2 + 24;
+
+    const titleText = this.add.text(cx - cardW / 2 + CARD_PAD_X, topY, title, {
+      fontFamily:      FONTS.DECORATIVE,
+      fontSize:        '54px',
+      color:           '#' + SILVER.toString(16).padStart(6, '0'),
+      stroke:          '#000000',
+      strokeThickness: 3,
+    }).setOrigin(0, 0);
+    group.add(titleText);
+
+    const bodyMaxW = cardW - CARD_PAD_X * 2;
+
+    const bodyText = this.add.text(
+      cx - cardW / 2 + CARD_PAD_X,
+      topY + titleText.height + 10,
+      body,
+      {
+        fontFamily:  FONTS.BASE,
+        fontSize:    '36px',
+        color:       '#cccccc',
+        wordWrap:    { width: bodyMaxW },
+        lineSpacing: 4,
+      }
+    ).setOrigin(0, 0);
+    group.add(bodyText);
+  }
+
   _buildAbilityCard(cx, cy, cardW, ability, borderColor, textColor, group) {
+    const { FONTS } = window.GAME_CONFIG;
+
     const bg = this.add.rectangle(cx, cy, cardW, CARD_H, 0x0a0a18)
       .setStrokeStyle(2, borderColor, 0.6);
     group.add(bg);
@@ -147,8 +264,8 @@ export default class HowToPlayScene extends Phaser.Scene {
     const topY     = cy - CARD_H / 2 + 20;
 
     const nameText = this.add.text(textX, topY, ability.name ?? ability.id, {
-      fontFamily:      'monospace',
-      fontSize:        '40px',
+      fontFamily:      FONTS.BASE,
+      fontSize:        '42px',
       color:           '#ffffff',
       stroke:          '#000000',
       strokeThickness: 3,
@@ -156,8 +273,8 @@ export default class HowToPlayScene extends Phaser.Scene {
     group.add(nameText);
 
     const descText = this.add.text(textX, topY + nameText.height + 10, ability.description ?? '', {
-      fontFamily:  'monospace',
-      fontSize:    '30px',
+      fontFamily:  FONTS.BASE,
+      fontSize:    '34px',
       color:       '#cccccc',
       wordWrap:    { width: textMaxW },
       lineSpacing: 4,
@@ -174,7 +291,7 @@ export default class HowToPlayScene extends Phaser.Scene {
       cy + CARD_H / 2 - 18,
       costLabel,
       {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.DECORATIVE,
         fontSize:   '32px',
         color:      '#' + textColor.toString(16).padStart(6, '0'),
       }
@@ -182,9 +299,10 @@ export default class HowToPlayScene extends Phaser.Scene {
     group.add(statText);
   }
 
-  // ===========
-  // Tab switch
-  // ===========
+  // ==================
+  // Tab switching
+  // ==================
+
   _switchTab(tabKey) {
     this._activeTab = tabKey;
 
@@ -199,13 +317,14 @@ export default class HowToPlayScene extends Phaser.Scene {
     });
   }
 
-  // ===========
+  // ==================
   // Back button
-  // ===========
+  // ==================
+
   _buildBackButton(WIDTH, HEIGHT) {
     const btn = this.add.text(85, HEIGHT * 0.96, '< BACK', {
-      fontFamily:      'monospace',
-      fontSize:        '56px',
+      fontFamily:      'Cinzel, serif',
+      fontSize:        '48px',
       color:           '#ccaa66',
       stroke:          '#000000',
       strokeThickness: 4,

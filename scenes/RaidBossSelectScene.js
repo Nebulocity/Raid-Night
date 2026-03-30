@@ -43,6 +43,8 @@ export default class RaidBossSelectScene extends Phaser.Scene {
   }
 
   create() {
+    const { FONTS } = window.GAME_CONFIG;
+
     const { WIDTH, HEIGHT } = window.GAME_CONFIG;
 
     const saveData       = loadSaveData();
@@ -61,7 +63,7 @@ export default class RaidBossSelectScene extends Phaser.Scene {
 
     // Raid name just above the background
     this.add.text(WIDTH / 2, bgTop - 48, raid.name, {
-      fontFamily:      'monospace',
+      fontFamily:      FONTS.DECORATIVE,
       fontSize:        '54px',
       color:           '#fff1c7',
       stroke:          '#000000',
@@ -70,7 +72,7 @@ export default class RaidBossSelectScene extends Phaser.Scene {
 
     // Blinking wipe token line
     const tokenText = this.add.text(WIDTH / 2, bgTop - 104, 'Raid Wipe Tokens Left: ' + saveData.raidWipeTokensLeft, {
-      fontFamily:      'monospace',
+      fontFamily:      FONTS.BASE,
       fontSize:        '34px',
       color:           '#f3e6c2',
       stroke:          '#000000',
@@ -196,6 +198,8 @@ export default class RaidBossSelectScene extends Phaser.Scene {
   }
 
   _drawBossButton(x, y, boss, raid, saveData, unlocked, defeated, buttonSize) {
+    const { FONTS } = window.GAME_CONFIG;
+
     const alpha     = (unlocked && !defeated) ? 1.0 : 0.35;
     const shortName = BOSS_SHORT_NAMES[boss.id] ?? boss.name;
 
@@ -210,7 +214,7 @@ export default class RaidBossSelectScene extends Phaser.Scene {
     const plateW      = buttonSize + 45;
 
     const nameText = this.add.text(0, -9999, shortName, {
-      fontFamily:      'monospace',
+      fontFamily:      FONTS.BASE,
       fontSize:        '32px',
       color:           (unlocked && !defeated) ? '#fff1c7' : '#555555',
       stroke:          '#000000',
@@ -332,11 +336,12 @@ export default class RaidBossSelectScene extends Phaser.Scene {
   }
 
   _drawBackButton() {
+    const { FONTS } = window.GAME_CONFIG;
     const { HEIGHT } = window.GAME_CONFIG;
 
     // Text-based back button - replace with sprite version later
     const btn = this.add.text(85, HEIGHT * 0.96, '< BACK', {
-      fontFamily:      'monospace',
+      fontFamily:      FONTS.BASE,
       fontSize:        '48px',
       color:           '#ccaa66',
       stroke:          '#000000',

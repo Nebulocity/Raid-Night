@@ -22,10 +22,12 @@ export default class GameScene extends Phaser.Scene {
   // init
   // ====
   init() {
-    this.levelData          = this.registry.get('levelData');
-    this.entitySlots        = {};
-    this.tickCount          = 0;
-    this.gameRunning        = false;
+    const { FONTS } = window.GAME_CONFIG;
+
+    this.levelData = this.registry.get('levelData');
+    this.entitySlots = {};
+    this.tickCount = 0;
+    this.gameRunning = false;
     // Tracks last cast timestamp per character for mana regen idle window
     this.lastCastTime = { player: 0, tank: 0, healer: 0 };
 
@@ -66,16 +68,18 @@ export default class GameScene extends Phaser.Scene {
     // Second actor state - populated if levelData.secondActor is present.
     // secondActorDamageTaken tracks total damage dealt to the primary boss
     // for damage_taken_percent spawn triggers.
-    this.secondActorSpawned      = false;
-    this.secondActorDamageTaken  = 0;
+    this.secondActorSpawned = false;
+    this.secondActorDamageTaken = 0;
     this.secondActorAbilityCooldowns = {};
+    this.portalSummonActive = false;
     this.secondActorAbilityLockoutUntil = 0;
     this.secondActorResummonCooldownUntil = 0;
+    this.activeSacrifice = null;
 
     // Boss cast state. Set when an ability with castTimeTicks > 0 begins.
     // Cleared on completion or interrupt.
-    this.bossIsCasting       = false;
-    this.bossCurrentCast     = null;
+    this.bossIsCasting = false;
+    this.bossCurrentCast = null;
     this.bossCurrentCastTimer = null;
 
     // When set, _tickBossAbilities fires this ability immediately on the next
@@ -90,6 +94,15 @@ export default class GameScene extends Phaser.Scene {
     // lifespanTimer, index }. Built dynamically as adds are spawned.
     this.summonedAddSlots = [];
 
+    // Cumulative count of how many times each add type has been summoned
+    // during this encounter. Keyed by addDef.id. Used for summons_count phase
+    // triggers (e.g. The Archivist phase 2 after 10 haunted tomes).
+    this.totalSummonsByAddId = {};
+
+    // Set of ability ids whose casts have fully completed this encounter.
+    // Used by cast_complete phase triggers.
+    this.completedCastAbilityIds = new Set();
+
     // Active boss buffs: { buffId: { ...params } }
     // Includes vanished, auto_attack_bonus, extra_auto_chance, enrage.
     this.bossBuffs = {};
@@ -103,23 +116,27 @@ export default class GameScene extends Phaser.Scene {
     // enteredPhaseIds: Set of phase ids whose onEnter events have already fired.
     // timeCycleStartTick: tick count when the most recent time_cycle phase began.
     // timeCycleActivePhaseId: which phase of a time_cycle pair is currently on.
-    this.currentPhaseId          = null;
-    this.enteredPhaseIds         = new Set();
-    this.timeCycleStartTick      = 0;
-    this.timeCycleActivePhaseId  = null;
+    this.currentPhaseId = null;
+    this.enteredPhaseIds = new Set();
+    this.timeCycleStartTick = 0;
+    this.timeCycleActivePhaseId = null;
 
     // Sequential encounter actor tracking.
     // Used when levelData.encounterActors is present (e.g. Sir Trotsalot).
     // currentEncounterActorIndex points to the active actor in that array.
     // firedEncounterSwapIndices prevents the swap trigger from re-firing.
-    this.currentEncounterActorIndex  = 0;
-    this.firedEncounterSwapIndices   = new Set();
-    this.encounterSwapInProgress     = false;
+    this.currentEncounterActorIndex = 0;
+    this.firedEncounterSwapIndices = new Set();
+    this.encounterSwapInProgress = false;
 
-    // Dialogue queue -- entries are played one at a time in arrival order.
-    // Each entry: { type: 'sequence'|'popup', ...args }
+    // Dialogue queue -- boss/NPC speech lines, played one at a time in arrival order.
     this.dialogueQueue = [];
-    this.dialogueBusy  = false;
+    this.dialogueBusy = false;
+
+    // Popup queue -- game-event notifications (sacrifice, enrage, death, etc.).
+    // Independent of dialogueQueue so game messages never block on boss speech.
+    this.popupQueue = [];
+    this.popupBusy = false;
 
     // Combat log -- append-only array of damage events from boss to characters.
     // Each entry: { tick, sourceName, abilityName, targetId, damage, damageType, targetHpAfter }
@@ -142,7 +159,7 @@ export default class GameScene extends Phaser.Scene {
     this._buildBossSlot(ZONES.BOSS);
     this._buildSecondActorSlot(ZONES.BOSS);
     this._buildPlayerSlot(ZONES.PLAYER);
-    this._buildCharacterSlot('tank',   ZONES.TANK, 0xff88cc, 'Tank', 'tank_idle', 'tank_idle');
+    this._buildCharacterSlot('tank', ZONES.TANK, 0xff88cc, 'Tank', 'tank_idle', 'tank_idle');
     this._buildCharacterSlot('healer', ZONES.HEALER, 0xa0ff69, 'Healer', 'healer_idle', 'healer_idle');
     this._buildTotemSlots(ZONES.TOTEMS);
 
@@ -155,7 +172,7 @@ export default class GameScene extends Phaser.Scene {
     // so no abilities can fire before the player sees the opening lines.
 
     // Audio uses HTML5 Audio (see main.js) -- no Web Audio unlock needed.
-    
+
     this.events.on('player-ability', this._onPlayerAbility, this);
     this.scene.get('UIScene').events.emit('game-ready', this.levelData);
 
@@ -169,7 +186,7 @@ export default class GameScene extends Phaser.Scene {
     // Initialize threat table - tank starts with high threat so
     // boss targets it by default before any combat actions occur.
     this._initThreatTable();
-    
+
     // Defer threat meter update until after slots are built
     this.time.delayedCall(100, () => this._updateThreatMeters());
 
@@ -210,18 +227,18 @@ export default class GameScene extends Phaser.Scene {
     // =====================
     // Sheet: 3x4 grid, 12 frames each 256x256 - all idle
     this._safeCreateAnim({
-      key:       'shaman_idle',
-      frames:    anims.generateFrameNumbers('shaman_idle', { start: 0, end: 10 }),
+      key: 'shaman_idle',
+      frames: anims.generateFrameNumbers('shaman_idle', { start: 0, end: 10 }),
       frameRate: 10,
-      repeat:    -1,
+      repeat: -1,
     }, 'shaman_idle');
 
     // Auto-attack: 1024x768, 4x3 = 11 frames (last row has 3), plays once
     this._safeCreateAnim({
-      key:       'shaman_attack',
-      frames:    anims.generateFrameNumbers('shaman_attack', { start: 0, end: 11 }),
+      key: 'shaman_attack',
+      frames: anims.generateFrameNumbers('shaman_attack', { start: 0, end: 11 }),
       frameRate: 10,
-      repeat:    0,
+      repeat: 0,
     }, 'shaman_attack');
 
     // this._safeCreateAnim({
@@ -240,18 +257,18 @@ export default class GameScene extends Phaser.Scene {
 
     // Casting: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
     this._safeCreateAnim({
-      key:       'shaman_casting',
-      frames:    anims.generateFrameNumbers('shaman_casting', { start: 0, end: 15 }),
+      key: 'shaman_casting',
+      frames: anims.generateFrameNumbers('shaman_casting', { start: 0, end: 15 }),
       frameRate: 12,
-      repeat:    0,
+      repeat: 0,
     }, 'shaman_casting');
 
     // Hit: 1024x768, 4x3 = 12 frames, plays once then returns to idle
     this._safeCreateAnim({
-      key:       'shaman_hit',
-      frames:    anims.generateFrameNumbers('shaman_hit', { start: 0, end: 11 }),
+      key: 'shaman_hit',
+      frames: anims.generateFrameNumbers('shaman_hit', { start: 0, end: 11 }),
       frameRate: 12,
-      repeat:    0,
+      repeat: 0,
     }, 'shaman_hit');
 
     // // Totem placement: 1024x768, 4x3 = 12 frames, plays once then returns to idle
@@ -267,42 +284,42 @@ export default class GameScene extends Phaser.Scene {
     // =====================
     // Idle: 1536x1024 sheet, 4 cols x 3 rows = 12 frames at 384x384
     this._safeCreateAnim({
-      key:       'tank_idle',
-      frames:    anims.generateFrameNumbers('tank_idle', { start: 0, end: 7 }),
+      key: 'tank_idle',
+      frames: anims.generateFrameNumbers('tank_idle', { start: 0, end: 7 }),
       frameRate: 8,
-      repeat:    -1,
+      repeat: -1,
     }, 'tank_idle');
-    
+
     // // Attack: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
     this._safeCreateAnim({
-      key:       'tank_attack',
-      frames:    anims.generateFrameNumbers('tank_attack', { start: 0, end: 15 }),
+      key: 'tank_attack',
+      frames: anims.generateFrameNumbers('tank_attack', { start: 0, end: 15 }),
       frameRate: 12,
-      repeat:    0,
+      repeat: 0,
     }, 'tank_attack');
 
     // // Hit: 1024x768, 4x3 = 12 frames, plays once then returns to idle
     this._safeCreateAnim({
-      key:       'tank_hit',
-      frames:    anims.generateFrameNumbers('tank_hit', { start: 0, end: 11 }),
+      key: 'tank_hit',
+      frames: anims.generateFrameNumbers('tank_hit', { start: 0, end: 11 }),
       frameRate: 12,
-      repeat:    0,
+      repeat: 0,
     }, 'tank_hit');
 
     // Judgement spell - uncomment when tank_judge.png is finalized
     this._safeCreateAnim({
-      key:       'tank_judge',
-      frames:    anims.generateFrameNumbers('tank_judge', { start: 0, end: 15 }),
+      key: 'tank_judge',
+      frames: anims.generateFrameNumbers('tank_judge', { start: 0, end: 15 }),
       frameRate: 12,
-      repeat:    0,
+      repeat: 0,
     }, 'tank_judge');
 
     // Consecration spell - uncomment when tank_consecrate.png is finalized
     this._safeCreateAnim({
-      key:       'tank_consecrate',
-      frames:    anims.generateFrameNumbers('tank_consecrate', { start: 0, end: 15 }),
+      key: 'tank_consecrate',
+      frames: anims.generateFrameNumbers('tank_consecrate', { start: 0, end: 15 }),
       frameRate: 8,
-      repeat:    0,
+      repeat: 0,
     }, 'tank_consecrate');
 
     // =====================
@@ -310,34 +327,34 @@ export default class GameScene extends Phaser.Scene {
     // =====================
     // Idle: 1024x768, 4x3 = 12 frames at 256x256
     this._safeCreateAnim({
-      key:       'healer_idle',
-      frames:    anims.generateFrameNumbers('healer_idle', { start: 0, end: 11 }),
+      key: 'healer_idle',
+      frames: anims.generateFrameNumbers('healer_idle', { start: 0, end: 11 }),
       frameRate: 10,
-      repeat:    -1,
+      repeat: -1,
     }, 'healer_idle');
 
     // Healer attack
     this._safeCreateAnim({
-      key:       'healer_attack',
-      frames:    anims.generateFrameNumbers('healer_attack', { start: 0, end: 15 }),
+      key: 'healer_attack',
+      frames: anims.generateFrameNumbers('healer_attack', { start: 0, end: 15 }),
       frameRate: 12,
-      repeat:    0,
+      repeat: 0,
     }, 'healer_attack');
 
     // Casting: 1024x768, 4x3 = 12 frames, plays once then returns to idle
     this._safeCreateAnim({
-      key:       'healer_casting',
-      frames:    anims.generateFrameNumbers('healer_casting', { start: 0, end: 11 }),
+      key: 'healer_casting',
+      frames: anims.generateFrameNumbers('healer_casting', { start: 0, end: 11 }),
       frameRate: 12,
-      repeat:    0,
+      repeat: 0,
     }, 'healer_casting');
 
     // // Hit: 1024x1024, 4x4 = 16 frames, plays once then returns to idle
     this._safeCreateAnim({
-      key:       'healer_hit',
-      frames:    anims.generateFrameNumbers('healer_hit', { start: 0, end: 15 }),
+      key: 'healer_hit',
+      frames: anims.generateFrameNumbers('healer_hit', { start: 0, end: 15 }),
       frameRate: 12,
-      repeat:    0,
+      repeat: 0,
     }, 'healer_hit');
 
     // =====================
@@ -363,27 +380,12 @@ export default class GameScene extends Phaser.Scene {
     // Character defeat sheets - always preloaded by PreloadScene
     ['shaman_defeated', 'healer_defeated', 'tank_defeated'].forEach(key => {
       this._safeCreateAnim({
-        key:       key,
-        frames:    anims.generateFrameNumbers(key, { start: 0, end: 15 }),
+        key: key,
+        frames: anims.generateFrameNumbers(key, { start: 0, end: 15 }),
         frameRate: 10,
-        repeat:    0,
+        repeat: 0,
       }, key);
     });
-
-    // Boss defeated animation - key is injected by BossLoadingScene from the catalog.
-    // Each boss has its own defeated spritesheet so we register it here from levelData.
-    const bossDefeatedAnim = this.levelData?.boss?.animations?.defeated;
-    if (bossDefeatedAnim?.key && this.textures.exists(bossDefeatedAnim.key)) {
-      this._safeCreateAnim({
-        key:       bossDefeatedAnim.key,
-        frames:    anims.generateFrameNumbers(bossDefeatedAnim.key, {
-          start: bossDefeatedAnim.startFrame ?? 0,
-          end:   bossDefeatedAnim.endFrame   ?? 15,
-        }),
-        frameRate: bossDefeatedAnim.frameRate ?? 10,
-        repeat:    0,
-      }, bossDefeatedAnim.key);
-    }
 
     // =====================
     // BOSS ANIMATIONS
@@ -396,14 +398,14 @@ export default class GameScene extends Phaser.Scene {
       Object.entries(bossData.animations).forEach(([animName, def]) => {
         const animKey = bossData.id + '_' + animName;
         this._safeCreateAnim({
-          key:       animKey,
-          frames:    anims.generateFrameNumbers(def.key, {
+          key: animKey,
+          frames: anims.generateFrameNumbers(def.key, {
             start: def.startFrame,
-            end:   def.endFrame,
+            end: def.endFrame,
           }),
           frameRate: def.frameRate,
-          repeat:    def.repeat,
-          yoyo:      def.yoyo || false,
+          repeat: def.repeat,
+          yoyo: def.yoyo || false,
         }, def.key);
       });
     }
@@ -420,14 +422,14 @@ export default class GameScene extends Phaser.Scene {
         Object.entries(actorData.animations).forEach(([animName, def]) => {
           const animKey = actorData.id + '_' + animName;
           this._safeCreateAnim({
-            key:       animKey,
-            frames:    anims.generateFrameNumbers(def.key, {
+            key: animKey,
+            frames: anims.generateFrameNumbers(def.key, {
               start: def.startFrame,
-              end:   def.endFrame,
+              end: def.endFrame,
             }),
             frameRate: def.frameRate,
-            repeat:    def.repeat,
-            yoyo:      def.yoyo || false,
+            repeat: def.repeat,
+            yoyo: def.yoyo || false,
           }, def.key);
         });
       });
@@ -443,16 +445,28 @@ export default class GameScene extends Phaser.Scene {
       Object.entries(secondActorData.animations).forEach(([animName, def]) => {
         const animKey = secondActorData.id + '_' + animName;
         this._safeCreateAnim({
-          key:       animKey,
-          frames:    anims.generateFrameNumbers(def.key, {
+          key: animKey,
+          frames: anims.generateFrameNumbers(def.key, {
             start: def.startFrame,
-            end:   def.endFrame,
+            end: def.endFrame,
           }),
           frameRate: def.frameRate,
-          repeat:    def.repeat,
-          yoyo:      def.yoyo || false,
+          repeat: def.repeat,
+          yoyo: def.yoyo || false,
         }, def.key);
       });
+    }
+
+    // If the second actor has a portal sprite, register its looping animation.
+    // The animation key matches the texture key (e.g. 'malvestian_portal').
+    const portalKey = secondActorData?.portalKey;
+    if (portalKey) {
+      this._safeCreateAnim({
+        key: portalKey,
+        frames: anims.generateFrameNumbers(portalKey, { start: 0, end: 11 }),
+        frameRate: 8,
+        repeat: -1,
+      }, portalKey);
     }
   }
 
@@ -481,13 +495,13 @@ export default class GameScene extends Phaser.Scene {
 
   _drawDebugZones(ZONES) {
     const zoneStyles = {
-      BOSS:       { color: 0xff4444, label: 'BOSS ZONE',   labelColor: '#ff6666' },
-      TANK:       { color: 0xff88cc, label: 'TANK ZONE',   labelColor: '#FF88CC' },
-      HEALER:     { color: 0xa0ff69, label: 'HEALER ZONE', labelColor: '#A0FF69' },
-      PLAYER:     { color: 0x44ddbb, label: 'PLAYER ZONE', labelColor: '#66ffdd' },
-      TOTEMS:     { color: 0x88cc44, label: 'TOTEM ZONE',  labelColor: '#aabb66' },
-      POPUP:      { color: 0x888888, label: 'POPUP ZONE',  labelColor: '#aaaaaa' },
-      ACTION_BAR: { color: 0x888888, label: 'ACTION BAR',  labelColor: '#aaaaaa' },
+      BOSS: { color: 0xff4444, label: 'BOSS ZONE', labelColor: '#ff6666' },
+      TANK: { color: 0xff88cc, label: 'TANK ZONE', labelColor: '#FF88CC' },
+      HEALER: { color: 0xa0ff69, label: 'HEALER ZONE', labelColor: '#A0FF69' },
+      PLAYER: { color: 0x44ddbb, label: 'PLAYER ZONE', labelColor: '#66ffdd' },
+      TOTEMS: { color: 0x88cc44, label: 'TOTEM ZONE', labelColor: '#aabb66' },
+      POPUP: { color: 0x888888, label: 'POPUP ZONE', labelColor: '#aaaaaa' },
+      ACTION_BAR: { color: 0x888888, label: 'ACTION BAR', labelColor: '#aaaaaa' },
     };
 
     Object.entries(ZONES).forEach(([key, zone]) => {
@@ -506,32 +520,38 @@ export default class GameScene extends Phaser.Scene {
   // =========
   _buildBossSlot(zone) {
     const encounterActors = this.levelData?.encounterActors;
-    const bossData        = encounterActors?.[0] ?? this.levelData?.boss;
-    const spriteKey       = bossData?.spriteKey;
-    const idleAnimKey     = bossData ? bossData.id + '_idle' : 'default_idle';
-    const hasSecondActor = !!this.levelData?.secondActor;
+    const bossData = encounterActors?.[0] ?? this.levelData?.boss;
+    const spriteKey = bossData?.spriteKey;
+    const idleAnimKey = bossData ? bossData.id + '_idle' : 'default_idle';
+    const secondActorData = this.levelData?.secondActor;
+    // "hasSecondActor" means the second actor is ON SCREEN from the very start.
+    // If the second actor has a spawnTrigger it starts hidden, so the boss gets
+    // the full solo layout and shifts over later when the second actor appears.
+    const secondActorStartsHidden = !!secondActorData?.spawnTrigger;
+    const hasSecondActor = !!secondActorData && !secondActorStartsHidden;
 
-    // When sharing the screen with a second actor, Mortimer moves to the left
-    // half at a smaller scale. When solo he stays centered at full scale.
-    const cx          = hasSecondActor ? 270  : ((zone.x + zone.w / 2) + 160);
-    const cy          = (zone.y + zone.h / 2) + 200;
-    const spriteScale = hasSecondActor ? 2.0  : (bossData?.spriteScale || 3);
-    const barW        = hasSecondActor ? 460  : 600;
-    const fontSize    = hasSecondActor ? '38px' : '46px';
+    // When sharing the screen with a second actor from the start, the boss sits
+    // on the left half at a smaller scale. Solo = centered at full scale.
+    const sharedCx = 270;
+    const cx = hasSecondActor ? sharedCx : ((zone.x + zone.w / 2) + 160);
+    const cy = (zone.y + zone.h / 2) + 200;
+    const spriteScale = hasSecondActor ? 2.0 : (bossData?.spriteScale || 3);
+    const barW = hasSecondActor ? 460 : 600;
+    const fontSize = hasSecondActor ? '38px' : '46px';
 
     // Nameplate sits just above the HP bar which sits just above the sprite
     const nameY = hasSecondActor ? (zone.y + 80) : (zone.y + zone.h - 550);
 
     const nameText = this.add.text(cx, nameY, bossData?.name || '???', {
-      fontFamily: 'monospace', fontSize, color: '#ff6644',
+      fontFamily: 'Cinzel Decorative, serif', fontSize, color: '#ff6644',
     }).setOrigin(0.5, 1);
 
     nameText.updateText();
 
-    const padding  = 16;
-    const textW    = nameText.width + padding * 2;
-    const textH    = nameText.height + padding;
-    const panelY   = nameText.y - nameText.height / 2 - padding / 4;
+    const padding = 16;
+    const textW = nameText.width + padding * 2;
+    const textH = nameText.height + padding;
+    const panelY = nameText.y - nameText.height / 2 - padding / 4;
 
     const titlePanel = this.add.rectangle(cx, panelY, textW, textH, 0x000000)
       .setAlpha(0.65)
@@ -552,31 +572,37 @@ export default class GameScene extends Phaser.Scene {
 
     bossSprite.setAlpha(0).setY(cy - 120);
     this.tweens.add({
-      targets:  bossSprite,
-      alpha:    1,
-      y:        cy,
+      targets: bossSprite,
+      alpha: 1,
+      y: cy,
       duration: 1400,
-      ease:     'Back.easeOut',
-      delay:    500,
+      ease: 'Back.easeOut',
+      delay: 500,
     });
 
-    this.entitySlots.boss = { sprite: bossSprite, nameText, titlePanel, hpBar };
+    this.entitySlots.boss = {
+      sprite: bossSprite, nameText, titlePanel, hpBar,
+      // Non-null only when the boss starts solo but gains a second actor later.
+      // Used by _shiftBossToSharedLayout() to know where/how to move the sprite.
+      sharedCx:    secondActorStartsHidden ? sharedCx : null,
+      sharedScale: secondActorStartsHidden ? 2.0 : null,
+    };
   }
 
   // =================
   // Second actor slot
   // =================
   // Placed on the right half of the screen (cx=810) at a smaller scale.
-  // The second actor has no HP bar and is not a damage target -- they are
-  // a persistent nuisance for the duration of the encounter.
+  // If the actor has redirectsPlayerDamage=true, a nameplate and HP bar are
+  // built for it so players can track its health as they wail on it.
   // Sprite renders at depth 2 so it always appears in front of the primary boss.
   _buildSecondActorSlot(zone) {
     const actorData = this.levelData?.secondActor;
     if (!actorData) return;
 
-    const cx          = 810;
-    const cy          = (zone.y + zone.h / 2) + 200;
-    const spriteKey   = actorData.spriteKey ?? null;
+    const cx = 810;
+    const cy = (zone.y + zone.h / 2) + 200;
+    const spriteKey = actorData.spriteKey ?? null;
     const spriteScale = actorData.spriteScale ?? 2.0;
     const idleAnimKey = actorData.id + '_idle';
 
@@ -585,20 +611,65 @@ export default class GameScene extends Phaser.Scene {
       sprite = this.add.sprite(cx, cy, spriteKey, 0)
         .setScale(spriteScale)
         .setOrigin(0.5, 0.5)
-        .setDepth(1);
+        .setDepth(2);
 
       if (this.anims.exists(idleAnimKey)) {
         sprite.play(idleAnimKey);
       }
     }
 
+    // If the actor has a portal key, create a hidden portal sprite at the same
+    // position. It will be revealed by _fadeInWithPixelate when the portal opens.
+    let portalSprite = null;
+    const portalKey = actorData.portalKey ?? null;
+    if (portalKey && this.textures.exists(portalKey)) {
+      portalSprite = this.add.sprite(cx, cy, portalKey, 0)
+        .setScale(spriteScale)
+        .setOrigin(0.5, 0.5)
+        .setDepth(1)
+        .setAlpha(0);
+      if (this.anims.exists(portalKey)) {
+        portalSprite.play(portalKey);
+      }
+    }
+
+    // Build a nameplate and HP bar if this actor soaks all player damage.
+    // Everything starts hidden (alpha=0) and is shown by _setSecondActorVisible.
+    let nameText = null;
+    let titlePanel = null;
+    let hpBar = null;
+    if (actorData.redirectsPlayerDamage) {
+      const nameplateY = zone.y + 80;
+      const barW = 380;
+
+      nameText = this.add.text(cx, nameplateY, actorData.name || '???', {
+        fontFamily: 'Cinzel Decorative, serif',
+        fontSize: '34px',
+        color: '#ff9966',
+      }).setOrigin(0.5, 1).setAlpha(0).setDepth(1);
+
+      const padding = 14;
+      titlePanel = this.add.rectangle(
+        cx, nameplateY - nameText.height / 2 - padding / 4,
+        nameText.width + padding * 2, nameText.height + padding,
+        0x000000
+      ).setAlpha(0).setStrokeStyle(2, 0x993300, 1.0).setOrigin(0.5, 0.5);
+
+      hpBar = this._buildBossHealthBar(cx, nameplateY + 36, barW, 36, 0xff3300);
+      hpBar.maxValue = actorData.stats?.maxHealth ?? 1;
+      hpBar.track?.setAlpha(0);
+      hpBar.fill?.setAlpha(0);
+      hpBar.valueText?.setAlpha(0);
+    }
+
     this.entitySlots.secondActor = {
       sprite,
-      nameText:    null,
-      titlePanel:  null,
-      hpBar:       null,
+      portalSprite,
+      nameText,
+      titlePanel,
+      hpBar,
       currentHealth: actorData.stats?.maxHealth ?? 0,
-      nuisance:    !!actorData.nuisance,
+      nuisance: !!actorData.nuisance,
       _data: actorData,
     };
   }
@@ -615,18 +686,18 @@ export default class GameScene extends Phaser.Scene {
       if (visible) {
         slot.sprite.setAlpha(0).setY(slot.sprite.y - 80);
         this.tweens.add({
-          targets:  slot.sprite,
-          alpha:    1,
-          y:        slot.sprite.y + 80,
+          targets: slot.sprite,
+          alpha: 1,
+          y: slot.sprite.y + 80,
           duration: 900,
-          ease:     'Back.easeOut',
+          ease: 'Back.easeOut',
         });
       } else {
         slot.sprite.setAlpha(0);
       }
     }
 
-    if (slot.nameText)  slot.nameText.setAlpha(alpha);
+    if (slot.nameText) slot.nameText.setAlpha(alpha);
     if (slot.titlePanel) slot.titlePanel.setAlpha(alpha);
     if (slot.hpBar) {
       slot.hpBar.track?.setAlpha(alpha);
@@ -634,6 +705,50 @@ export default class GameScene extends Phaser.Scene {
       slot.hpBar.valueText?.setAlpha(alpha);
     }
   }
+
+  // Fades a sprite in from fully transparent over the given duration (ms).
+  // If the renderer supports postFX (WebGL), also animates a pixelate effect
+  // from blocky to sharp, giving a "materializing" look. Falls back gracefully
+  // in canvas mode -- you just get a plain alpha fade. No big deal.
+  _fadeInWithPixelate(sprite, duration) {
+    sprite.setAlpha(0);
+    this.tweens.add({ targets: sprite, alpha: 1, duration, ease: 'Sine.easeOut' });
+
+    if (sprite.postFX) {
+      const PIXEL_START = 48;
+      const pixFX = sprite.postFX.addPixelate(PIXEL_START);
+      this.tweens.addCounter({
+        from: PIXEL_START,
+        to: 0,
+        duration,
+        ease: 'Sine.easeOut',
+        onUpdate: (tween) => { pixFX.amount = Math.round(tween.getValue()); },
+        onComplete: () => { sprite.postFX.remove(pixFX); },
+      });
+    }
+  }
+
+  // Slides the boss sprite from its solo center position to the left-side shared
+  // position when a second actor appears mid-fight. Only fires once -- the stored
+  // sharedCx/sharedScale values are cleared after use so it can't run again.
+  _shiftBossToSharedLayout() {
+    const slot = this.entitySlots.boss;
+    if (!slot?.sprite || slot.sharedCx == null) return;
+
+    const newCx    = slot.sharedCx;
+    const newScale = slot.sharedScale ?? 2.0;
+
+    this.tweens.add({
+      targets:  slot.sprite,
+      x:        newCx,
+      duration: 1200,
+      ease:     'Sine.easeInOut',
+    });
+
+    slot.sharedCx    = null;
+    slot.sharedScale = null;
+  }
+
   _buildPlayerSlot(zone) {
     const cx = zone.x + zone.w / 2;
     const cy = zone.y + zone.h - 60;
@@ -660,21 +775,21 @@ export default class GameScene extends Phaser.Scene {
     namePanel.strokeRect(zone.x - 10, zone.y + 480, namePanelW, namePanelH);
 
     // const nameText = this.add.text(cx, zone.y + 80, "Earth Mother's Favorite", {
-    //   fontFamily: 'monospace', fontSize: '32px', color: '#44ddbb',
+    //   fontFamily: 'Cinzel, serif', fontSize: '32px', color: '#44ddbb',
     // }).setOrigin(0.5, 0.5).setAlpha(0.9).setVisible(true);
 
     const nameText = this.add.text(cx, zone.y + 492, 'Earth Mother\'s Favorite', {
-      fontFamily: 'monospace', fontSize: '32px',
+      fontFamily: 'Cinzel, serif', fontSize: '32px',
       color: '#44ddbb',
     }).setOrigin(0.5, 0).setAlpha(0.9);
 
-    const hpBar      = this._buildHealthBar(cx + 5, zone.y + 565, zone.w + 31, 40, 0x44ddbb);
-    const manaBar    = this._buildManaBar(cx + 5, zone.y + 605, zone.w + 31, 25, 14);
-    const threatBar  = this._buildThreatBar(cx + 5, zone.y + 640, zone.w + 31, 18);
+    const hpBar = this._buildHealthBar(cx + 5, zone.y + 565, zone.w + 31, 40, 0x44ddbb);
+    const manaBar = this._buildManaBar(cx + 5, zone.y + 605, zone.w + 31, 25, 14);
+    const threatBar = this._buildThreatBar(cx + 5, zone.y + 640, zone.w + 31, 18);
 
     // Threat label
     this.add.text(cx - (zone.w + 31) / 2 + 5, zone.y + 640, 'THREAT', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#884400',
+      fontFamily: 'Cinzel, serif', fontSize: '14px', color: '#884400',
     }).setOrigin(0, 0.5);
 
     this.entitySlots.player = { sprite, nameText, hpBar, manaBar, threatBar };
@@ -717,17 +832,17 @@ export default class GameScene extends Phaser.Scene {
     namePanel.strokeRect(zone.x - 10, zone.y + 480, namePanelW, namePanelH);
 
     const nameText = this.add.text(cx, zone.y + 492, label, {
-      fontFamily: 'monospace', fontSize: '32px',
+      fontFamily: 'Cinzel, serif', fontSize: '32px',
       color: '#' + tintColor.toString(16).padStart(6, '0'),
     }).setOrigin(0.5, 0).setAlpha(0.9);
 
-    const hpBar     = this._buildHealthBar(cx + 5, zone.y + 565, zone.w + 31, 40, tintColor);
-    const manaBar   = this._buildManaBar(cx + 5, zone.y + 605, zone.w + 31, 25, 14);
+    const hpBar = this._buildHealthBar(cx + 5, zone.y + 565, zone.w + 31, 40, tintColor);
+    const manaBar = this._buildManaBar(cx + 5, zone.y + 605, zone.w + 31, 25, 14);
     const threatBar = this._buildThreatBar(cx + 5, zone.y + 640, zone.w + 31, 18);
 
     // Threat label
     this.add.text(cx - (zone.w + 31) / 2 + 5, zone.y + 640, 'THREAT', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#884400',
+      fontFamily: 'Cinzel, serif', fontSize: '14px', color: '#884400',
     }).setOrigin(0, 0.5);
 
     sprite.setAlpha(0);
@@ -749,11 +864,11 @@ export default class GameScene extends Phaser.Scene {
   // Totem slots
   // ===========
   _buildTotemSlots(zone) {
-    
+
     // "TOTEMS" title panel at the top of the zone
     const panelW = 430;
     const panelH = 60;
-    const cx     = zone.x + zone.w / 2;
+    const cx = zone.x + zone.w / 2;
     const panelY = zone.y + 10;
 
     const titlePanel = this.add.graphics();
@@ -763,16 +878,16 @@ export default class GameScene extends Phaser.Scene {
     titlePanel.strokeRect(cx - panelW / 2, panelY + 470, panelW, panelH);
 
     this.add.text(cx - (panelW / 2) + 210, panelY + 500, 'TOTEMS', {
-      fontFamily: 'monospace',
-      fontSize:   '32px',
-      color:      '#BBC985',
-      stroke:     '#000000',
+      fontFamily: 'Cinzel, serif',
+      fontSize: '32px',
+      color: '#BBC985',
+      stroke: '#000000',
       strokeThickness: 3,
     }).setOrigin(0.5, 0.5);
 
-    const elements  = ['earth', 'fire', 'water', 'air'];
+    const elements = ['earth', 'fire', 'water', 'air'];
     const totemKeys = ['totem_earth', 'totem_fire', 'totem_water', 'totem_air'];
-    const slotW     = zone.w / 4;
+    const slotW = zone.w / 4;
     const totemScale = (slotW * 0.85) / 512;
 
     this.entitySlots.totems = {};
@@ -785,7 +900,7 @@ export default class GameScene extends Phaser.Scene {
       //   .setStrokeStyle(1, 0x554422, 0.6);
 
       const slotLabel = this.add.text(sx, zone.y + zone.h - 125, element.toUpperCase(), {
-        fontFamily: 'monospace', fontSize: '24px', color: '#ffffff',
+        fontFamily: 'Cinzel, serif', fontSize: '24px', color: '#ffffff',
       }).setOrigin(0.5, 1).setAlpha(0.6);
 
       const totemSprite = this.add.sprite(sx, sy, totemKeys[i], 0)
@@ -829,7 +944,7 @@ export default class GameScene extends Phaser.Scene {
     // Do not interrupt a cast already in progress
     const current = playerSlot.sprite.anims.currentAnim;
     if (current && current.key !== 'shaman_idle' && current.key !== 'shaman_attack'
-        && playerSlot.sprite.anims.isPlaying) return;
+      && playerSlot.sprite.anims.isPlaying) return;
 
     if (this.anims.exists('shaman_totem')) {
       playerSlot.sprite.play('shaman_totem');
@@ -859,7 +974,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     if (data.secondActor && this.entitySlots.secondActor) {
-      const slot      = this.entitySlots.secondActor;
+      const slot = this.entitySlots.secondActor;
       const actorData = data.secondActor;
       if (slot.nameText) slot.nameText.setText(actorData.name || '???');
       if (slot.hpBar) slot.hpBar.maxValue = actorData.stats?.maxHealth ?? 0;
@@ -880,15 +995,15 @@ export default class GameScene extends Phaser.Scene {
 
     ['tank', 'healer', 'player'].forEach(id => {
       const charData = data.characters?.[id];
-      const slot     = this.entitySlots[id];
+      const slot = this.entitySlots[id];
       if (!charData || !slot) return;
       slot.nameText.setText(charData.name || id.toUpperCase());
       // Stamp maxValue onto bars from JSON stats
-      if (slot.hpBar)   slot.hpBar.maxValue   = charData.stats?.maxHealth ?? 0;
-      if (slot.manaBar) slot.manaBar.maxValue  = charData.stats?.maxMana   ?? 0;
+      if (slot.hpBar) slot.hpBar.maxValue = charData.stats?.maxHealth ?? 0;
+      if (slot.manaBar) slot.manaBar.maxValue = charData.stats?.maxMana ?? 0;
       // Track live health/mana values on the slot itself
       slot.currentHealth = charData.stats?.maxHealth ?? 0;
-      slot.currentMana   = charData.stats?.maxMana   ?? 0;
+      slot.currentMana = charData.stats?.maxMana ?? 0;
       this._setHealthBar(slot.hpBar, 1.0);
       if (slot.manaBar) this._setManaBar(slot.manaBar, 1.0);
       slot._data = charData;
@@ -905,14 +1020,14 @@ export default class GameScene extends Phaser.Scene {
     const track = this.add.rectangle(cx, cy, width, height, 0x111111)
       .setStrokeStyle(1, 0x333333, 0.8);
 
-    const fill  = this.add.rectangle(cx - width / 2, cy, width, height, color)
+    const fill = this.add.rectangle(cx - width / 2, cy, width, height, color)
       .setOrigin(0, 0.5);
 
     const valueText = this.add.text(cx, cy, '', {
-      fontFamily: 'monospace',
-      fontSize:   '32px',
-      color:      '#ffffff',
-      stroke:     '#000000',
+      fontFamily: 'Cinzel, serif',
+      fontSize: '32px',
+      color: '#ffffff',
+      stroke: '#000000',
       strokeThickness: 3,
     }).setOrigin(0.5, 0.5);
 
@@ -923,14 +1038,14 @@ export default class GameScene extends Phaser.Scene {
     const track = this.add.rectangle(cx, cy, width, height, 0x080818)
       .setStrokeStyle(1, 0x222244, 0.8);
 
-    const fill  = this.add.rectangle(cx - width / 2, cy, width, height, 0x2244cc)
+    const fill = this.add.rectangle(cx - width / 2, cy, width, height, 0x2244cc)
       .setOrigin(0, 0.5);
 
     const valueText = this.add.text(cx, cy, '', {
-      fontFamily: 'monospace',
-      fontSize:   '32px',
-      color:      '#ffffff',
-      stroke:     '#000000',
+      fontFamily: 'Cinzel, serif',
+      fontSize: '32px',
+      color: '#ffffff',
+      stroke: '#000000',
       strokeThickness: 3,
     }).setOrigin(0.5, 0.5);
 
@@ -942,14 +1057,14 @@ export default class GameScene extends Phaser.Scene {
     const track = this.add.rectangle(cx, cy, width + 2, height, 0x111111)
       .setStrokeStyle(1, 0x333333, 0.8);
 
-    const fill  = this.add.rectangle(cx - width / 2, cy, width + 2, height, color)
+    const fill = this.add.rectangle(cx - width / 2, cy, width + 2, height, color)
       .setOrigin(0, 0.5);
 
     const valueText = this.add.text(cx, cy, '', {
-      fontFamily: 'monospace',
-      fontSize:   '48px',
-      color:      '#ffffff',
-      stroke:     '#000000',
+      fontFamily: 'Cinzel, serif',
+      fontSize: '48px',
+      color: '#ffffff',
+      stroke: '#000000',
       strokeThickness: 3,
     }).setOrigin(0.5, 0.5);
 
@@ -960,14 +1075,14 @@ export default class GameScene extends Phaser.Scene {
     const track = this.add.rectangle(cx, cy, width, height, 0x080818)
       .setStrokeStyle(1, 0x222244, 0.8);
 
-    const fill  = this.add.rectangle(cx - width / 2, cy, width, height, 0x2244cc)
+    const fill = this.add.rectangle(cx - width / 2, cy, width, height, 0x2244cc)
       .setOrigin(0, 0.5);
 
     const valueText = this.add.text(cx, cy, '', {
-      fontFamily: 'monospace',
-      fontSize:   '32px',
-      color:      '#ffffff',
-      stroke:     '#000000',
+      fontFamily: 'Cinzel, serif',
+      fontSize: '32px',
+      color: '#ffffff',
+      stroke: '#000000',
       strokeThickness: 3,
     }).setOrigin(0.5, 0.5);
 
@@ -1018,13 +1133,13 @@ export default class GameScene extends Phaser.Scene {
   _buildThreatBar(cx, cy, width, height) {
     const track = this.add.rectangle(cx, cy, width, height, 0x1a0a00)
       .setStrokeStyle(1, 0x442200, 0.8);
-    const fill  = this.add.rectangle(cx - width / 2, cy, 0, height, 0xff6600)
+    const fill = this.add.rectangle(cx - width / 2, cy, 0, height, 0xff6600)
       .setOrigin(0, 0.5);
     const valueText = this.add.text(cx, cy, '0%', {
-      fontFamily: 'monospace',
-      fontSize:   '18px',
-      color:      '#ffaa44',
-      stroke:     '#000000',
+      fontFamily: 'Cinzel, serif',
+      fontSize: '18px',
+      color: '#ffaa44',
+      stroke: '#000000',
       strokeThickness: 2,
     }).setOrigin(0.5, 0.5);
     return { track, fill, maxWidth: width, valueText };
@@ -1050,7 +1165,7 @@ export default class GameScene extends Phaser.Scene {
 
   _getBossAnimKey(animName) {
     const encounterActors = this.levelData?.encounterActors;
-    const activeActorId   = encounterActors
+    const activeActorId = encounterActors
       ? encounterActors[this.currentEncounterActorIndex]?.id
       : this.levelData?.boss?.id;
 
@@ -1071,23 +1186,22 @@ export default class GameScene extends Phaser.Scene {
   }
 
   playBossAttack() {
-    const slot    = this.entitySlots.boss;
+    const slot = this.entitySlots.boss;
     const animKey = this._getBossAnimKey('attacking');
     if (!slot?.sprite || !animKey) return;
 
     const current = slot.sprite.anims.currentAnim;
     if (current && current.key === animKey && slot.sprite.anims.isPlaying) return;
 
-    const targetId        = this.getHighestThreatTarget();
-    const targetName      = this.entitySlots[targetId]?._data?.name ?? targetId;
+    const targetId = this.getHighestThreatTarget();
+    const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
     const activeActorData = this._getActiveActorData();
-    const bossName        = activeActorData?.name ?? 'Boss';
-    console.log('[Boss]', bossName, 'attacks', targetName + '!');
+    const bossName = activeActorData?.name ?? 'Boss';
 
     this._playSound(activeActorData?.attackSound);
 
     const idleKey = this._getBossAnimKey('idle');
-    
+
     slot.sprite.play(animKey);
     slot.sprite.once('animationcomplete', () => {
       if (idleKey && this.anims.exists(idleKey)) slot.sprite.play(idleKey);
@@ -1096,10 +1210,10 @@ export default class GameScene extends Phaser.Scene {
     // ========================
     // Miss roll
     // ========================
-    const bossData2  = this.entitySlots.boss?._data;
+    const bossData2 = this.entitySlots.boss?._data;
     const missChance = bossData2?.stats?.missChance ?? 0;
     if (missChance > 0 && Phaser.Math.Between(1, 100) <= missChance) {
-      console.log('[Boss] Attack MISSED', targetName + '!');
+      console.log('[Boss]', bossName, 'auto ->', targetName, '| MISSED');
       const uiMiss = this.scene.get('UIScene');
       if (uiMiss?.spawnFloatingText) {
         uiMiss.spawnFloatingText(window.GAME_CONFIG.ZONES[targetId.toUpperCase()], 'MISS', 'miss');
@@ -1114,17 +1228,23 @@ export default class GameScene extends Phaser.Scene {
     if (this._rollBlock(targetId)) return;
 
     // Generate threat from the auto-attack so tanking threat matters
-    const bossData    = this.entitySlots.boss?._data;
+    const bossData = this.entitySlots.boss?._data;
     const damageRange = bossData?.stats?.damageRange ?? [100, 200];
-    const baseDamage  = Phaser.Math.Between(damageRange[0], damageRange[1]);
+    const baseDamage = Phaser.Math.Between(damageRange[0], damageRange[1]);
 
     // enrage multiplier applied to base damage
     const enrageMultiplier = this.bossBuffs?.enrage?.damageMultiplier ?? 1;
-    const autoBonus        = this.bossBuffs?.auto_attack_bonus?.bonusDamage ?? 0;
-    const autoBonus2       = this.bossBuffs?.enrage?.extraAutoAttackDamage ?? 0;
+    const autoBonus = this.bossBuffs?.auto_attack_bonus?.bonusDamage ?? 0;
+    const autoBonus2 = this.bossBuffs?.enrage?.extraAutoAttackDamage ?? 0;
 
     const damage = Math.round((baseDamage + autoBonus + autoBonus2) * (this.bossDamageMultiplier ?? 1) * enrageMultiplier);
     this._applyDamageToCharacter(targetId, damage, 'icon_autoAttack', 'physical');
+
+    const dmgMult = this.bossDamageMultiplier ?? 1;
+    const modStr = (dmgMult !== 1 || enrageMultiplier !== 1)
+      ? ' [dmgMult=' + dmgMult + ' enrage=' + enrageMultiplier + ']'
+      : '';
+    console.log('[Boss]', bossName, 'auto ->', targetName, '|', damage, 'physical' + modStr);
 
     // Tank generates passive threat just by being the target
     this.addThreat('tank', 50);
@@ -1133,10 +1253,11 @@ export default class GameScene extends Phaser.Scene {
     // extra_auto_chance buff -- proc a free second auto-attack
     const extraAutoChance = this.bossBuffs?.extra_auto_chance?.chance ?? 0;
     if (extraAutoChance > 0 && Phaser.Math.Between(1, 100) <= extraAutoChance) {
-      console.log('[Boss] Extra auto-attack proc!');
       const extraTarget = this.getHighestThreatTarget();
+      const extraTargetName = this.entitySlots[extraTarget]?._data?.name ?? extraTarget;
       const extraDamage = Math.round((baseDamage + autoBonus + autoBonus2) * (this.bossDamageMultiplier ?? 1) * enrageMultiplier);
       this._applyDamageToCharacter(extraTarget, extraDamage, 'icon_autoAttack', 'physical');
+      console.log('[Boss]', bossName, 'extra auto proc ->', extraTargetName, '|', extraDamage, 'physical' + modStr);
     }
   }
 
@@ -1165,12 +1286,12 @@ export default class GameScene extends Phaser.Scene {
     if (baseBlock <= 0 && characterId !== 'tank') return false;
 
     // Holy Shield bonus (tank only, only while active with charges)
-    let hsBonus  = 0;
+    let hsBonus = 0;
     let hsActive = false;
     if (characterId === 'tank') {
       const hs = slot.holyShield;
       if (hs?.active && hs.charges > 0 && Date.now() < hs.expiresAt) {
-        hsBonus  = hs.blockChance ?? 30;
+        hsBonus = hs.blockChance ?? 30;
         hsActive = true;
       }
     }
@@ -1183,8 +1304,8 @@ export default class GameScene extends Phaser.Scene {
 
     // ---- BLOCKED ----
     const zoneName = characterId.toUpperCase();
-    const zone     = window.GAME_CONFIG.ZONES[zoneName];
-    const uiScene  = this.scene.get('UIScene');
+    const zone = window.GAME_CONFIG.ZONES[zoneName];
+    const uiScene = this.scene.get('UIScene');
 
     // BLOCK floating text
     if (uiScene?.spawnFloatingText && zone) {
@@ -1196,8 +1317,8 @@ export default class GameScene extends Phaser.Scene {
       const hs = slot.holyShield;
 
       // Deal block damage back to the boss
-      const blockDmg    = hs.blockDamage ?? 59;
-      const iconKey     = this.textures.exists('icon_holy_shield') ? 'icon_holy_shield' : null;
+      const blockDmg = hs.blockDamage ?? 59;
+      const iconKey = this.textures.exists('icon_holy_shield') ? 'icon_holy_shield' : null;
       this._applyDamageToBoss(blockDmg, iconKey);
 
       // Generate threat from block
@@ -1207,17 +1328,12 @@ export default class GameScene extends Phaser.Scene {
 
       // Consume one charge
       hs.charges--;
-      console.log('[Tank] Holy Shield BLOCK - charges left:', hs.charges,
-        'dealt', blockDmg, 'to boss, threat', blockThreat);
 
       if (hs.charges <= 0) {
         hs.active = false;
-        console.log('[Tank] Holy Shield - all charges consumed');
       }
 
       this._emitBuffUpdate('tank');
-    } else {
-      console.log('[' + characterId + '] BLOCK (base ' + baseBlock + '%)');
     }
 
     return true;
@@ -1226,7 +1342,7 @@ export default class GameScene extends Phaser.Scene {
   // Play the appropriate hit reaction on a character when struck.
   _playHitOnTarget(targetId) {
     if (targetId === 'player') this.playPlayerHit();
-    if (targetId === 'tank')   this.playTankHit();
+    if (targetId === 'tank') this.playTankHit();
     if (targetId === 'healer') this.playHealerHit();
   }
 
@@ -1246,8 +1362,8 @@ export default class GameScene extends Phaser.Scene {
 
     const startCombat = () => {
       this.tweens.add({
-        targets:  blocker,
-        alpha:    0,
+        targets: blocker,
+        alpha: 0,
         duration: 300,
         onComplete: () => {
           blocker.destroy();
@@ -1258,34 +1374,34 @@ export default class GameScene extends Phaser.Scene {
     };
 
     const runCountdown = () => {
-      const cx      = WIDTH / 2;
-      const cy      = HEIGHT * 0.50;
-      const steps   = ['Pulling in 5', '4', '3', '2', '1'];
+      const cx = WIDTH / 2;
+      const cy = HEIGHT * 0.50;
+      const steps = ['Pulling in 5', '4', '3', '2', '1'];
       const STEP_MS = 1000;
       const FADE_MS = 150;
-      let   index   = 0;
+      let index = 0;
 
       const showStep = () => {
         const label = steps[index];
         index++;
 
         const text = this.add.text(cx, cy, label, {
-          fontFamily:      'monospace',
-          fontSize:        index === 1 ? '52px' : '96px',
-          color:           '#a82020',
-          stroke:          '#000000',
+          fontFamily: 'Cinzel Decorative, serif',
+          fontSize: index === 1 ? '52px' : '96px',
+          color: '#a82020',
+          stroke: '#000000',
           strokeThickness: 6,
         }).setOrigin(0.5).setAlpha(0).setDepth(91);
 
         this.tweens.add({
-          targets:  text,
-          alpha:    1,
+          targets: text,
+          alpha: 1,
           duration: FADE_MS,
           onComplete: () => {
             this.time.delayedCall(STEP_MS - FADE_MS * 2, () => {
               this.tweens.add({
-                targets:  text,
-                alpha:    0,
+                targets: text,
+                alpha: 0,
                 duration: FADE_MS,
                 onComplete: () => {
                   text.destroy();
@@ -1316,9 +1432,9 @@ export default class GameScene extends Phaser.Scene {
   // Show the boss opening dialogue sequence on level load.
   // openingDialogue in the JSON can be a string or an array of strings.
   _showBossDialogue(onComplete = null) {
-    const raw   = this.levelData?.boss?.dialog?.intro
-                  || this.levelData?.boss?.openingDialogue
-                  || '';
+    const raw = this.levelData?.boss?.dialog?.intro
+      || this.levelData?.boss?.openingDialogue
+      || '';
     const lines = Array.isArray(raw) ? raw.filter(l => l.length > 0) : (raw ? [raw] : []);
 
     this._playSound(this.levelData?.boss?.openingSound);
@@ -1328,8 +1444,8 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
 
-    const fadeMs      = 350;
-    const holdMs      = this.levelData?.boss?.audioDuration ?? 6000;
+    const fadeMs = 350;
+    const holdMs = this.levelData?.boss?.audioDuration ?? 6000;
     const holdPerLine = Math.max(500, (holdMs / lines.length) - (fadeMs * 2));
 
     this.showDialogueSequence(lines, '#ff9944', holdPerLine, fadeMs, onComplete);
@@ -1345,20 +1461,36 @@ export default class GameScene extends Phaser.Scene {
 
   // Show dialogue triggered by an ability being used.
   // Reads ability.dialogue from the JSON (string or array).
-  showAbilityDialogue(abilityId) {
+  // Accepts an optional targets array; any {target} token in the dialogue
+  // string is replaced with the character's name (single target) or
+  // "the group" (AoE). Falls back to "someone" when targets is empty.
+  showAbilityDialogue(abilityId, targets = []) {
     const ability = this.levelData?.abilities?.[abilityId];
     if (!ability?.dialogue && !ability?.sound) return;
 
     this._playSound(ability.sound);
 
     if (ability.dialogue) {
-      const lines      = Array.isArray(ability.dialogue) ? ability.dialogue : [ability.dialogue];
-      const fadeMs     = 350;
+      const targetLabel = this._resolveDialogueTargetLabel(targets);
+      const rawLines = Array.isArray(ability.dialogue) ? ability.dialogue : [ability.dialogue];
+      const lines = rawLines.map(l => l.replace(/\{target\}/g, targetLabel));
+      const fadeMs = 350;
       // Use the ability's own audioDuration, not the boss intro duration
-      const holdMs     = ability.audioDuration ?? 3000;
+      const holdMs = ability.audioDuration ?? 3000;
       const holdPerLine = Math.max(500, (holdMs / lines.length) - (fadeMs * 2));
-      this.showDialogueSequence(lines, '#ffaa44', holdPerLine, fadeMs);
+      this.showPopup(lines, '#ffaa44', holdPerLine, fadeMs);
     }
+  }
+
+  // Resolves a target id array into a human-readable label for dialogue substitution.
+  // Single target  → the character's display name (e.g. "Wrenley")
+  // Multiple / AoE → "the group"
+  // Empty          → "someone"  (safe fallback when no targets are passed)
+  _resolveDialogueTargetLabel(targets = []) {
+    if (!targets || targets.length === 0) return 'someone';
+    if (targets.length > 1) return 'the group';
+    const name = this.entitySlots[targets[0]]?._data?.name;
+    return name ?? 'someone';
   }
 
   // ==============================================
@@ -1378,13 +1510,18 @@ export default class GameScene extends Phaser.Scene {
       if (onComplete) onComplete();
       return;
     }
-    this.dialogueQueue.push({ type: 'sequence', lines, color, holdMs, fadeMs, onComplete });
+    this.dialogueQueue.push({ lines, color, holdMs, fadeMs, onComplete });
     this._drainDialogueQueue();
   }
 
-  showPopup(message, color = '#ffffff', duration = 2500) {
-    this.dialogueQueue.push({ type: 'popup', message, color, duration });
-    this._drainDialogueQueue();
+  showPopup(message, color = '#ffffff', duration = 2500, priority = false) {
+    const entry = { message, color, duration };
+    if (priority) {
+      this.popupQueue.unshift(entry);
+    } else {
+      this.popupQueue.push(entry);
+    }
+    this._drainPopupQueue();
   }
 
   _drainDialogueQueue() {
@@ -1398,35 +1535,48 @@ export default class GameScene extends Phaser.Scene {
       this._drainDialogueQueue();
     };
 
-    if (entry.type === 'sequence') {
-      this._showDialogueSequenceNow(
-        entry.lines, entry.color, entry.holdMs, entry.fadeMs,
-        () => { if (entry.onComplete) entry.onComplete(); done(); }
-      );
-    } else {
-      this._showPopupNow(entry.message, entry.color, entry.duration, done);
-    }
+    this._showDialogueSequenceNow(
+      entry.lines, entry.color, entry.holdMs, entry.fadeMs,
+      () => { if (entry.onComplete) entry.onComplete(); done(); }
+    );
+  }
+
+  _drainPopupQueue() {
+    if (this.popupBusy || this.popupQueue.length === 0) return;
+
+    const entry = this.popupQueue.shift();
+    this.popupBusy = true;
+
+    this._showPopupNow(entry.message, entry.color, entry.duration, () => {
+      this.popupBusy = false;
+      this._drainPopupQueue();
+    });
   }
 
   // =======================
-  // Internal display methods -- call showDialogueSequence / showPopup instead.
+  // Internal display methods - call showDialogueSequence / showPopup instead.
   // =======================
+
+
   _showDialogueSequenceNow(lines, color = '#ffffff', holdMs = 2200, fadeMs = 350, onComplete = null) {
     if (!lines || lines.length === 0) {
       if (onComplete) onComplete();
       return;
     }
-
+    const { FONTS } = window.GAME_CONFIG;
     this.bossDialoguePlaying = true;
 
     const zone = window.GAME_CONFIG.ZONES.POPUP;
-    const cx   = zone.x + zone.w / 2;
-    const cy   = zone.y + zone.h / 2;
+    const cx = zone.x + zone.w / 2;
+    const cy = zone.y + zone.h / 2;
+    const PAD_X = 48;
+    const PAD_Y = 36;
 
-    const panel = this.add.rectangle(cx, cy - 250, zone.w, zone.h, 0x000000, 0.78)
+    // Panel starts invisible; resized each line to fit the text.
+    const panel = this.add.rectangle(cx, cy - 250, zone.w, 80, 0x000000, 0.78)
       .setStrokeStyle(2, 0xff4400, 0.85)
       .setAlpha(0)
-      .setDepth(80);
+      .setDepth(92);
 
     this.tweens.add({ targets: panel, alpha: 1, duration: fadeMs });
 
@@ -1449,24 +1599,27 @@ export default class GameScene extends Phaser.Scene {
       lineIndex++;
 
       const text = this.add.text(cx, cy - 250, line, {
-        fontFamily: 'monospace',
-        fontSize:   '42px',
-        color:      color,
-        align:      'center',
-        wordWrap:   { width: zone.w - 48 },
-        stroke:     '#000000',
+        fontFamily: FONTS.DECORATIVE,
+        fontSize: '42px',
+        color: color,
+        align: 'center',
+        wordWrap: { width: zone.w - PAD_X * 2 },
+        stroke: '#000000',
         strokeThickness: 3,
-      }).setOrigin(0.5).setAlpha(0).setDepth(81);
+      }).setOrigin(0.5).setAlpha(0).setDepth(93);
+
+      // Resize the panel to fit this line's actual rendered height
+      panel.setSize(zone.w, text.height + PAD_Y * 2);
 
       this.tweens.add({
-        targets:  text,
-        alpha:    1,
+        targets: text,
+        alpha: 1,
         duration: fadeMs,
         onComplete: () => {
           this.time.delayedCall(holdMs, () => {
             this.tweens.add({
-              targets:  text,
-              alpha:    0,
+              targets: text,
+              alpha: 0,
               duration: fadeMs,
               onComplete: () => {
                 text.destroy();
@@ -1482,14 +1635,15 @@ export default class GameScene extends Phaser.Scene {
   }
 
   _showPopupNow(message, color = '#ffffff', duration = 2500, onComplete = null) {
+    const { FONTS } = window.GAME_CONFIG;
     const zone = window.GAME_CONFIG.ZONES.POPUP;
-    const cx   = zone.x + zone.w / 2;
-    const cy   = zone.y + zone.h / 2;
+    const cx = zone.x + zone.w / 2;
+    const cy = zone.y + zone.h / 2;
 
     const panel = this.add.rectangle(cx, cy, zone.w, zone.h * 0.6, 0x000000, 0.7)
       .setStrokeStyle(1, 0x444444, 0.8).setAlpha(0).setDepth(80);
-    const text  = this.add.text(cx, cy, message, {
-      fontFamily: 'monospace', fontSize: '28px', color,
+    const text = this.add.text(cx, cy, message, {
+      fontFamily: FONTS.DECORATIVE, fontSize: '32px', color,
       align: 'center', wordWrap: { width: zone.w - 32 },
     }).setOrigin(0.5).setAlpha(0).setDepth(81);
 
@@ -1535,33 +1689,23 @@ export default class GameScene extends Phaser.Scene {
   // Plays the death sound, shows death dialogue, then stops the ticker.
   playBossDeath() {
     const encounterActors = this.levelData?.encounterActors;
-    const activeActor     = encounterActors
+    const activeActor = encounterActors
       ? encounterActors[this.currentEncounterActorIndex]
       : null;
     const bossData = activeActor ?? this.levelData?.boss;
 
     this._playSound(bossData?.deathSound);
 
-    const raw   = bossData?.dialog?.defeat
-                  || bossData?.deathDialogue
-                  || 'I AM... DEFEATED.';
+    const raw = bossData?.dialog?.defeat
+      || bossData?.deathDialogue
+      || 'I AM... DEFEATED.';
+
     const lines = Array.isArray(raw) ? raw : [raw];
     this.showDialogueSequence(lines, '#aaaaaa');
 
     const slot = this.entitySlots.boss;
     if (slot?.sprite) {
-      const defeatedKey = activeActor?.animations?.defeated?.key
-                          ?? this.levelData?.boss?.animations?.defeated?.key
-                          ?? this._getBossAnimKey('death');
-
-      if (defeatedKey && this.anims.exists(defeatedKey)) {
-        slot.sprite.play(defeatedKey);
-        slot.sprite.once('animationcomplete', () => {
-          this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 800 });
-        });
-      } else {
-        this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 1500 });
-      }
+      this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 1500 });
     }
 
     this._onBossDefeated();
@@ -1578,7 +1722,6 @@ export default class GameScene extends Phaser.Scene {
     }
     this.gameRunning = true;
     this.tickerStartedAt = Date.now();
-    console.log('[GameScene] Tick started, delay:', delay, 'ms');
     this.events.emit('combat-start');
     this.tickTimer = this.time.addEvent({
       delay: delay, loop: true,
@@ -1602,8 +1745,8 @@ export default class GameScene extends Phaser.Scene {
     this._tickAuras();
     this._tickEnrage();
     this._tickPlayerAutoAttack();
-    this._tickTankAutoAttack();
     this._tickTankAbilities();
+    this._tickTankAutoAttack();
     this._tickHealerAI();
     this._tickManaRegen();
 
@@ -1619,7 +1762,6 @@ export default class GameScene extends Phaser.Scene {
   // Fires playBossAttack() every <attackSpeed> ticks as defined in the JSON.
   // attackSpeed: 1 = every tick, 2 = every 2 ticks, 3 = every 3 ticks, etc.
   _tickBossAutoAttack() {
-    console.log("[Boss] Attacking");
     if (this.bossDialoguePlaying) return;
     if (this.bossIsCasting) return;
     if (this.bossBuffs?.vanished) return;
@@ -1629,8 +1771,8 @@ export default class GameScene extends Phaser.Scene {
     const bossData = this.entitySlots.boss?._data;
     if (!bossData) return;
 
-    const baseAttackSpeed   = Math.round(bossData.stats?.attackSpeed ?? 3);
-    const enrageSpeedMult   = this.bossBuffs?.enrage?.attackSpeedMultiplier ?? 1;
+    const baseAttackSpeed = Math.round(bossData.stats?.attackSpeed ?? 3);
+    const enrageSpeedMult = this.bossBuffs?.enrage?.attackSpeedMultiplier ?? 1;
     const effectiveInterval = Math.max(1, Math.round(baseAttackSpeed * enrageSpeedMult));
     if (this.tickCount % effectiveInterval === 0) {
       this.playBossAttack();
@@ -1669,9 +1811,9 @@ export default class GameScene extends Phaser.Scene {
 
     // If a queued ability is waiting (e.g. Garrote after Vanish), fire it first
     if (this.bossQueuedAbilityId) {
-      const queuedId  = this.bossQueuedAbilityId;
+      const queuedId = this.bossQueuedAbilityId;
       const abilities = this.levelData?.abilities ?? {};
-      const ability   = abilities[queuedId];
+      const ability = abilities[queuedId];
       this.bossQueuedAbilityId = null;
       if (ability) {
         this.bossAbilityCooldowns[queuedId] = Date.now();
@@ -1682,8 +1824,8 @@ export default class GameScene extends Phaser.Scene {
     }
 
     const currentPhase = this._resolveCurrentPhase();
-    const abilityIds   = currentPhase?.abilityIds ?? [];
-    const abilities    = this.levelData?.abilities ?? {};
+    const abilityIds = currentPhase?.abilityIds ?? [];
+    const abilities = this.levelData?.abilities ?? {};
 
     for (const abilityId of abilityIds) {
       const ability = abilities[abilityId];
@@ -1693,9 +1835,20 @@ export default class GameScene extends Phaser.Scene {
       // Only fire special abilities (non-zero recastTimer means it's special)
       if (!ability.recastTimer || ability.recastTimer <= 0) continue;
 
-      const lastUsed  = this.bossAbilityCooldowns[abilityId] ?? 0;
-      const recastMs  = ability.recastTimer * 1000;
-      const now       = Date.now();
+      if (ability.requiresPortalInactive && this.portalSummonActive) continue;
+
+      if (ability.requiresSecondActorDead) {
+        // A second actor that has never been spawned counts as dead --
+        // otherwise the initial currentHealth value (maxHealth) would
+        // permanently block abilities like Fiendish Portal from ever firing.
+        const secondActorAlive = this.secondActorSpawned &&
+          (this.entitySlots.secondActor?.currentHealth ?? 0) > 0;
+        if (secondActorAlive) continue;
+      }
+
+      const lastUsed = this.bossAbilityCooldowns[abilityId] ?? 0;
+      const recastMs = ability.recastTimer * 1000;
+      const now = Date.now();
 
       if (now - lastUsed >= recastMs) {
         this.bossAbilityCooldowns[abilityId] = now;
@@ -1724,109 +1877,13 @@ export default class GameScene extends Phaser.Scene {
 
     if (slot.nuisance) return;
 
-    // ========================
-    // Submerge - special case
-    // ========================
-    if (abilityId === 'submerge') {
-      this.showAbilityDialogue(abilityId);
-      this.bossSubmerged = true;
-      this.playBossSubmerge();
-
-      // Register for all targets so death/rebirth clears it
-      ['player', 'tank', 'healer'].forEach(id => this._registerDot(id, subTimer));
-      return;
-    }
-
-    // ========================
-    // Wrath of Ragnaros
-    // ========================
-    if (abilityId === 'wrath_of_ragnaros') {
-      this.playBossWrath();
-      // Immediate AoE damage
-      const immDmg = Phaser.Math.Between(
-        this.levelData?.abilities?.wrath_of_ragnaros?.immediateMin ?? 2500,
-        this.levelData?.abilities?.wrath_of_ragnaros?.immediateMax ?? 4500
-      );
-      ['player', 'tank', 'healer'].forEach(id => this._applyDamageToCharacter(id, immDmg, 'icon_wrath_of_ragnaros'));
-      console.log('[Boss] Wrath of Ragnaros AoE immediate:', immDmg);
-      // No tick DoT for wrath - it's handled by wrath_of_fire below
-      return;
-    }
-
-    // ========================
-    // Wrath of Fire - AoE immediate + DoT
-    // ========================
-    if (abilityId === 'wrath_of_fire') {
-      this.showAbilityDialogue(abilityId);
-      // Immediate AoE
-      const immDmg = Phaser.Math.Between(ability.immediateMin ?? 2500, ability.immediateMax ?? 4500);
-      ['player', 'tank', 'healer'].forEach(id => this._applyDamageToCharacter(id, immDmg, 'icon_wrath_of_ragnaros'));
-      console.log('[Boss] Wrath of Fire AoE immediate:', immDmg);
-      // DoT ticks
-      if (ability.duration > 0 && ability.tickMin) {
-        const tickDmg = Phaser.Math.Between(ability.tickMin, ability.tickMax);
-        let ticks = 0;
-        const dotTimer = this.time.addEvent({
-          delay:    TICK_MS,
-          loop:     true,
-          callback: () => {
-            ticks++;
-            ['player', 'tank', 'healer'].forEach(id => this._applyDamageToCharacter(id, tickDmg, 'icon_wrath_of_ragnaros'));
-            if (ticks >= ability.duration || !this.gameRunning) dotTimer.remove();
-          },
-        });
-        // Register for all targets so Rebirth clears it properly
-        ['player', 'tank', 'healer'].forEach(id => this._registerDot(id, dotTimer));
-      }
-      return;
-    }
-
-    // ========================
-    // Magma Blast - single target immediate + DoT
-    // ========================
-    if (abilityId === 'magma_blast') {
-      this.showAbilityDialogue(abilityId);
-      const targetId = this.getHighestThreatTarget();
-      // Immediate hit
-      const immDmg = Phaser.Math.Between(ability.immediateMin ?? 3000, ability.immediateMax ?? 5000);
-      this._applyDamageToCharacter(targetId, immDmg, 'icon_magma_blast');
-      console.log('[Boss] Magma Blast hits', targetId, 'for', immDmg);
-      // DoT ticks - same target, roll once
-      if (ability.duration > 0 && ability.tickMin) {
-        const tickDmg = Phaser.Math.Between(ability.tickMin, ability.tickMax);
-        let ticks = 0;
-        const dotTimer = this.time.addEvent({
-          delay:    TICK_MS,
-          loop:     true,
-          callback: () => {
-            ticks++;
-            this._applyDamageToCharacter(targetId, tickDmg, 'icon_magma_blast');
-            if (ticks >= ability.duration || !this.gameRunning) dotTimer.remove();
-          },
-        });
-        this._registerDot(targetId, dotTimer);
-      }
-      return;
-    }
-
-
-    // ========================
-    // Generic boss ability handling
-    // ========================
-    const resolveTargets = () => {
-      if (targetType === 'all_allies') return ['player', 'tank', 'healer'];
-      if (targetType === 'random_ally') {
-        const alive = ['player', 'tank', 'healer'].filter(id => (this.entitySlots[id]?.currentHealth ?? 0) > 0);
-        return alive.length ? [Phaser.Utils.Array.GetRandom(alive)] : [];
-      }
-      if (targetType === 'boss_self') return [];
-      return [this.getHighestThreatTarget()];
-    };
+    const attackSpeed = Math.round(slot._data.stats?.attackSpeed ?? 3);
+    if (this.tickCount % attackSpeed !== 0) return;
 
     const damageRange = slot._data.stats?.damageRange ?? [100, 200];
-    const baseDamage  = Phaser.Math.Between(damageRange[0], damageRange[1]);
-    const damage      = Math.round(baseDamage * (this.bossDamageMultiplier ?? 1));
-    const targetId    = this.getHighestThreatTarget();
+    const baseDamage = Phaser.Math.Between(damageRange[0], damageRange[1]);
+    const damage = Math.round(baseDamage * (this.bossDamageMultiplier ?? 1));
+    const targetId = this.getHighestThreatTarget();
 
     this._applyDamageToCharacter(targetId, damage, 'icon_autoAttack', 'physical');
     this.addThreat('tank', 50);
@@ -1834,13 +1891,13 @@ export default class GameScene extends Phaser.Scene {
 
     const actorName = slot._data.name ?? 'Second Actor';
     const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
-    console.log('[SecondActor]', actorName, 'attacks', targetName, 'for', damage);
+    console.log('[SecondActor]', actorName, 'auto ->', targetName, '|', damage, 'physical');
 
-    const uiScene = this.scene.get('UIScene');
-    if (uiScene?.spawnAbilityBadge) {
-      const secondActorZone = { x: 610, y: 325, w: 400, h: 384 };
-      uiScene.spawnAbilityBadge(secondActorZone, 'autoAttack', actorName + ' attacks!');
-    }
+    // const uiScene = this.scene.get('UIScene');
+    // if (uiScene?.spawnAbilityBadge) {
+    //   const secondActorZone = { x: 610, y: 325, w: 400, h: 384 };
+    //   uiScene.spawnAbilityBadge(secondActorZone, 'autoAttack', actorName + ' attacks!');
+    // }
   }
 
   // =====================================
@@ -1859,15 +1916,15 @@ export default class GameScene extends Phaser.Scene {
     if (!slot?._data) return;
     if ((slot.currentHealth ?? 0) <= 0) return;
 
-    const GRACE_PERIOD_MS       = 1000;
+    const GRACE_PERIOD_MS = 1000;
     const POST_ABILITY_LOCKOUT_MS = 2000;
 
     if (!this.tickerStartedAt || Date.now() - this.tickerStartedAt < GRACE_PERIOD_MS) return;
     if (Date.now() < this.secondActorAbilityLockoutUntil) return;
 
     const abilityIds = slot._data.abilityIds ?? [];
-    const abilities  = this.levelData?.abilities ?? {};
-    const now        = Date.now();
+    const abilities = this.levelData?.abilities ?? {};
+    const now = Date.now();
 
     for (const abilityId of abilityIds) {
       const ability = abilities[abilityId];
@@ -1880,15 +1937,27 @@ export default class GameScene extends Phaser.Scene {
       if (now - lastUsed >= recastMs) {
         this.secondActorAbilityCooldowns[abilityId] = now;
         this.secondActorAbilityLockoutUntil = now + POST_ABILITY_LOCKOUT_MS;
-        console.log('[SecondActor]', slot._data.name, 'uses', ability.name ?? abilityId);
 
         const uiScene = this.scene.get('UIScene');
         if (uiScene?.spawnAbilityBadge) {
-          const secondActorZone = { x: 610, y: 325, w: 400, h: 384 };
+          const secondActorZone = { x: 610, y: 450, w: 400, h: 384 };
           uiScene.spawnAbilityBadge(secondActorZone, abilityId, ability.name ?? abilityId);
         }
 
-        this._fireBossAbility(abilityId, ability);
+        this._fireBossAbility(abilityId, ability, slot._data.name);
+
+        if (ability.playAttackAnim) {
+          const attackKey = this.levelData.secondActor?.animations?.attacking?.key;
+          const idleKey = this.levelData.secondActor?.animations?.idle?.key;
+          const secondSprite = this.entitySlots.secondActor?.sprite;
+          if (secondSprite && attackKey && this.anims.exists(attackKey)) {
+            secondSprite.play(attackKey);
+            secondSprite.once('animationcomplete', () => {
+              if (idleKey && this.anims.exists(idleKey)) secondSprite.play(idleKey);
+            });
+          }
+        }
+
         break;
       }
     }
@@ -1907,23 +1976,23 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
 
-    const actorData    = this.levelData.secondActor;
+    const actorData = this.levelData.secondActor;
     const spawnTrigger = actorData.spawnTrigger;
     if (!spawnTrigger) return;
 
     let shouldSpawn = false;
 
     if (spawnTrigger.type === 'damage_taken_percent') {
-      const maxHealth    = this.levelData.boss?.stats?.maxHealth ?? 1;
-      const triggerPct   = (spawnTrigger.value ?? 5) / 100;
+      const maxHealth = this.levelData.boss?.stats?.maxHealth ?? 1;
+      const triggerPct = (spawnTrigger.value ?? 5) / 100;
       shouldSpawn = this.secondActorDamageTaken >= maxHealth * triggerPct;
     }
 
     if (spawnTrigger.type === 'health_percent') {
-      const slot    = this.entitySlots.boss;
-      const maxHp   = slot?.hpBar?.maxValue ?? 1;
+      const slot = this.entitySlots.boss;
+      const maxHp = slot?.hpBar?.maxValue ?? 1;
       const current = slot?.currentHealth ?? maxHp;
-      const pct     = current / maxHp;
+      const pct = current / maxHp;
       shouldSpawn = pct <= (spawnTrigger.value ?? 100) / 100;
     }
 
@@ -1961,7 +2030,7 @@ export default class GameScene extends Phaser.Scene {
     this.secondActorSpawned = true;
 
     const actorData = this.levelData.secondActor;
-    const slot      = this.entitySlots.secondActor;
+    const slot = this.entitySlots.secondActor;
     if (!slot) return;
 
     slot.currentHealth = actorData.stats?.maxHealth ?? 0;
@@ -1971,7 +2040,7 @@ export default class GameScene extends Phaser.Scene {
     this._setSecondActorVisible(true);
 
     const introLine = actorData.dialogue?.intro ?? (actorData.name + ' joins the fight!');
-    const lines     = Array.isArray(introLine) ? introLine : [introLine];
+    const lines = Array.isArray(introLine) ? introLine : [introLine];
     this.showDialogueSequence(lines, '#ff9966');
 
     console.log('[SecondActor] Spawned:', actorData.name);
@@ -1991,10 +2060,10 @@ export default class GameScene extends Phaser.Scene {
       damageType = 'physical';
     }
 
-    const resistList  = slot._data?.stats?.resistList ?? {};
+    const resistList = slot._data?.stats?.resistList ?? {};
     const finalDamage = this._applyResistReduction(damage, damageType, resistList);
 
-    const maxHealth    = slot.hpBar?.maxValue ?? 1;
+    const maxHealth = slot.hpBar?.maxValue ?? 1;
     slot.currentHealth = Math.max(0, (slot.currentHealth ?? maxHealth) - finalDamage);
 
     const pct = slot.currentHealth / maxHealth;
@@ -2013,17 +2082,37 @@ export default class GameScene extends Phaser.Scene {
   // Called when the second actor reaches 0 HP.
   _onSecondActorDeath() {
     const actorData = this.levelData?.secondActor;
-    const slot      = this.entitySlots.secondActor;
+    const slot = this.entitySlots.secondActor;
     if (!slot) return;
 
     slot.currentHealth = 0;
-    this._setSecondActorVisible(false);
+
+    // Fade everything out smoothly instead of snapping to invisible.
+    const DEATH_FADE = 800;
+    const fadeTargets = [slot.sprite, slot.nameText, slot.titlePanel,
+      slot.hpBar?.track, slot.hpBar?.fill, slot.hpBar?.valueText,
+    ].filter(Boolean);
+    if (fadeTargets.length) {
+      this.tweens.add({ targets: fadeTargets, alpha: 0, duration: DEATH_FADE });
+    }
 
     console.log('[SecondActor] Died:', actorData?.name);
 
+    const onDeathBuff = this.levelData?.boss?.onSecondActorDeathBuff;
+    if (onDeathBuff) {
+      this._applyBossBuff('enrage', {
+        damageMultiplier:      onDeathBuff.damageMultiplier ?? 1,
+        attackSpeedMultiplier: onDeathBuff.attackSpeedMultiplier ?? 1,
+        extraAutoAttackDamage: 0,
+      }, onDeathBuff.durationTicks ?? 0);
+      if (onDeathBuff.message) {
+        this.showPopup(onDeathBuff.message, '#ff4444', 3000);
+      }
+    }
+
     if (actorData?.resummoned) {
       const cooldownTicks = actorData.resummonCooldownTicks ?? 30;
-      const cooldownMs    = cooldownTicks * window.GAME_CONFIG.TICK_MS;
+      const cooldownMs = cooldownTicks * window.GAME_CONFIG.TICK_MS;
       this.secondActorResummonCooldownUntil = Date.now() + cooldownMs;
       console.log('[SecondActor] Re-summon cooldown:', cooldownTicks, 'ticks');
     }
@@ -2038,21 +2127,23 @@ export default class GameScene extends Phaser.Scene {
   // and damaged independently of the boss.
   _spawnAdd(addDef) {
     const TICK_MS = window.GAME_CONFIG.TICK_MS;
-    const index   = this.summonedAddSlots.length;
+    const index = this.summonedAddSlots.length;
+
+    this.totalSummonsByAddId[addDef.id] = (this.totalSummonsByAddId[addDef.id] ?? 0) + 1;
 
     const addSlot = this._buildAddSlot(addDef, index);
     if (!addSlot) return;
 
     addSlot.currentHealth = addDef.health ?? 1;
-    addSlot.addDef        = addDef;
-    addSlot.index         = index;
+    addSlot.addDef = addDef;
+    addSlot.index = index;
 
     const lifespanTicks = addDef.lifespanTicks ?? 9;
-    let   ticksElapsed  = 0;
+    let ticksElapsed = 0;
 
     addSlot.lifespanTimer = this.time.addEvent({
       delay: TICK_MS,
-      loop:  true,
+      loop: true,
       callback: () => {
         ticksElapsed++;
 
@@ -2076,43 +2167,98 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // Builds the display elements for a summoned add.
-  // Adds are shown in a horizontal row inside the BOSS zone.
-  // Each add is 160px wide with a small HP bar and countdown timer.
+  // Adds with an idleKey get a sprite centered in the boss zone with a
+  // nameplate and HP bar above them. The countdown timer is rendered on
+  // top of the sprite so it is always readable.
   _buildAddSlot(addDef, index) {
-    const zone    = window.GAME_CONFIG.ZONES.BOSS;
-    const slotW   = 160;
-    const startX  = zone.x + 20;
-    const cx      = startX + index * (slotW + 12) + slotW / 2;
-    const cy      = zone.y + zone.h - 80;
+    const { ZONES } = window.GAME_CONFIG;
+    const zone = ZONES.BOSS;
 
-    const barW    = slotW - 8;
-    const barH    = 18;
+    const spriteKey = addDef.idleKey ?? null;
+    const spriteScale = addDef.spriteScale ?? 1.875;
+    const frameH = 384;
+    const spriteDisplayH = frameH * spriteScale;
 
-    const bg = this.add.rectangle(cx, cy - 10, slotW, 60, 0x000000, 0.7)
-      .setStrokeStyle(1, 0xaa3300, 0.8)
-      .setDepth(10);
+    const spawnPadX = 80;
+    const spawnPadTop = 100;
+    const spawnPadBottom = 40;
 
-    const nameText = this.add.text(cx, cy - 30, addDef.name || '???', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#ffaa44',
-    }).setOrigin(0.5, 0.5).setDepth(11);
+    const cx = Phaser.Math.Between(
+      zone.x + spawnPadX,
+      zone.x + zone.w - spawnPadX
+    );
 
-    const hpBar = this._buildBossHealthBar(cx, cy - 10, barW, barH, 0xcc2200);
-    if (hpBar.track)     hpBar.track.setDepth(11);
-    if (hpBar.fill)      hpBar.fill.setDepth(12);
+    const spawnMinY = zone.y + spawnPadTop + spriteDisplayH / 2;
+    const spawnMaxY = zone.y + zone.h - spawnPadBottom + spriteDisplayH / 2;
+    const spriteCy = Phaser.Math.Between(spawnMinY, spawnMaxY);
+
+    const nameplateY = spriteCy - 160;
+    const hpBarY = nameplateY + 36;
+
+    let sprite = null;
+    if (spriteKey && this.textures.exists(spriteKey)) {
+      const animKey = spriteKey + '_add_idle';
+      if (!this.anims.exists(animKey)) {
+        this.anims.create({
+          key: animKey,
+          frames: this.anims.generateFrameNumbers(spriteKey, {
+            start: addDef.idleFrameStart ?? 0,
+            end:   addDef.idleFrameEnd   ?? 11,
+          }),
+          frameRate: addDef.idleFrameRate ?? 8,
+          repeat: -1,
+        });
+      }
+
+      sprite = this.add.sprite(cx, spriteCy, spriteKey, 0)
+        .setScale(spriteScale)
+        .setOrigin(0.5, 0.5)
+        .setDepth(5)
+        .setAlpha(0);
+
+      sprite.play(animKey);
+
+      this.tweens.add({
+        targets:  sprite,
+        alpha:    1,
+        duration: 500,
+        ease:     'Sine.easeOut',
+      });
+    }
+
+    const barW = 320;
+    const barH = 24;
+
+    const nameText = this.add.text(cx, nameplateY, addDef.name || '???', {
+      fontFamily:      'Cinzel, serif',
+      fontSize:        '28px',
+      color:           '#f50808',
+      stroke:          '#00ff15',
+      strokeThickness: 3,
+    }).setOrigin(0.5, 0.5).setDepth(15);
+
+    const hpBar = this._buildBossHealthBar(cx, hpBarY, barW, barH, 0xcc2200);
+    if (hpBar.track) hpBar.track.setDepth(14);
+    if (hpBar.fill)  hpBar.fill.setDepth(15);
     if (hpBar.valueText) hpBar.valueText.setVisible(false);
     hpBar.maxValue = addDef.health ?? 1;
 
-    const countdownText = this.add.text(cx, cy + 14, String(addDef.lifespanTicks ?? 9), {
-      fontFamily: 'monospace', fontSize: '16px', color: '#ff4422',
-    }).setOrigin(0.5, 0.5).setDepth(11);
+    const countdownText = this.add.text(cx, spriteCy, String(addDef.lifespanTicks ?? 9), {
+      fontFamily:      'Cinzel, serif',
+      fontSize:        '64px',
+      color:           '#ff4422',
+      stroke:          '#000000',
+      strokeThickness: 5,
+    }).setOrigin(0.5, 0.5).setDepth(16);
 
-    return { bg, nameText, hpBar, countdownText, currentHealth: addDef.health ?? 1 };
+    return { sprite, nameText, hpBar, countdownText, currentHealth: addDef.health ?? 1 };
   }
 
   // Hides and destroys all display elements for an add slot.
   _destroyAddSlot(addSlot) {
     if (!addSlot) return;
-    if (addSlot.lifespanTimer) { try { addSlot.lifespanTimer.remove(); } catch(e) {} }
+    if (addSlot.lifespanTimer) { try { addSlot.lifespanTimer.remove(); } catch (e) { } }
+    addSlot.sprite?.destroy();
     addSlot.bg?.destroy();
     addSlot.nameText?.destroy();
     addSlot.hpBar?.track?.destroy();
@@ -2130,7 +2276,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (!DAMAGE_TYPES.has(damageType)) damageType = 'physical';
 
-    const resistList  = addSlot.addDef?.resistList ?? {};
+    const resistList = addSlot.addDef?.resistList ?? {};
     const finalDamage = this._applyResistReduction(damage, damageType, resistList);
 
     const maxHealth = addSlot.hpBar?.maxValue ?? 1;
@@ -2151,7 +2297,7 @@ export default class GameScene extends Phaser.Scene {
 
   // Called when an add is killed before its lifespan expires.
   _onAddDeath(addSlot) {
-    if (addSlot.lifespanTimer) { try { addSlot.lifespanTimer.remove(); } catch(e) {} }
+    if (addSlot.lifespanTimer) { try { addSlot.lifespanTimer.remove(); } catch (e) { } }
     addSlot.currentHealth = 0;
     console.log('[Add] Killed:', addSlot.addDef?.name);
     this._destroyAddSlot(addSlot);
@@ -2161,15 +2307,15 @@ export default class GameScene extends Phaser.Scene {
   // Called when an add's lifespan timer runs out without being killed.
   // Fires the onExpireEffect defined in the add's definition.
   _onAddExpire(addSlot) {
-    const addDef      = addSlot.addDef;
+    const addDef = addSlot.addDef;
     const expireEffect = addDef?.onExpireEffect;
 
     console.log('[Add] Expired:', addDef?.name);
 
     if (expireEffect?.type === 'damage') {
-      const damage     = Phaser.Math.Between(addDef.onExpireMin ?? 0, addDef.onExpireMax ?? addDef.onExpireMin ?? 0);
+      const damage = Phaser.Math.Between(addDef.onExpireMin ?? 0, addDef.onExpireMax ?? addDef.onExpireMin ?? 0);
       const damageType = addDef.damageType ?? 'arcane';
-      const targets    = addDef.onExpireTargets === 'all_allies'
+      const targets = addDef.onExpireTargets === 'all_allies'
         ? ['player', 'tank', 'healer']
         : [this.getHighestThreatTarget()];
 
@@ -2192,20 +2338,21 @@ export default class GameScene extends Phaser.Scene {
   _tickSummonedAdds() {
     this.summonedAddSlots = this.summonedAddSlots.filter(slot => {
       if (!slot || (slot.currentHealth ?? 0) <= 0) return false;
-      if (!slot.bg?.scene) return false;
+      const anchor = slot.sprite ?? slot.bg ?? null;
+      if (!anchor?.scene) return false;
       return true;
     });
   }
 
   // Fire a specific boss ability - plays animation if one is defined,
   // shows dialogue, plays sound.
-  _fireBossAbility(abilityId, ability) {
-    const bossName    = this._getActiveActorData()?.name ?? 'Boss';
+  _fireBossAbility(abilityId, ability, sourceName = null) {
+    const bossName = sourceName ?? this._getActiveActorData()?.name ?? 'Boss';
     const abilityName = ability.name ?? abilityId;
-    const targetType  = ability.targetType;
-    const isAoE       = targetType === 'all_allies';
-    const TICK_MS     = window.GAME_CONFIG.TICK_MS;
-    const damageType  = ability.damageType ?? 'physical';
+    const targetType = ability.targetType;
+    const isAoE = targetType === 'all_allies';
+    const TICK_MS = window.GAME_CONFIG.TICK_MS;
+    const damageType = ability.damageType ?? 'physical';
 
     if (!DAMAGE_TYPES.has(damageType)) {
       console.warn('[GameScene] Ability', abilityId, 'has unknown damageType:', damageType);
@@ -2217,7 +2364,7 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
 
-    this._resolveBossAbilityEffect(abilityId, ability);
+    this._resolveBossAbilityEffect(abilityId, ability, sourceName);
   }
 
   // =====================================
@@ -2226,24 +2373,14 @@ export default class GameScene extends Phaser.Scene {
   // Executes the actual damage, healing, and DoT for a boss ability.
   // Called directly for instant abilities, or deferred by _beginBossCast
   // for cast-time abilities once the cast completes.
-  _resolveBossAbilityEffect(abilityId, ability) {
-    const bossName    = this._getActiveActorData()?.name ?? 'Boss';
+  _resolveBossAbilityEffect(abilityId, ability, sourceName = null) {
+    const bossName = sourceName ?? this._getActiveActorData()?.name ?? 'Boss';
+    const logTag = sourceName ? '[SecondActor]' : '[Boss]';
     const abilityName = ability.name ?? abilityId;
-    const targetType  = ability.targetType;
-    const isAoE       = targetType === 'all_allies';
-    const TICK_MS     = window.GAME_CONFIG.TICK_MS;
-    const damageType  = ability.damageType ?? 'physical';
-
-    const singleTargetId   = isAoE ? null : this.getHighestThreatTarget();
-    const singleTargetName = singleTargetId
-      ? (this.entitySlots[singleTargetId]?._data?.name ?? singleTargetId)
-      : null;
-
-    if (isAoE) {
-      console.log('[Boss]', bossName, 'uses', abilityName, 'on the party!');
-    } else {
-      console.log('[Boss]', bossName, 'uses', abilityName, 'on', singleTargetName + '!');
-    }
+    const targetType = ability.targetType;
+    const isAoE = targetType === 'all_allies';
+    const TICK_MS = window.GAME_CONFIG.TICK_MS;
+    const damageType = ability.damageType ?? 'physical';
 
     const resolveTargets = () => {
       if (targetType === 'all_allies') return ['player', 'tank', 'healer'];
@@ -2283,7 +2420,7 @@ export default class GameScene extends Phaser.Scene {
         const casting = ['player', 'tank', 'healer'].find(id => this.entitySlots[id]?.isCasting === true);
         return casting ? [casting] : [];
       }
-      if (targetType === 'boss_self') return [];
+      if (targetType === 'self') return [];
       return [this.getHighestThreatTarget()];
     };
 
@@ -2291,6 +2428,20 @@ export default class GameScene extends Phaser.Scene {
     const iconKey = this.textures.exists('icon_' + (ability.iconId || abilityId))
       ? 'icon_' + (ability.iconId || abilityId)
       : 'icon_autoAttack';
+
+    // Log non-damage abilities now; damage abilities log themselves below with the final rolled value.
+    const isDamageAbility = (ability.immediateFlag && (ability.immediateMin || ability.immediateMax))
+      || (ability.duration > 0 && ability.tickMin);
+    if (!isDamageAbility) {
+      if (isAoE) {
+        console.log(logTag, bossName, 'uses', abilityName, '| party');
+      } else if (targetType !== 'self' && targets.length > 0) {
+        const logTarget = this.entitySlots[targets[0]]?._data?.name ?? targets[0];
+        console.log(logTag, bossName, 'uses', abilityName, '->', logTarget);
+      } else {
+        console.log(logTag, bossName, 'uses', abilityName);
+      }
+    }
 
     if (ability.selfBuff?.damageMultiplier) {
       this.bossDamageMultiplier = ability.selfBuff.damageMultiplier;
@@ -2305,9 +2456,9 @@ export default class GameScene extends Phaser.Scene {
     // applyBuff -- applies a named boss buff for a duration (or permanently if 0)
     if (ability.applyBuff) {
       const buffDef = ability.applyBuff;
-      const buffId  = buffDef.id;
+      const buffId = buffDef.id;
       const buffDuration = buffDef.durationTicks ?? 0;
-      const buffParams   = { ...buffDef };
+      const buffParams = { ...buffDef };
       delete buffParams.id;
       delete buffParams.durationTicks;
       this._applyBossBuff(buffId, buffParams, buffDuration);
@@ -2334,7 +2485,7 @@ export default class GameScene extends Phaser.Scene {
     if (ability.immediateEffect?.type === 'heal_boss') {
       const bossSlot = this.entitySlots.boss;
       if (bossSlot) {
-        const maxHealth  = bossSlot.hpBar?.maxValue ?? bossSlot._data?.stats?.maxHealth ?? 1;
+        const maxHealth = bossSlot.hpBar?.maxValue ?? bossSlot._data?.stats?.maxHealth ?? 1;
         const healAmount = Phaser.Math.Between(ability.immediateMin ?? 0, ability.immediateMax ?? ability.immediateMin ?? 0);
         bossSlot.currentHealth = Math.min(maxHealth, (bossSlot.currentHealth ?? maxHealth) + healAmount);
         const pct = bossSlot.currentHealth / maxHealth;
@@ -2345,26 +2496,136 @@ export default class GameScene extends Phaser.Scene {
         }
       }
     } else if (ability.immediateEffect?.type === 'summon_add') {
-      const addId  = ability.immediateEffect.addId;
+      const addId = ability.immediateEffect.addId;
       const addDef = this.levelData?.summonedAdds?.find(a => a.id === addId);
       if (addDef) {
         this._spawnAdd(addDef);
       } else {
         console.warn('[GameScene] summon_add: no summonedAdd definition found for id:', addId);
       }
+    } else if (ability.immediateEffect?.type === 'summon_second_actor') {
+      const actorData = this.levelData?.secondActor;
+      const secondSlot = this.entitySlots.secondActor;
+      if (actorData && secondSlot) {
+        const isAlreadyAlive = this.secondActorSpawned && (secondSlot.currentHealth ?? 0) > 0;
+        if (!isAlreadyAlive) {
+          secondSlot.currentHealth = actorData.stats?.maxHealth ?? 0;
+          if (secondSlot.hpBar) {
+            secondSlot.hpBar.maxValue = secondSlot.currentHealth;
+            this._setBossHealthBar(secondSlot.hpBar, 1.0);
+          }
+          // secondActorSpawned stays false until Kil'wretch is actually on screen
+          // so his abilities and auto-attacks don't run during the portal sequence.
+
+          const portalSprite = secondSlot.portalSprite ?? null;
+          if (portalSprite) {
+            // Mark the portal as active so Sacrifice is blocked during the sequence.
+            this.portalSummonActive = true;
+
+            // Step 1: Malvestian slides left to clear the right side of the screen.
+            this._shiftBossToSharedLayout();
+
+            // Step 2: once he's out of the way, the portal fades in.
+            this.time.delayedCall(1400, () => {
+              if (!this.gameRunning) return;
+              this._fadeInWithPixelate(portalSprite, 2000);
+
+              // Step 3: a few seconds later Kil'wretch crawls out of the portal.
+              this.time.delayedCall(5000, () => {
+                if (!this.gameRunning) return;
+
+                // Sprite materializes with the same pixelated fade.
+                if (secondSlot.sprite) {
+                  this._fadeInWithPixelate(secondSlot.sprite, 2000);
+                }
+
+                // Nameplate and HP bar fade in alongside the sprite.
+                if (secondSlot.nameText) {
+                  this.tweens.add({ targets: secondSlot.nameText, alpha: 1, duration: 800 });
+                }
+                if (secondSlot.titlePanel) {
+                  this.tweens.add({ targets: secondSlot.titlePanel, alpha: 0.65, duration: 800 });
+                }
+                if (secondSlot.hpBar) {
+                  const barParts = [secondSlot.hpBar.track, secondSlot.hpBar.fill, secondSlot.hpBar.valueText].filter(Boolean);
+                  this.tweens.add({ targets: barParts, alpha: 1, duration: 800 });
+                }
+
+                // Intro dialogue fires as he starts to appear.
+                const rawIntro = actorData.dialogue?.intro ?? (actorData.name + ' joins the fight!');
+                const introLines = Array.isArray(rawIntro) ? rawIntro : [rawIntro];
+                this.showDialogueSequence(introLines, '#ff9966');
+
+                // Once he is fully visible, enable combat and fade out the portal.
+                // Keeping secondActorSpawned false until the fade completes prevents
+                // him from attacking or being targeted while still materializing.
+                this.time.delayedCall(2000, () => {
+                  if (!this.gameRunning) return;
+                  this.secondActorSpawned = true;
+                  this.tweens.add({
+                    targets: portalSprite, alpha: 0, duration: 600,
+                    onComplete: () => { this.portalSummonActive = false; },
+                  });
+                });
+              });
+            });
+          } else {
+            // No portal -- just show the actor normally.
+            this._setSecondActorVisible(true);
+            const rawIntro = actorData.dialogue?.intro ?? (actorData.name + ' joins the fight!');
+            const introLines = Array.isArray(rawIntro) ? rawIntro : [rawIntro];
+            this.showDialogueSequence(introLines, '#ff9966');
+          }
+        }
+      }
+    } else if (ability.immediateEffect?.type === 'sacrifice') {
+      const targetId = targets[0];
+      if (targetId) {
+        const requiredDamage = ability.immediateEffect.requiredDamage ?? 10000;
+        const durationTicks = ability.immediateEffect.durationTicks ?? 6;
+        const bossHealthSnapshot = this.entitySlots.boss?.currentHealth ?? 0;
+        const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
+
+        this.activeSacrifice = { targetId, requiredDamage, bossHealthSnapshot };
+        this.showPopup(targetName + ' is marked for Sacrifice!', '#cc44cc', 3000, true);
+
+        this.time.delayedCall(durationTicks * TICK_MS, () => {
+          if (!this.gameRunning || !this.activeSacrifice) return;
+          const { targetId, requiredDamage, bossHealthSnapshot } = this.activeSacrifice;
+          this.activeSacrifice = null;
+          const bossHealthCurrent = this.entitySlots.boss?.currentHealth ?? 0;
+          const damageDealtToBoss = bossHealthSnapshot - bossHealthCurrent;
+          if (damageDealtToBoss < requiredDamage) {
+            const targetSlot = this.entitySlots[targetId];
+            if (targetSlot && (targetSlot.currentHealth ?? 0) > 0) {
+              this._applyDamageToCharacter(targetId, targetSlot.currentHealth, iconKey, 'shadow');
+              this.showPopup('The sacrifice is complete!', '#cc0000', 3000, true);
+            }
+          } else {
+            this.showPopup('The sacrifice is interrupted!', '#44cc44', 3000, true);
+          }
+        });
+      }
     } else if (ability.immediateFlag && (ability.immediateMin || ability.immediateMax)) {
       const immediateDamage = Phaser.Math.Between(ability.immediateMin ?? 0, ability.immediateMax ?? ability.immediateMin ?? 0);
       targets.forEach((targetId) => {
         if (!targetId) return;
-        this._applyDamageToCharacter(targetId, Math.round(immediateDamage * (this.bossDamageMultiplier ?? 1)), iconKey, damageType);
+        const finalHit = Math.round(immediateDamage * (this.bossDamageMultiplier ?? 1));
+        this._applyDamageToCharacter(targetId, finalHit, iconKey, damageType);
+        const hitTargetName = this.entitySlots[targetId]?._data?.name ?? targetId;
+        console.log(logTag, bossName, 'uses', abilityName, '->', hitTargetName, '|', finalHit, damageType);
       });
     }
 
     if (ability.duration > 0 && ability.tickMin) {
+      const dotTargetList = targets.map(t => this.entitySlots[t]?._data?.name ?? t).join(', ');
+      console.log(logTag, bossName, 'uses', abilityName, '->', dotTargetList,
+        '|', ability.tickMin + '-' + (ability.tickMax ?? ability.tickMin), damageType,
+        'x' + ability.duration, 'ticks');
       let ticks = 0;
       const dotTimer = this.time.addEvent({
         delay: TICK_MS,
-        loop:  true,
+        loop: true,
         callback: () => {
           ticks++;
           const tickDamage = Phaser.Math.Between(ability.tickMin ?? 0, ability.tickMax ?? ability.tickMin ?? 0);
@@ -2385,9 +2646,9 @@ export default class GameScene extends Phaser.Scene {
     // applyDebuff block -- applied after damage so the debuff doesn't affect
     // the damage dealt in the same ability fire.
     if (ability.applyDebuff) {
-      const debuffDef    = ability.applyDebuff;
-      const debuffId     = debuffDef.id;
-      const debuffTicks  = debuffDef.durationTicks ?? 4;
+      const debuffDef = ability.applyDebuff;
+      const debuffId = debuffDef.id;
+      const debuffTicks = debuffDef.durationTicks ?? 4;
       const debuffParams = { ...debuffDef };
       delete debuffParams.id;
       delete debuffParams.durationTicks;
@@ -2414,8 +2675,7 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    this.playBossAttack();
-    this.showAbilityDialogue(abilityId);
+    this.showAbilityDialogue(abilityId, targets);
   }
 
   // =====================================
@@ -2425,11 +2685,16 @@ export default class GameScene extends Phaser.Scene {
   // Locks the boss out of all other actions for the duration.
   // Emits boss-cast-start so UIScene can show the cast bar.
   _beginBossCast(abilityId, ability) {
-    const TICK_MS       = window.GAME_CONFIG.TICK_MS;
+    const TICK_MS = window.GAME_CONFIG.TICK_MS;
     const castDurationMs = ability.castTimeTicks * TICK_MS;
 
-    this.bossIsCasting   = true;
+    this.bossIsCasting = true;
     this.bossCurrentCast = { abilityId, ability };
+
+    if (ability.castStartBuff) {
+      this.bossBuffs[ability.castStartBuff.id] = { ...ability.castStartBuff };
+      console.log('[Boss] castStartBuff applied:', ability.castStartBuff.id);
+    }
 
     console.log('[Boss] Casting', ability.name ?? abilityId, 'for', ability.castTimeTicks, 'ticks');
 
@@ -2438,14 +2703,35 @@ export default class GameScene extends Phaser.Scene {
       uiScene.showBossCastBar(ability.name ?? abilityId, castDurationMs);
     }
 
+    const castingAnimKey = this._getActiveActorData()?.id + '_casting';
+    const bossSprite = this.entitySlots.boss?.sprite;
+    if (bossSprite && this.anims.exists(castingAnimKey)) {
+      bossSprite.playReverse(castingAnimKey);
+    }
+
     this.bossCurrentCastTimer = this.time.delayedCall(castDurationMs, () => {
       if (!this.bossIsCasting) return;
 
-      this.bossIsCasting       = false;
-      this.bossCurrentCast     = null;
+      this.bossIsCasting = false;
+
+      const completedAbility = this.bossCurrentCast?.ability;
+      this.bossCurrentCast = null;
       this.bossCurrentCastTimer = null;
 
+      if (completedAbility?.castStartBuff) {
+        delete this.bossBuffs[completedAbility.castStartBuff.id];
+        console.log('[Boss] castStartBuff cleared:', completedAbility.castStartBuff.id);
+      }
+
       if (uiScene?.hideBossCastBar) uiScene.hideBossCastBar();
+
+      const completedBossSprite = this.entitySlots.boss?.sprite;
+      const completedIdleKey = this._getActiveActorData()?.id + '_idle';
+      if (completedBossSprite && this.anims.exists(completedIdleKey)) {
+        completedBossSprite.play(completedIdleKey);
+      }
+
+      this.completedCastAbilityIds.add(abilityId);
 
       this._resolveBossAbilityEffect(abilityId, ability);
     });
@@ -2468,14 +2754,25 @@ export default class GameScene extends Phaser.Scene {
       this.bossCurrentCastTimer = null;
     }
 
+    if (ability?.castStartBuff) {
+      delete this.bossBuffs[ability.castStartBuff.id];
+      console.log('[Boss] castStartBuff cleared on interrupt:', ability.castStartBuff.id);
+    }
+
     const abilityName = ability?.name ?? this.bossCurrentCast?.abilityId ?? 'ability';
     console.log('[Boss] Cast interrupted:', abilityName);
 
-    this.bossIsCasting   = false;
+    this.bossIsCasting = false;
     this.bossCurrentCast = null;
 
     const uiScene = this.scene.get('UIScene');
     if (uiScene?.hideBossCastBar) uiScene.hideBossCastBar(true);
+
+    const interruptedBossSprite = this.entitySlots.boss?.sprite;
+    const interruptedIdleKey = this._getActiveActorData()?.id + '_idle';
+    if (interruptedBossSprite && this.anims.exists(interruptedIdleKey)) {
+      interruptedBossSprite.play(interruptedIdleKey);
+    }
 
     return true;
   }
@@ -2546,7 +2843,7 @@ export default class GameScene extends Phaser.Scene {
     const uiScene = this.scene.get('UIScene');
     if (uiScene?.spawnFloatingText) {
       const zone = window.GAME_CONFIG.ZONES[characterId.toUpperCase()]
-                   ?? window.GAME_CONFIG.ZONES.PLAYER;
+        ?? window.GAME_CONFIG.ZONES.PLAYER;
       uiScene.spawnFloatingText(zone, finalDamage, 'damage', iconKey);
     }
 
@@ -2570,7 +2867,7 @@ export default class GameScene extends Phaser.Scene {
     const defeatKeyMap = {
       player: 'shaman_defeated',
       healer: 'healer_defeated',
-      tank:   'tank_defeated',
+      tank: 'tank_defeated',
     };
     const defeatKey = defeatKeyMap[characterId];
 
@@ -2613,8 +2910,8 @@ export default class GameScene extends Phaser.Scene {
   _logBossDamage(iconKey, targetId, damage, damageType, targetHpAfter) {
     if (damage <= 0) return;
 
-    const rawId      = iconKey ? iconKey.replace(/^icon_/, '') : 'autoAttack';
-    const isAutoAtk  = rawId === 'autoAttack';
+    const rawId = iconKey ? iconKey.replace(/^icon_/, '') : 'autoAttack';
+    const isAutoAtk = rawId === 'autoAttack';
     const abilityDef = this.levelData?.abilities?.[rawId];
     const abilityName = isAutoAtk
       ? 'Auto Attack'
@@ -2624,7 +2921,7 @@ export default class GameScene extends Phaser.Scene {
     const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
 
     const entry = {
-      tick:          this.tickCount,
+      tick: this.tickCount,
       sourceName,
       abilityName,
       damageType,
@@ -2637,14 +2934,6 @@ export default class GameScene extends Phaser.Scene {
     this.combatLog.push(entry);
     this.events.emit('combat-log-entry', entry);
 
-    console.log(
-      '[CombatLog] T' + entry.tick +
-      ' | ' + sourceName +
-      ' -> ' + targetName +
-      ' | ' + abilityName +
-      ' | ' + damage + ' ' + damageType +
-      ' | HP left: ' + entry.targetHpAfter
-    );
   }
 
   // =====================================
@@ -2688,7 +2977,7 @@ export default class GameScene extends Phaser.Scene {
   // Cancel and clear all active DoT timers on a character
   _cancelDotsOnCharacter(characterId) {
     if (!this.activeDots?.[characterId]) return;
-    this.activeDots[characterId].forEach(t => { try { t.remove(); } catch(e) {} });
+    this.activeDots[characterId].forEach(t => { try { t.remove(); } catch (e) { } });
     this.activeDots[characterId] = [];
   }
 
@@ -2696,7 +2985,7 @@ export default class GameScene extends Phaser.Scene {
     // Cancel and clear all active HoT timers on this character
     const hots = this.charHoTs?.[characterId] ?? {};
     for (const hot of Object.values(hots)) {
-      if (hot.timer) { try { hot.timer.remove(); } catch(e) {} }
+      if (hot.timer) { try { hot.timer.remove(); } catch (e) { } }
     }
     if (this.charHoTs?.[characterId]) this.charHoTs[characterId] = {};
 
@@ -2739,7 +3028,7 @@ export default class GameScene extends Phaser.Scene {
       case 'ally_lowest_hp': {
         let target = null, lowestPct = Infinity;
         for (const id of aliveIds) {
-          const s   = this.entitySlots[id];
+          const s = this.entitySlots[id];
           const pct = (s?.currentHealth ?? 1) / (s?.hpBar?.maxValue ?? 1);
           if (pct < lowestPct) { lowestPct = pct; target = id; }
         }
@@ -2748,7 +3037,7 @@ export default class GameScene extends Phaser.Scene {
       case 'ally_lowest_mana': {
         let target = null, lowestPct = Infinity;
         for (const id of aliveIds) {
-          const s   = this.entitySlots[id];
+          const s = this.entitySlots[id];
           const pct = (s?.currentMana ?? 1) / (s?.manaBar?.maxValue ?? 1);
           if (pct < lowestPct) { lowestPct = pct; target = id; }
         }
@@ -2770,12 +3059,12 @@ export default class GameScene extends Phaser.Scene {
   // Loops effects[] and routes each entry to its handler.
   // effectResults[] lets later effects reference earlier resolved values.
   _dispatchEffects(casterId, ability, targets) {
-    const TICK_MS      = window.GAME_CONFIG.TICK_MS;
-    const casterSlot   = this.entitySlots[casterId];
-    const casterData   = casterSlot?._data;
-    const critChance   = casterData?.stats?.critChance    ?? 0;
-    const critMult     = casterData?.stats?.critMultiplier ?? 2.0;
-    const iconKey      = 'icon_' + (ability.iconId ?? ability.id);
+    const TICK_MS = window.GAME_CONFIG.TICK_MS;
+    const casterSlot = this.entitySlots[casterId];
+    const casterData = casterSlot?._data;
+    const critChance = casterData?.stats?.critChance ?? 0;
+    const critMult = casterData?.stats?.critMultiplier ?? 2.0;
+    const iconKey = 'icon_' + (ability.iconId ?? ability.id);
     const effectResults = [];
 
     for (let i = 0; i < (ability.effects?.length ?? 0); i++) {
@@ -2809,10 +3098,9 @@ export default class GameScene extends Phaser.Scene {
 
         case 'self_damage': {
           const sourceVal = effectResults[eff.sourceEffect ?? 0] ?? 0;
-          const selfDmg   = Math.round(sourceVal * (eff.amountPct ?? 0));
+          const selfDmg = Math.round(sourceVal * (eff.amountPct ?? 0));
           if (selfDmg > 0) {
             this._applyDamageToCharacter(casterId, selfDmg, iconKey);
-            console.log('[' + casterId + '] ' + ability.id + ' self-damage: ' + selfDmg);
           }
           effectResults[i] = selfDmg;
           break;
@@ -2855,11 +3143,11 @@ export default class GameScene extends Phaser.Scene {
             ? [casterId]
             : targets.filter(t => t !== 'boss');
           for (const tid of manaTargets) {
-            const slot    = this.entitySlots[tid];
+            const slot = this.entitySlots[tid];
             if (!slot) continue;
             const maxMana = slot.manaBar?.maxValue ?? 0;
             if (maxMana <= 0) continue;
-            const amount  = eff.amountPct
+            const amount = eff.amountPct
               ? Math.round(maxMana * eff.amountPct)
               : (eff.amount ?? 0);
             slot.currentMana = Math.min(maxMana, (slot.currentMana ?? maxMana) + amount);
@@ -2869,7 +3157,6 @@ export default class GameScene extends Phaser.Scene {
               const zone = window.GAME_CONFIG.ZONES[tid.toUpperCase()] ?? window.GAME_CONFIG.ZONES.PLAYER;
               uiScene.spawnFloatingText(zone, amount, 'mana', iconKey);
             }
-            console.log('[' + casterId + '] restore_mana -> ' + tid + ' +' + amount);
           }
           break;
         }
@@ -2878,41 +3165,39 @@ export default class GameScene extends Phaser.Scene {
           for (const tid of targets) {
             const slot = this.entitySlots[tid];
             if (!slot) continue;
-            const maxHp  = slot.hpBar?.maxValue  ?? 1;
-            const maxMp  = slot.manaBar?.maxValue ?? 1;
+            const maxHp = slot.hpBar?.maxValue ?? 1;
+            const maxMp = slot.manaBar?.maxValue ?? 1;
             const restHp = Math.round(maxHp * (eff.healthPct ?? 0.75));
-            const restMp = Math.round(maxMp * (eff.manaPct   ?? 0.75));
+            const restMp = Math.round(maxMp * (eff.manaPct ?? 0.75));
             slot.currentHealth = restHp;
-            slot.currentMana   = restMp;
+            slot.currentMana = restMp;
             this._setHealthBar(slot.hpBar, restHp / maxHp);
             if (slot.manaBar) this._setManaBar(slot.manaBar, restMp / maxMp);
             if (slot.sprite) {
               slot.sprite.setAlpha(0);
               this.tweens.add({ targets: slot.sprite, alpha: 1, duration: 800 });
-              if (tid === 'tank'   && this.anims.exists('tank_idle'))   slot.sprite.play('tank_idle');
+              if (tid === 'tank' && this.anims.exists('tank_idle')) slot.sprite.play('tank_idle');
               if (tid === 'player' && this.anims.exists('shaman_idle')) slot.sprite.play('shaman_idle');
               if (tid === 'healer' && this.anims.exists('healer_idle')) slot.sprite.play('healer_idle');
             }
             this.showPopup((slot._data?.name ?? tid) + ' returns to life!', '#aaffaa', 3000);
-            console.log('[' + casterId + '] Awaken -> ' + tid, restHp + 'hp', restMp + 'mana');
           }
           break;
         }
 
         case 'consume_hot': {
           for (const tid of targets.filter(t => t !== 'boss')) {
-            const hots    = this.charHoTs?.[tid] ?? {};
+            const hots = this.charHoTs?.[tid] ?? {};
             const hotKeys = Object.keys(hots);
             if (!hotKeys.length) continue;
-            const hotId   = hotKeys[0];
+            const hotId = hotKeys[0];
             const hotData = hots[hotId];
-            const stacks  = hotData.stacks  ?? 1;
+            const stacks = hotData.stacks ?? 1;
             const remaining = (hotData.ticksLeft ?? 0) * (hotData.tickHeal ?? 0) * stacks;
-            if (hotData.timer) { try { hotData.timer.remove(); } catch(e) {} }
+            if (hotData.timer) { try { hotData.timer.remove(); } catch (e) { } }
             delete this.charHoTs[tid][hotId];
             this._emitBuffUpdate(tid);
             if (remaining > 0) this._applyHealToCharacter(tid, remaining, ability.id);
-            console.log('[' + casterId + '] Spirit Surge consumed ' + hotId + ' on ' + tid + ' for ' + remaining);
           }
           break;
         }
@@ -2922,16 +3207,19 @@ export default class GameScene extends Phaser.Scene {
             const allThreat = Object.values(this.threatTable ?? {});
             const maxThreat = (allThreat.length ? Math.max(...allThreat) : 0) + 10000;
             if (!this.threatTable) this.threatTable = {};
+            console.log('[Threat] Provoke fired by', casterId,
+              '| before:', JSON.stringify(this.threatTable),
+              '| setting to', maxThreat);
             this.threatTable[casterId] = maxThreat;
             this._updateThreatMeters();
-            console.log('[' + casterId + '] Provoke -- threat set to ' + maxThreat);
+            console.log('[Threat] After Provoke:', JSON.stringify(this.threatTable));
           }
           break;
         }
 
         case 'buff': {
           const buffTargets = (eff.target === 'self') ? [casterId] : targets;
-          const durationMs  = (eff.durationTicks ?? 0) * TICK_MS;
+          const durationMs = (eff.durationTicks ?? 0) * TICK_MS;
           for (const tid of buffTargets) {
             const slot = this.entitySlots[tid];
             if (!slot) continue;
@@ -3013,10 +3301,10 @@ export default class GameScene extends Phaser.Scene {
         case 'apply_shield': {
           for (const tid of targets.filter(t => t !== 'boss')) {
             this._applyShieldToCharacter(tid, {
-              absorbAmount:  eff.absorbAmount  ?? 5000,
-              damageType:    eff.damageType    ?? 'all',
-              dispellable:   eff.dispellable   ?? true,
-              dispelType:    eff.dispelType    ?? 'magic',
+              absorbAmount: eff.absorbAmount ?? 5000,
+              damageType: eff.damageType ?? 'all',
+              dispellable: eff.dispellable ?? true,
+              dispelType: eff.dispelType ?? 'magic',
               durationTicks: eff.durationTicks ?? 0,
             });
           }
@@ -3032,7 +3320,7 @@ export default class GameScene extends Phaser.Scene {
   // Apply a heal-over-time. Handles stacking (burgeon), reset-on-recast, bloom-on-expire.
   _applyHoT(casterId, ability, eff, targetId) {
     const TICK_MS = window.GAME_CONFIG.TICK_MS;
-    const hotId   = eff.hotId ?? (ability.id + '_hot');
+    const hotId = eff.hotId ?? (ability.id + '_hot');
 
     if (!this.charHoTs[targetId]) this.charHoTs[targetId] = {};
     const existing = this.charHoTs[targetId][hotId];
@@ -3041,14 +3329,14 @@ export default class GameScene extends Phaser.Scene {
     if (eff.stackable && existing) {
       stacks = Math.min((existing.stacks ?? 1) + 1, eff.maxStacks ?? 1);
     }
-    if (existing?.timer) { try { existing.timer.remove(); } catch(e) {} }
+    if (existing?.timer) { try { existing.timer.remove(); } catch (e) { } }
 
-    const tickHeal  = Phaser.Math.Between(eff.min, eff.max);
-    let   ticksLeft = eff.durationTicks;
+    const tickHeal = Phaser.Math.Between(eff.min, eff.max);
+    let ticksLeft = eff.durationTicks;
 
     const hotTimer = this.time.addEvent({
       delay: TICK_MS,
-      loop:  true,
+      loop: true,
       callback: () => {
         if ((this.entitySlots[targetId]?.currentHealth ?? 0) <= 0) {
           hotTimer.remove();
@@ -3057,8 +3345,8 @@ export default class GameScene extends Phaser.Scene {
           return;
         }
         const curStacks = this.charHoTs[targetId]?.[hotId]?.stacks ?? 1;
-        let   heal      = tickHeal * curStacks;
-        const crit      = this.entitySlots[casterId]?._data?.stats?.critChance ?? 0;
+        let heal = tickHeal * curStacks;
+        const crit = this.entitySlots[casterId]?._data?.stats?.critChance ?? 0;
         if (ability.canCrit && Math.random() * 100 < crit) {
           heal = Math.round(heal * (this.entitySlots[casterId]?._data?.stats?.critMultiplier ?? 2.0));
         }
@@ -3076,13 +3364,12 @@ export default class GameScene extends Phaser.Scene {
           hotTimer.remove();
           if (eff.onExpire && this.charHoTs[targetId]?.[hotId]) {
             const bloomStacks = this.charHoTs[targetId][hotId].stacks ?? 1;
-            const bloomBase   = Phaser.Math.Between(
+            const bloomBase = Phaser.Math.Between(
               eff.onExpire.min ?? eff.min,
               eff.onExpire.max ?? eff.max
             );
             const bloomHeal = bloomBase * (eff.onExpire.multiplier === 'stack_count' ? bloomStacks : 1);
             this._applyHealToCharacter(targetId, bloomHeal, ability.id);
-            console.log('[' + casterId + '] ' + ability.id + ' bloom: ' + bloomHeal + ' (' + bloomStacks + 'x)');
           }
           if (this.charHoTs[targetId]) delete this.charHoTs[targetId][hotId];
           this._emitBuffUpdate(targetId);
@@ -3091,25 +3378,23 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.charHoTs[targetId][hotId] = { stacks, tickHeal, ticksLeft, timer: hotTimer };
-    this.addThreat(casterId, Math.round(tickHeal * eff.durationTicks * stacks * 0.1));
+    // Threat is generated per tick inside the timer callback; don't add it again here.
     this._updateThreatMeters();
     this._emitBuffUpdate(targetId);
-    console.log('[' + casterId + '] ' + ability.id + ' HoT -> ' + targetId + ' (' + stacks + ' stack(s), ' + tickHeal + '/tick)');
   }
 
   // Apply a mana-over-time (quicken).
   _applyMoT(casterId, ability, eff, targetId) {
-    const TICK_MS    = window.GAME_CONFIG.TICK_MS;
+    const TICK_MS = window.GAME_CONFIG.TICK_MS;
     const targetSlot = this.entitySlots[targetId];
     if (!targetSlot) return;
-    const maxMana  = targetSlot.manaBar?.maxValue ?? 1;
+    const maxMana = targetSlot.manaBar?.maxValue ?? 1;
     const duration = eff.durationTicks ?? 8;
     // "target_max_mana * 0.10 / 20"
     const tickRestore = eff.amountPerTick?.formula
       ? Math.round(maxMana * 0.10 / 20)
       : Math.round(eff.amountPerTick ?? 0);
 
-    console.log('[' + casterId + '] Quicken -> ' + targetId + ' ' + tickRestore + '/tick x' + duration);
     let ticks = 0;
     const timer = this.time.addEvent({
       delay: TICK_MS, loop: true,
@@ -3140,7 +3425,7 @@ export default class GameScene extends Phaser.Scene {
     if (!ability?.effects) return false;
 
     const maxMana = slot.manaBar?.maxValue ?? 1;
-    const mana    = slot.currentMana ?? maxMana;
+    const mana = slot.currentMana ?? maxMana;
     if (mana < (ability.manaCost ?? 0)) return false;
 
     if (!this.charAbilityCooldowns[casterId]) this.charAbilityCooldowns[casterId] = {};
@@ -3158,18 +3443,19 @@ export default class GameScene extends Phaser.Scene {
 
     this._dispatchEffects(casterId, ability, targets);
 
-    if (casterId === 'tank')   this.playTankAutoAttack();
+    if (casterId === 'tank') this.playTankAutoAttack();
     if (casterId === 'healer') this.playHealerCast();
     if (casterId === 'player') this.playPlayerCast('shaman_cast_lightning');
 
     const zone = window.GAME_CONFIG.ZONES[casterId.toUpperCase()];
-    const ui   = this.scene.get('UIScene');
+    const ui = this.scene.get('UIScene');
+
     if (ui?.spawnAbilityBadge && zone) {
       ui.spawnAbilityBadge(zone, abilityId, ability.name ?? abilityId);
     }
+
     this.showAbilityDialogue(abilityId);
 
-    console.log('[' + casterId + '] ' + abilityId + ' | mana: ' + slot.currentMana + '/' + maxMana);
     return true;
   }
 
@@ -3209,7 +3495,7 @@ export default class GameScene extends Phaser.Scene {
       return (s?.currentHealth ?? 0) / (s?.hpBar?.maxValue ?? 1);
     };
 
-    const aliveIds   = ['player', 'tank', 'healer'].filter(id => (this.entitySlots[id]?.currentHealth ?? 0) > 0);
+    const aliveIds = ['player', 'tank', 'healer'].filter(id => (this.entitySlots[id]?.currentHealth ?? 0) > 0);
     const lowestHpId = aliveIds.reduce((best, id) => hpPct(id) < hpPct(best) ? id : best, aliveIds[0] ?? 'tank');
 
     // Snapshot current HP percentages for spike detection next tick
@@ -3271,8 +3557,8 @@ export default class GameScene extends Phaser.Scene {
     // is below 20% mana.
     {
       const healerManaPctRaw = (healerSlot.currentMana ?? healerMaxMana) / healerMaxMana;
-      const healerNeedsMana  = healerManaPctRaw < 0.20;
-      const healerFlush      = healerManaPctRaw >= 0.50;
+      const healerNeedsMana = healerManaPctRaw < 0.20;
+      const healerFlush = healerManaPctRaw >= 0.50;
 
       const allyNeedsMana = aliveIds.find(id => {
         if (id === 'healer') return false;
@@ -3300,12 +3586,12 @@ export default class GameScene extends Phaser.Scene {
     // Find the alive ally below 80% with the fewest current Burgeon stacks
     {
       let burgeonTarget = null;
-      let fewestStacks  = 3;
+      let fewestStacks = 3;
       for (const id of aliveIds) {
         if (hpPct(id) > 0.80) continue;
         const stacks = this.charHoTs?.[id]?.['burgeon_hot']?.stacks ?? 0;
         if (stacks < fewestStacks) {
-          fewestStacks  = stacks;
+          fewestStacks = stacks;
           burgeonTarget = id;
         }
       }
@@ -3333,9 +3619,9 @@ export default class GameScene extends Phaser.Scene {
   // If a character hasn't cast anything for 5 seconds, they regen
   // 3% of their max mana every 2 ticks. Resets on any cast.
   _tickManaRegen() {
-    const IDLE_WINDOW_MS  = 5000;
-    const REGEN_PCT       = 0.06;
-    const REGEN_INTERVAL  = 2;  // ticks between each regen tick
+    const IDLE_WINDOW_MS = 5000;
+    const REGEN_PCT = 0.06;
+    const REGEN_INTERVAL = 2;  // ticks between each regen tick
 
     if (this.tickCount % REGEN_INTERVAL !== 0) return;
 
@@ -3345,17 +3631,17 @@ export default class GameScene extends Phaser.Scene {
       const slot = this.entitySlots[id];
       if (!slot || (slot.currentHealth ?? 0) <= 0) continue;
 
-      const maxMana     = slot.manaBar?.maxValue ?? 0;
+      const maxMana = slot.manaBar?.maxValue ?? 0;
       if (maxMana <= 0) continue;
 
       const currentMana = slot.currentMana ?? maxMana;
       if (currentMana >= maxMana) continue;  // already full
 
-      const lastCast    = this.lastCastTime[id] ?? 0;
+      const lastCast = this.lastCastTime[id] ?? 0;
       if (now - lastCast < IDLE_WINDOW_MS) continue;  // still in combat window
 
       const regenAmount = Math.round(maxMana * REGEN_PCT);
-      slot.currentMana  = Math.min(maxMana, currentMana + regenAmount);
+      slot.currentMana = Math.min(maxMana, currentMana + regenAmount);
       this._setManaBar(slot.manaBar, slot.currentMana / maxMana);
 
       // Floating mana text
@@ -3382,13 +3668,30 @@ export default class GameScene extends Phaser.Scene {
     // Vanished buff -- boss is immune to all damage
     if (this.bossBuffs?.vanished) return;
 
+    // Active summoned adds absorb all incoming damage until they are dead.
+    // The character AI still "attacks the boss" but the damage lands on the add.
+    if (this.summonedAddSlots.length > 0) {
+      this._applyDamageToAdd(0, damage, iconKey, damageType);
+      return;
+    }
+
+    // If a second actor is alive and redirects player damage to itself,
+    // all hits land on it instead of the boss. Kill Kil'wretch first!
+    const secondSlotCheck = this.entitySlots.secondActor;
+    if (this.levelData?.secondActor?.redirectsPlayerDamage &&
+        this.secondActorSpawned &&
+        (secondSlotCheck?.currentHealth ?? 0) > 0) {
+      this._applyDamageToSecondActor(damage, iconKey, damageType);
+      return;
+    }
+
     if (!DAMAGE_TYPES.has(damageType)) {
       console.warn('[GameScene] Unknown damageType:', damageType, '-- defaulting to physical');
       damageType = 'physical';
     }
 
-    const resistList   = this._getActiveActorData()?.stats?.resistList ?? {};
-    let   finalDamage  = this._applyResistReduction(damage, damageType, resistList);
+    const resistList = this._getActiveActorData()?.stats?.resistList ?? {};
+    let finalDamage = this._applyResistReduction(damage, damageType, resistList);
 
     // damage_increase_cast -- boss takes amplified damage while casting
     if (this.bossIsCasting && this.bossBuffs?.damage_increase_cast) {
@@ -3396,7 +3699,7 @@ export default class GameScene extends Phaser.Scene {
       finalDamage = Math.round(finalDamage * mult);
     }
 
-    const maxHealth    = slot.hpBar?.maxValue ?? 1;
+    const maxHealth = slot.hpBar?.maxValue ?? 1;
     slot.currentHealth = Math.max(0, (slot.currentHealth ?? maxHealth) - finalDamage);
 
     this.secondActorDamageTaken += finalDamage;
@@ -3410,9 +3713,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     if (slot.currentHealth <= 0) {
-      const encounterActors  = this.levelData?.encounterActors;
-      const nextActorIndex   = this.currentEncounterActorIndex + 1;
-      const hasNextActor     = encounterActors && nextActorIndex < encounterActors.length;
+      const encounterActors = this.levelData?.encounterActors;
+      const nextActorIndex = this.currentEncounterActorIndex + 1;
+      const hasNextActor = encounterActors && nextActorIndex < encounterActors.length;
 
       if (hasNextActor && !this.encounterSwapInProgress) {
         this._swapEncounterActor(nextActorIndex);
@@ -3467,7 +3770,7 @@ export default class GameScene extends Phaser.Scene {
     const uiScene = this.scene.get('UIScene');
     if (uiScene?.spawnFloatingText) {
       const zone = window.GAME_CONFIG.ZONES[characterId.toUpperCase()]
-                   ?? window.GAME_CONFIG.ZONES.PLAYER;
+        ?? window.GAME_CONFIG.ZONES.PLAYER;
       const iconKey = abilityId ? 'icon_' + abilityId : null;
       uiScene.spawnFloatingText(zone, finalAmount, 'heal', iconKey);
     }
@@ -3491,7 +3794,6 @@ export default class GameScene extends Phaser.Scene {
       ...params,
     };
 
-    console.log('[Debuff]', debuffId, '->', characterId, 'for', durationTicks, 'ticks');
 
     if (characterId === 'player') {
       this.events.emit('player-debuff-update', this.charDebuffs.player);
@@ -3510,11 +3812,11 @@ export default class GameScene extends Phaser.Scene {
     if (!this.charShields[characterId]) this.charShields[characterId] = [];
 
     const shield = {
-      absorbAmount:  shieldDef.absorbAmount  ?? 5000,
-      damageType:    shieldDef.damageType    ?? 'all',
-      dispellable:   shieldDef.dispellable   ?? true,
-      dispelType:    shieldDef.dispelType    ?? 'magic',
-      remaining:     shieldDef.absorbAmount  ?? 5000,
+      absorbAmount: shieldDef.absorbAmount ?? 5000,
+      damageType: shieldDef.damageType ?? 'all',
+      dispellable: shieldDef.dispellable ?? true,
+      dispelType: shieldDef.dispelType ?? 'magic',
+      remaining: shieldDef.absorbAmount ?? 5000,
     };
 
     this.charShields[characterId].push(shield);
@@ -3527,13 +3829,9 @@ export default class GameScene extends Phaser.Scene {
         const idx = shields.indexOf(shield);
         if (idx !== -1) {
           shields.splice(idx, 1);
-          console.log('[Shield] Expired on', characterId);
         }
       });
     }
-
-    console.log('[Shield] Applied to', characterId, '-- absorbs', shield.absorbAmount,
-      shield.damageType === 'all' ? '(all types)' : '(' + shield.damageType + ')');
   }
 
   // Runs incoming damage through the character's shield queue.
@@ -3544,8 +3842,8 @@ export default class GameScene extends Phaser.Scene {
     const shields = this.charShields?.[characterId];
     if (!shields?.length) return damage;
 
-    let remaining     = damage;
-    const toRemove    = [];
+    let remaining = damage;
+    const toRemove = [];
 
     for (let i = 0; i < shields.length && remaining > 0; i++) {
       const shield = shields[i];
@@ -3563,7 +3861,6 @@ export default class GameScene extends Phaser.Scene {
 
       if (shield.remaining <= 0) {
         toRemove.push(i);
-        console.log('[Shield] Consumed on', characterId);
       }
     }
 
@@ -3574,10 +3871,10 @@ export default class GameScene extends Phaser.Scene {
 
     if (remaining < damage) {
       const absorbed = damage - remaining;
-      const uiScene  = this.scene.get('UIScene');
+      const uiScene = this.scene.get('UIScene');
       if (uiScene?.spawnFloatingText) {
         const zone = window.GAME_CONFIG.ZONES[characterId.toUpperCase()]
-                     ?? window.GAME_CONFIG.ZONES.PLAYER;
+          ?? window.GAME_CONFIG.ZONES.PLAYER;
         uiScene.spawnFloatingText(zone, absorbed, 'miss');
       }
     }
@@ -3603,7 +3900,6 @@ export default class GameScene extends Phaser.Scene {
       if (!allowedTypes.includes(dispelType)) continue;
 
       delete debuffs[debuffId];
-      console.log('[Dispel] Removed', debuffId, 'from', characterId);
       removed = true;
       if (!removeAll) break;
     }
@@ -3637,15 +3933,13 @@ export default class GameScene extends Phaser.Scene {
   // Physical DoT that bypasses armor entirely.
   // totalDamage is split evenly across durationTicks.
   _applyBleed(characterId, totalDamage, durationTicks, iconKey = null) {
-    const TICK_MS    = window.GAME_CONFIG.TICK_MS;
+    const TICK_MS = window.GAME_CONFIG.TICK_MS;
     const tickDamage = Math.round(totalDamage / Math.max(1, durationTicks));
-    let   ticks      = 0;
-
-    console.log('[Bleed] ->', characterId, tickDamage + '/tick x' + durationTicks);
+    let ticks = 0;
 
     const bleedTimer = this.time.addEvent({
       delay: TICK_MS,
-      loop:  true,
+      loop: true,
       callback: () => {
         ticks++;
         if ((this.entitySlots[characterId]?.currentHealth ?? 0) <= 0) {
@@ -3653,7 +3947,7 @@ export default class GameScene extends Phaser.Scene {
           return;
         }
 
-        const slot      = this.entitySlots[characterId];
+        const slot = this.entitySlots[characterId];
         const maxHealth = slot?.hpBar?.maxValue ?? 1;
         slot.currentHealth = Math.max(0, (slot.currentHealth ?? maxHealth) - tickDamage);
         this._setHealthBar(slot.hpBar, slot.currentHealth / maxHealth);
@@ -3681,7 +3975,7 @@ export default class GameScene extends Phaser.Scene {
     const slot = this.entitySlots[characterId];
     if (!slot) return;
 
-    const maxMana     = slot.manaBar?.maxValue ?? 0;
+    const maxMana = slot.manaBar?.maxValue ?? 0;
     const currentMana = slot.currentMana ?? maxMana;
     if (currentMana <= 0) return;
 
@@ -3743,7 +4037,6 @@ export default class GameScene extends Phaser.Scene {
         if (debuffs[debuffId].ticksLeft <= 0) {
           if (debuffId === 'gouge') this._onGougeExpired(characterId);
           delete debuffs[debuffId];
-          console.log('[Debuff]', debuffId, 'expired on', characterId);
           if (characterId === 'player') {
             this.events.emit('player-debuff-update', this.charDebuffs.player);
           }
@@ -3783,20 +4076,31 @@ export default class GameScene extends Phaser.Scene {
     if (this.bossBuffs?.enrage) return;
 
     const activeActorData = this._getActiveActorData();
-    const enrageDef       = activeActorData?.enrage ?? this.levelData?.boss?.enrage;
+    const enrageDef = activeActorData?.enrage ?? this.levelData?.boss?.enrage;
     if (!enrageDef) return;
 
     const slot = this.entitySlots.boss;
     if (!slot) return;
 
-    const maxHp      = slot.hpBar?.maxValue ?? 1;
-    const current    = slot.currentHealth ?? maxHp;
-    const hpPct      = current / maxHp;
+    const maxHp = slot.hpBar?.maxValue ?? 1;
+    const current = slot.currentHealth ?? maxHp;
+    const hpPct = current / maxHp;
     const triggerPct = (enrageDef.trigger?.value ?? 30) / 100;
 
-    if (hpPct <= triggerPct) {
+    const triggerType = enrageDef.trigger?.type ?? 'health_percent';
+
+    let shouldEnrage = false;
+
+    if (triggerType === 'health_percent') {
+      shouldEnrage = hpPct <= triggerPct;
+    } else if (triggerType === 'cast_complete') {
+      const requiredAbilityId = enrageDef.trigger?.abilityId ?? '';
+      shouldEnrage = this.completedCastAbilityIds.has(requiredAbilityId);
+    }
+
+    if (shouldEnrage) {
       this._applyBossBuff('enrage', {
-        damageMultiplier:      enrageDef.damageMultiplier      ?? 1,
+        damageMultiplier: enrageDef.damageMultiplier ?? 1,
         attackSpeedMultiplier: enrageDef.attackSpeedMultiplier ?? 1,
         extraAutoAttackDamage: enrageDef.extraAutoAttackDamage ?? 0,
       }, 0);
@@ -3807,7 +4111,7 @@ export default class GameScene extends Phaser.Scene {
         3000
       );
 
-      console.log('[Enrage] Triggered at', Math.round(hpPct * 100) + '% HP');
+      console.log('[Enrage] Triggered by', triggerType);
     }
   }
 
@@ -3823,7 +4127,7 @@ export default class GameScene extends Phaser.Scene {
     const TICK_MS = window.GAME_CONFIG.TICK_MS;
 
     if (this.charAuras[characterId][auraId]) {
-      try { this.charAuras[characterId][auraId].stackTimer.remove(); } catch(e) {}
+      try { this.charAuras[characterId][auraId].stackTimer.remove(); } catch (e) { }
     }
 
     this.charAuras[characterId][auraId] = { stacks: 0, stackTimer: null };
@@ -3832,7 +4136,7 @@ export default class GameScene extends Phaser.Scene {
 
     auraEntry.stackTimer = this.time.addEvent({
       delay: stackIntervalTicks * TICK_MS,
-      loop:  true,
+      loop: true,
       callback: () => {
         if (!this.gameRunning) return;
         auraEntry.stacks++;
@@ -3847,7 +4151,7 @@ export default class GameScene extends Phaser.Scene {
   _removeAura(characterId, auraId) {
     const entry = this.charAuras?.[characterId]?.[auraId];
     if (!entry) return;
-    try { entry.stackTimer.remove(); } catch(e) {}
+    try { entry.stackTimer.remove(); } catch (e) { }
     delete this.charAuras[characterId][auraId];
     console.log('[Aura]', auraId, 'removed from', characterId);
   }
@@ -3872,7 +4176,7 @@ export default class GameScene extends Phaser.Scene {
 
         if (auraId === 'persevering_aura') {
           const drain = 25 * stacks;
-          const slot  = this.entitySlots[characterId];
+          const slot = this.entitySlots[characterId];
           if (slot && (slot.currentHealth ?? 0) > 0) {
             const maxHp = slot.hpBar?.maxValue ?? 1;
             slot.currentHealth = Math.max(0, (slot.currentHealth ?? maxHp) - drain);
@@ -3883,7 +4187,7 @@ export default class GameScene extends Phaser.Scene {
 
         if (auraId === 'serene_aura') {
           const drain = 25 * stacks;
-          const slot  = this.entitySlots[characterId];
+          const slot = this.entitySlots[characterId];
           if (slot) {
             const maxMana = slot.manaBar?.maxValue ?? 0;
             slot.currentMana = Math.max(0, (slot.currentMana ?? maxMana) - drain);
@@ -3902,12 +4206,12 @@ export default class GameScene extends Phaser.Scene {
     const auras = this.charAuras?.[characterId] ?? {};
 
     const perseveringStacks = auras.persevering_aura?.stacks ?? 0;
-    const sereneStacks      = auras.serene_aura?.stacks      ?? 0;
-    const dominantStacks    = auras.dominant_aura?.stacks    ?? 0;
+    const sereneStacks = auras.serene_aura?.stacks ?? 0;
+    const dominantStacks = auras.dominant_aura?.stacks ?? 0;
 
     multiplier += (perseveringStacks * 0.01);
-    multiplier += (sereneStacks      * 0.01);
-    multiplier -= (dominantStacks    * 0.01);
+    multiplier += (sereneStacks * 0.01);
+    multiplier -= (dominantStacks * 0.01);
 
     return Math.max(0, multiplier);
   }
@@ -3938,7 +4242,7 @@ export default class GameScene extends Phaser.Scene {
   _initThreatTable() {
     this.threatTable = {
       player: 0,
-      tank:   0,
+      tank: 0,
       healer: 0,
     };
   }
@@ -3949,9 +4253,12 @@ export default class GameScene extends Phaser.Scene {
     if (!this.threatTable) this._initThreatTable();
     if (this.threatTable[characterId] !== undefined) {
       const TANK_GLOBAL_THREAT_MULTIPLIER = 5.0;
+      const HEALER_GLOBAL_THREAT_MULTIPLIER = 0.8;
       const finalAmount = characterId === 'tank'
         ? Math.round(amount * TANK_GLOBAL_THREAT_MULTIPLIER)
-        : amount;
+        : characterId === 'healer'
+          ? Math.round(amount * HEALER_GLOBAL_THREAT_MULTIPLIER)
+          : amount;
       this.threatTable[characterId] += finalAmount;
     }
   }
@@ -3985,6 +4292,7 @@ export default class GameScene extends Phaser.Scene {
         highestId = id;
       }
     }
+    console.log('[Threat] Target picked:', highestId, '| table:', JSON.stringify(this.threatTable));
     return highestId;
   }
 
@@ -3997,14 +4305,14 @@ export default class GameScene extends Phaser.Scene {
     );
     if (alive.length <= 1) return this.getHighestThreatTarget();
 
-    let firstId  = alive[0], firstAmt  = -1;
+    let firstId = alive[0], firstAmt = -1;
     let secondId = alive[0], secondAmt = -1;
 
     for (const id of alive) {
       const amount = this.threatTable[id] ?? 0;
       if (amount > firstAmt) {
         secondAmt = firstAmt; secondId = firstId;
-        firstAmt  = amount;   firstId  = id;
+        firstAmt = amount; firstId = id;
       } else if (amount > secondAmt) {
         secondAmt = amount; secondId = id;
       }
@@ -4024,10 +4332,10 @@ export default class GameScene extends Phaser.Scene {
       if (!slot?.threatBar) continue;
       const pct = amount / total;
       this.tweens.add({
-        targets:  slot.threatBar.fill,
-        width:    slot.threatBar.maxWidth * pct,
+        targets: slot.threatBar.fill,
+        width: slot.threatBar.maxWidth * pct,
         duration: 300,
-        ease:     'Sine.easeOut',
+        ease: 'Sine.easeOut',
       });
       if (slot.threatBar.valueText) {
         slot.threatBar.valueText.setText(Math.round(pct * 100) + '%');
@@ -4039,7 +4347,6 @@ export default class GameScene extends Phaser.Scene {
   // Fires playPlayerAutoAttack() every <attackSpeed> ticks as defined
   // in the player JSON data. attackSpeed: 2 = every 2 ticks, etc.
   _tickPlayerAutoAttack() {
-    console.log("[Player] Attacking");
     const playerData = this.entitySlots.player?._data;
     if (!playerData) return;
     if ((this.entitySlots.player?.currentHealth ?? 0) <= 0) return;
@@ -4068,9 +4375,9 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Deal damage to boss and generate threat
-    const playerData  = slot._data;
+    const playerData = slot._data;
     const damageRange = playerData?.stats?.damageRange ?? [50, 100];
-    const damage      = Phaser.Math.Between(damageRange[0], damageRange[1]);
+    const damage = Phaser.Math.Between(damageRange[0], damageRange[1]);
     this._applyDamageToBoss(damage, 'icon_autoAttack');
     this.addThreat('player', damage);
     this._updateThreatMeters();
@@ -4128,7 +4435,7 @@ export default class GameScene extends Phaser.Scene {
     slot.sprite.once('animationcomplete', () => {
       if (this.anims.exists('healer_idle')) slot.sprite.play('healer_idle');
     });
-  } 
+  }
 
   // ====================
   // Tank auto-attack
@@ -4165,9 +4472,9 @@ export default class GameScene extends Phaser.Scene {
 
     // Deal damage to boss and generate threat
     // Tanks generate 1.5x threat from physical attacks (WoW taunt mechanic)
-    const tankData    = slot._data;
+    const tankData = slot._data;
     const damageRange = tankData?.stats?.damageRange ?? [100, 200];
-    const damage      = Phaser.Math.Between(damageRange[0], damageRange[1]);
+    const damage = Phaser.Math.Between(damageRange[0], damageRange[1]);
     const TANK_THREAT_MULTIPLIER = 3.0;
     this._applyDamageToBoss(damage, 'icon_autoAttack');
     this.addThreat('tank', Math.round(damage * TANK_THREAT_MULTIPLIER));
@@ -4187,7 +4494,6 @@ export default class GameScene extends Phaser.Scene {
 
     const attackSpeed = Math.round(healerData.stats?.attackSpeed ?? 2);
     if (this.tickCount % attackSpeed === 0) {
-      console.log('[Healer] Auto-attack tick', this.tickCount, 'speed', attackSpeed);
       this.playHealerAutoAttack();
     }
   }
@@ -4209,16 +4515,15 @@ export default class GameScene extends Phaser.Scene {
 
     // Deal damage to boss and generate threat
     // Healers generate 1.5x threat from physical attacks (WoW taunt mechanic)
-    const healerData    = slot._data;
+    const healerData = slot._data;
     const damageRange = healerData?.stats?.damageRange ?? [100, 200];
-    const damage      = Phaser.Math.Between(damageRange[0], damageRange[1]);
-    
+    const damage = Phaser.Math.Between(damageRange[0], damageRange[1]);
+
     this._applyDamageToBoss(damage, 'icon_autoAttack');
     this.addThreat('healer', damage);
     this._updateThreatMeters();
-    console.log('[Healer] Auto-attack for', damage, '-> threat', Math.round(damage * TANK_THREAT_MULTIPLIER));
   }
-  
+
   // ====================
   // Tank AI
   // ====================
@@ -4272,7 +4577,7 @@ export default class GameScene extends Phaser.Scene {
   _onBossDefeated() {
     this.stopGame();
 
-    const saveData     = loadSaveData();
+    const saveData = loadSaveData();
     const selectedRaidId = this.registry.get('selectedRaidId') || 'spookspire_keep';
     const selectedBossId = this.registry.get('selectedBossId') || 'sir_trotsalot';
 
@@ -4339,19 +4644,18 @@ export default class GameScene extends Phaser.Scene {
     const playerSlot = this.entitySlots.player;
     if (!playerSlot) return;
 
-    const ability    = this.levelData?.abilities?.[abilityId];
+    const ability = this.levelData?.abilities?.[abilityId];
     if (!ability) return;
 
     // Block if casting animation already playing
     const current = playerSlot.sprite?.anims?.currentAnim;
     if (current && current.key !== 'shaman_idle' && current.key !== 'shaman_attack'
-        && playerSlot.sprite.anims.isPlaying) return;
+      && playerSlot.sprite.anims.isPlaying) return;
 
     // Check mana
     const maxMana = playerSlot.manaBar?.maxValue ?? 1;
-    const mana    = playerSlot.currentMana ?? maxMana;
+    const mana = playerSlot.currentMana ?? maxMana;
     if (mana < ability.manaCost) {
-      console.log('[Player] Not enough mana for', abilityId, '-', mana, '/', ability.manaCost);
       return;
     }
 
@@ -4365,8 +4669,8 @@ export default class GameScene extends Phaser.Scene {
 
     // Deal damage after a short cast delay so it lands with the animation
     const hitCount = ability.hitCount ?? 1;
-    const minDmg   = ability.immediateMin ?? ability.immediateEffect?.value ?? 0;
-    const maxDmg   = ability.immediateMax ?? ability.immediateEffect?.value ?? 0;
+    const minDmg = ability.immediateMin ?? ability.immediateEffect?.value ?? 0;
+    const maxDmg = ability.immediateMax ?? ability.immediateEffect?.value ?? 0;
 
     for (let hit = 0; hit < hitCount; hit++) {
       // Stagger Chain Lightning hits slightly so numbers don't stack
@@ -4376,14 +4680,12 @@ export default class GameScene extends Phaser.Scene {
         this._applyDamageToBoss(damage, 'icon_' + abilityId);
         this.addThreat('player', Math.round(damage * (ability.threatPerDamage ?? 1.0)));
         this._updateThreatMeters();
-        console.log('[Player]', abilityId, 'hit', hit + 1, 'of', hitCount, 'for', damage);
       });
     }
   }
 
   _onPlayerAbility(abilityId) {
     if (this._hasDebuff('player', 'stun')) {
-      console.log('[Player] Stunned -- ability blocked:', abilityId);
       return;
     }
 
@@ -4391,7 +4693,6 @@ export default class GameScene extends Phaser.Scene {
 
     // Silence blocks spells and abilities but not auto-attacks
     if (this._hasDebuff('player', 'silence') && ability?.effects) {
-      console.log('[Player] Silenced -- ability blocked:', abilityId);
       return;
     }
 
@@ -4403,7 +4704,6 @@ export default class GameScene extends Phaser.Scene {
 
     // Legacy fallback (totem abilities still go through old path)
     this._recordCast('player');
-    console.log('[GameScene] Ability (legacy):', abilityId);
 
     const uiForPlayer = this.scene.get('UIScene');
     if (uiForPlayer?.spawnAbilityBadge) {
@@ -4413,10 +4713,10 @@ export default class GameScene extends Phaser.Scene {
 
     const totemSlots = {
       'strength_of_earth_totem': 'earth',
-      'grounding_totem':         'earth',
-      'totem_of_wrath':          'fire',
-      'windfury_totem':          'air',
-      'wrath_of_air_totem':      'air',
+      'grounding_totem': 'earth',
+      'totem_of_wrath': 'fire',
+      'windfury_totem': 'air',
+      'wrath_of_air_totem': 'air',
     };
     if (totemSlots[abilityId]) {
       this.playTotemPlacement(totemSlots[abilityId]);
@@ -4457,7 +4757,7 @@ export default class GameScene extends Phaser.Scene {
 
       // Return a synthetic phase-like object so _tickBossAbilities works unchanged.
       return {
-        id:         activeActor.id + '_active',
+        id: activeActor.id + '_active',
         abilityIds: activeActor.abilityIds ?? [],
       };
     }
@@ -4466,9 +4766,9 @@ export default class GameScene extends Phaser.Scene {
     if (!phases.length) return null;
 
     const bossSlot = this.entitySlots.boss;
-    const maxHp    = bossSlot?.hpBar?.maxValue ?? 1;
+    const maxHp = bossSlot?.hpBar?.maxValue ?? 1;
     const currentHp = bossSlot?.currentHealth ?? maxHp;
-    const hpPct    = currentHp / maxHp;
+    const hpPct = currentHp / maxHp;
 
     // time_cycle phases are handled separately via timeCycleActivePhaseId
     const timeCyclePhase = phases.find(p => p.trigger?.type === 'time_cycle');
@@ -4489,8 +4789,20 @@ export default class GameScene extends Phaser.Scene {
 
       if (triggerType === 'second_actor_alive') {
         const actorId = phase.trigger?.actorId ?? 'secondActor';
-        const slot    = this.entitySlots[actorId];
+        const slot = this.entitySlots[actorId];
         if ((slot?.currentHealth ?? 0) > 0) resolved = phase;
+      }
+
+      if (triggerType === 'summons_count') {
+        const addId = phase.trigger?.addId ?? '';
+        const threshold = phase.trigger?.value ?? 0;
+        const totalSummoned = this.totalSummonsByAddId[addId] ?? 0;
+        if (totalSummoned >= threshold) resolved = phase;
+      }
+
+      if (triggerType === 'cast_complete') {
+        const requiredAbilityId = phase.trigger?.abilityId ?? '';
+        if (this.completedCastAbilityIds.has(requiredAbilityId)) resolved = phase;
       }
     }
 
@@ -4519,7 +4831,7 @@ export default class GameScene extends Phaser.Scene {
     if (!activePhase) return;
 
     if (activePhase.id !== this.currentPhaseId) {
-      const previousId    = this.currentPhaseId;
+      const previousId = this.currentPhaseId;
       this.currentPhaseId = activePhase.id;
 
       console.log('[Phase] Transition:', previousId, '->', activePhase.id);
@@ -4544,19 +4856,19 @@ export default class GameScene extends Phaser.Scene {
   // The time_cycle phase specifies durationTicks (how long it is active)
   // and cooldownTicks (how long the other phase is active before it returns).
   _tickTimeCyclePhase(timeCyclePhase, phases) {
-    const durationTicks  = timeCyclePhase.trigger?.durationTicks  ?? 90;
-    const cooldownTicks  = timeCyclePhase.trigger?.cooldownTicks  ?? 30;
-    const cycleLength    = durationTicks + cooldownTicks;
+    const durationTicks = timeCyclePhase.trigger?.durationTicks ?? 90;
+    const cooldownTicks = timeCyclePhase.trigger?.cooldownTicks ?? 30;
+    const cycleLength = durationTicks + cooldownTicks;
 
     // On first tick, initialise to the time_cycle phase
     if (!this.timeCycleActivePhaseId) {
-      this.timeCycleStartTick    = this.tickCount;
+      this.timeCycleStartTick = this.tickCount;
       this.timeCycleActivePhaseId = timeCyclePhase.id;
       return;
     }
 
-    const elapsed       = this.tickCount - this.timeCycleStartTick;
-    const posInCycle    = elapsed % cycleLength;
+    const elapsed = this.tickCount - this.timeCycleStartTick;
+    const posInCycle = elapsed % cycleLength;
     const shouldBeInCycle = posInCycle < durationTicks;
     const currentlyInCycle = this.timeCycleActivePhaseId === timeCyclePhase.id;
 
@@ -4635,9 +4947,9 @@ export default class GameScene extends Phaser.Scene {
         }
 
         case 'apply_buff': {
-          const actorId    = event.actorId ?? 'boss';
-          const buffId     = event.buffId;
-          const duration   = event.duration ?? 0;
+          const actorId = event.actorId ?? 'boss';
+          const buffId = event.buffId;
+          const duration = event.duration ?? 0;
           const buffParams = event.params ?? {};
           if (actorId === 'boss') {
             this._applyBossBuff(buffId, buffParams, duration);
@@ -4648,9 +4960,9 @@ export default class GameScene extends Phaser.Scene {
 
         case 'apply_debuff': {
           const targetType = event.targetType ?? 'all_allies';
-          const debuffId   = event.debuffId;
-          const duration   = event.duration ?? 4;
-          const params     = event.params ?? {};
+          const debuffId = event.debuffId;
+          const duration = event.duration ?? 4;
+          const params = event.params ?? {};
           const targets = targetType === 'all_allies'
             ? ['player', 'tank', 'healer']
             : [this.getHighestThreatTarget()];
@@ -4686,10 +4998,10 @@ export default class GameScene extends Phaser.Scene {
         }
 
         case 'modify_stats': {
-          const actorId    = event.actorId ?? 'boss';
-          const statKey    = event.statKey;
+          const actorId = event.actorId ?? 'boss';
+          const statKey = event.statKey;
           const multiplier = event.multiplier ?? 1;
-          const slot       = this.entitySlots[actorId];
+          const slot = this.entitySlots[actorId];
           if (slot?._data?.stats?.[statKey] !== undefined) {
             slot._data.stats[statKey] = Math.round(slot._data.stats[statKey] * multiplier);
             console.log('[onEnter] modify_stats:', actorId, statKey, 'x' + multiplier, '=', slot._data.stats[statKey]);
@@ -4722,10 +5034,10 @@ export default class GameScene extends Phaser.Scene {
     const nextIndex = this.currentEncounterActorIndex + 1;
     if (nextIndex >= encounterActors.length) return;
 
-    const slot       = this.entitySlots.boss;
-    const maxHp      = slot?.hpBar?.maxValue ?? 1;
-    const currentHp  = slot?.currentHealth ?? maxHp;
-    const hpPct      = currentHp / maxHp;
+    const slot = this.entitySlots.boss;
+    const maxHp = slot?.hpBar?.maxValue ?? 1;
+    const currentHp = slot?.currentHealth ?? maxHp;
+    const hpPct = currentHp / maxHp;
     const triggerPct = (activeActor.swapTrigger.value ?? 50) / 100;
 
     if (hpPct <= triggerPct) {
@@ -4746,7 +5058,7 @@ export default class GameScene extends Phaser.Scene {
     if (!slot) return;
 
     const FADE_OUT_MS = 600;
-    const FADE_IN_MS  = 900;
+    const FADE_IN_MS = 900;
 
     this.encounterSwapInProgress = true;
 
@@ -4757,29 +5069,29 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.tweens.add({
-      targets:  slot.sprite,
-      alpha:    0,
+      targets: slot.sprite,
+      alpha: 0,
       duration: FADE_OUT_MS,
-      ease:     'Sine.easeIn',
+      ease: 'Sine.easeIn',
       onComplete: () => {
         this.currentEncounterActorIndex = nextIndex;
 
         // Clear combat state from the outgoing actor so it does not carry
         // into the incoming one. Cooldowns, buffs, cast state, and queued
         // abilities are all actor-specific and must start fresh.
-        this.bossAbilityCooldowns       = {};
-        this.bossAbilityLockoutUntil    = 0;
-        this.bossBuffs                  = {};
-        this.bossIsCasting              = false;
-        this.bossCurrentCast            = null;
-        this.bossQueuedAbilityId        = null;
+        this.bossAbilityCooldowns = {};
+        this.bossAbilityLockoutUntil = 0;
+        this.bossBuffs = {};
+        this.bossIsCasting = false;
+        this.bossCurrentCast = null;
+        this.bossQueuedAbilityId = null;
 
         if (this.bossCurrentCastTimer) {
-          try { this.bossCurrentCastTimer.remove(); } catch (e) {}
+          try { this.bossCurrentCastTimer.remove(); } catch (e) { }
           this.bossCurrentCastTimer = null;
         }
 
-        slot._data         = incomingActor;
+        slot._data = incomingActor;
         slot.currentHealth = incomingActor.stats?.maxHealth ?? 0;
 
         if (slot.hpBar) {
@@ -4800,7 +5112,7 @@ export default class GameScene extends Phaser.Scene {
           }
         }
 
-        const newSpriteKey   = incomingActor.spriteKey;
+        const newSpriteKey = incomingActor.spriteKey;
         const newSpriteScale = incomingActor.spriteScale ?? 3;
 
         if (newSpriteKey && this.textures.exists(newSpriteKey)) {
@@ -4815,10 +5127,10 @@ export default class GameScene extends Phaser.Scene {
         }
 
         this.tweens.add({
-          targets:  slot.sprite,
-          alpha:    1,
+          targets: slot.sprite,
+          alpha: 1,
           duration: FADE_IN_MS,
-          ease:     'Back.easeOut',
+          ease: 'Back.easeOut',
           onComplete: () => {
             this.encounterSwapInProgress = false;
           },
@@ -4840,14 +5152,14 @@ export default class GameScene extends Phaser.Scene {
 
     if (slot.sprite) {
       this.tweens.add({
-        targets:  slot.sprite,
-        alpha:    0,
+        targets: slot.sprite,
+        alpha: 0,
         duration: 800,
-        ease:     'Sine.easeIn',
+        ease: 'Sine.easeIn',
       });
     }
 
-    slot.currentHealth  = 0;
+    slot.currentHealth = 0;
     this.secondActorSpawned = false;
 
     console.log('[SecondActor] Dismissed by onEnter event');
@@ -4863,13 +5175,13 @@ export default class GameScene extends Phaser.Scene {
     if (!slot?.sprite) return;
 
     const { WIDTH } = window.GAME_CONFIG;
-    const targetX   = WIDTH / 2;
+    const targetX = WIDTH / 2;
 
     this.tweens.add({
-      targets:  slot.sprite,
-      x:        targetX,
+      targets: slot.sprite,
+      x: targetX,
       duration: 600,
-      ease:     'Sine.easeInOut',
+      ease: 'Sine.easeInOut',
     });
 
     if (slot.hpBar) {
@@ -4888,19 +5200,19 @@ export default class GameScene extends Phaser.Scene {
 
     if (slot.nameText) {
       this.tweens.add({
-        targets:  slot.nameText,
-        x:        targetX,
+        targets: slot.nameText,
+        x: targetX,
         duration: 600,
-        ease:     'Sine.easeInOut',
+        ease: 'Sine.easeInOut',
       });
     }
 
     if (slot.titlePanel) {
       this.tweens.add({
-        targets:  slot.titlePanel,
-        x:        targetX,
+        targets: slot.titlePanel,
+        x: targetX,
         duration: 600,
-        ease:     'Sine.easeInOut',
+        ease: 'Sine.easeInOut',
       });
     }
 

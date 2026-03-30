@@ -7,7 +7,7 @@
   },
   "assets": {
     "background": {
-      "key": "bg_encounter_magtheridax",
+      "key": "bg_magtheridax",
       "path": "assets/raids/bg_the_basement_demon.webp"
     },
     "spritesheets": [
@@ -20,12 +20,6 @@
       {
         "key": "magtheridax_attacking",
         "path": "assets/raids/the_basement_demon/bosses/magtheridax/magtheridax_attacking.webp",
-        "frameWidth": 256,
-        "frameHeight": 256
-      },
-      {
-        "key": "magtheridax_defeated",
-        "path": "assets/raids/the_basement_demon/bosses/magtheridax/magtheridax_defeated.web",
         "frameWidth": 256,
         "frameHeight": 256
       }
@@ -113,13 +107,6 @@
         "frameRate": 12,
         "repeat": 0
       },
-      "defeated": {
-        "key": "magtheridax_defeated",
-        "startFrame": 0,
-        "endFrame": 15,
-        "frameRate": 10,
-        "repeat": 0
-      }
     }
   },
   "characters": {
