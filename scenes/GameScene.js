@@ -129,10 +129,14 @@ export default class GameScene extends Phaser.Scene {
     this.firedEncounterSwapIndices = new Set();
     this.encounterSwapInProgress = false;
 
-    // Dialogue queue -- entries are played one at a time in arrival order.
-    // Each entry: { type: 'sequence'|'popup', ...args }
+    // Dialogue queue -- boss/NPC speech lines, played one at a time in arrival order.
     this.dialogueQueue = [];
     this.dialogueBusy = false;
+
+    // Popup queue -- game-event notifications (sacrifice, enrage, death, etc.).
+    // Independent of dialogueQueue so game messages never block on boss speech.
+    this.popupQueue = [];
+    this.popupBusy = false;
 
     // Combat log -- append-only array of damage events from boss to characters.
     // Each entry: { tick, sourceName, abilityName, targetId, damage, damageType, targetHpAfter }
@@ -382,21 +386,6 @@ export default class GameScene extends Phaser.Scene {
         repeat: 0,
       }, key);
     });
-
-    // Boss defeated animation - key is injected by BossLoadingScene from the catalog.
-    // Each boss has its own defeated spritesheet so we register it here from levelData.
-    const bossDefeatedAnim = this.levelData?.boss?.animations?.defeated;
-    if (bossDefeatedAnim?.key && this.textures.exists(bossDefeatedAnim.key)) {
-      this._safeCreateAnim({
-        key: bossDefeatedAnim.key,
-        frames: anims.generateFrameNumbers(bossDefeatedAnim.key, {
-          start: bossDefeatedAnim.startFrame ?? 0,
-          end: bossDefeatedAnim.endFrame ?? 15,
-        }),
-        frameRate: bossDefeatedAnim.frameRate ?? 10,
-        repeat: 0,
-      }, bossDefeatedAnim.key);
-    }
 
     // =====================
     // BOSS ANIMATIONS
@@ -1489,7 +1478,7 @@ export default class GameScene extends Phaser.Scene {
       // Use the ability's own audioDuration, not the boss intro duration
       const holdMs = ability.audioDuration ?? 3000;
       const holdPerLine = Math.max(500, (holdMs / lines.length) - (fadeMs * 2));
-      this.showDialogueSequence(lines, '#ffaa44', holdPerLine, fadeMs);
+      this.showPopup(lines, '#ffaa44', holdPerLine, fadeMs);
     }
   }
 
@@ -1521,13 +1510,18 @@ export default class GameScene extends Phaser.Scene {
       if (onComplete) onComplete();
       return;
     }
-    this.dialogueQueue.push({ type: 'sequence', lines, color, holdMs, fadeMs, onComplete });
+    this.dialogueQueue.push({ lines, color, holdMs, fadeMs, onComplete });
     this._drainDialogueQueue();
   }
 
-  showPopup(message, color = '#ffffff', duration = 2500) {
-    this.dialogueQueue.push({ type: 'popup', message, color, duration });
-    this._drainDialogueQueue();
+  showPopup(message, color = '#ffffff', duration = 2500, priority = false) {
+    const entry = { message, color, duration };
+    if (priority) {
+      this.popupQueue.unshift(entry);
+    } else {
+      this.popupQueue.push(entry);
+    }
+    this._drainPopupQueue();
   }
 
   _drainDialogueQueue() {
@@ -1541,18 +1535,26 @@ export default class GameScene extends Phaser.Scene {
       this._drainDialogueQueue();
     };
 
-    if (entry.type === 'sequence') {
-      this._showDialogueSequenceNow(
-        entry.lines, entry.color, entry.holdMs, entry.fadeMs,
-        () => { if (entry.onComplete) entry.onComplete(); done(); }
-      );
-    } else {
-      this._showPopupNow(entry.message, entry.color, entry.duration, done);
-    }
+    this._showDialogueSequenceNow(
+      entry.lines, entry.color, entry.holdMs, entry.fadeMs,
+      () => { if (entry.onComplete) entry.onComplete(); done(); }
+    );
+  }
+
+  _drainPopupQueue() {
+    if (this.popupBusy || this.popupQueue.length === 0) return;
+
+    const entry = this.popupQueue.shift();
+    this.popupBusy = true;
+
+    this._showPopupNow(entry.message, entry.color, entry.duration, () => {
+      this.popupBusy = false;
+      this._drainPopupQueue();
+    });
   }
 
   // =======================
-  // Internal display methods -- call showDialogueSequence / showPopup instead.
+  // Internal display methods - call showDialogueSequence / showPopup instead.
   // =======================
 
 
@@ -1697,23 +1699,13 @@ export default class GameScene extends Phaser.Scene {
     const raw = bossData?.dialog?.defeat
       || bossData?.deathDialogue
       || 'I AM... DEFEATED.';
+
     const lines = Array.isArray(raw) ? raw : [raw];
     this.showDialogueSequence(lines, '#aaaaaa');
 
     const slot = this.entitySlots.boss;
     if (slot?.sprite) {
-      const defeatedKey = activeActor?.animations?.defeated?.key
-        ?? this.levelData?.boss?.animations?.defeated?.key
-        ?? this._getBossAnimKey('death');
-
-      if (defeatedKey && this.anims.exists(defeatedKey)) {
-        slot.sprite.play(defeatedKey);
-        slot.sprite.once('animationcomplete', () => {
-          this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 800 });
-        });
-      } else {
-        this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 1500 });
-      }
+      this.tweens.add({ targets: slot.sprite, alpha: 0, duration: 1500 });
     }
 
     this._onBossDefeated();
@@ -1901,11 +1893,11 @@ export default class GameScene extends Phaser.Scene {
     const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
     console.log('[SecondActor]', actorName, 'auto ->', targetName, '|', damage, 'physical');
 
-    const uiScene = this.scene.get('UIScene');
-    if (uiScene?.spawnAbilityBadge) {
-      const secondActorZone = { x: 610, y: 325, w: 400, h: 384 };
-      uiScene.spawnAbilityBadge(secondActorZone, 'autoAttack', actorName + ' attacks!');
-    }
+    // const uiScene = this.scene.get('UIScene');
+    // if (uiScene?.spawnAbilityBadge) {
+    //   const secondActorZone = { x: 610, y: 325, w: 400, h: 384 };
+    //   uiScene.spawnAbilityBadge(secondActorZone, 'autoAttack', actorName + ' attacks!');
+    // }
   }
 
   // =====================================
@@ -1948,11 +1940,24 @@ export default class GameScene extends Phaser.Scene {
 
         const uiScene = this.scene.get('UIScene');
         if (uiScene?.spawnAbilityBadge) {
-          const secondActorZone = { x: 610, y: 325, w: 400, h: 384 };
+          const secondActorZone = { x: 610, y: 450, w: 400, h: 384 };
           uiScene.spawnAbilityBadge(secondActorZone, abilityId, ability.name ?? abilityId);
         }
 
         this._fireBossAbility(abilityId, ability, slot._data.name);
+
+        if (ability.playAttackAnim) {
+          const attackKey = this.levelData.secondActor?.animations?.attacking?.key;
+          const idleKey = this.levelData.secondActor?.animations?.idle?.key;
+          const secondSprite = this.entitySlots.secondActor?.sprite;
+          if (secondSprite && attackKey && this.anims.exists(attackKey)) {
+            secondSprite.play(attackKey);
+            secondSprite.once('animationcomplete', () => {
+              if (idleKey && this.anims.exists(idleKey)) secondSprite.play(idleKey);
+            });
+          }
+        }
+
         break;
       }
     }
@@ -2415,7 +2420,7 @@ export default class GameScene extends Phaser.Scene {
         const casting = ['player', 'tank', 'healer'].find(id => this.entitySlots[id]?.isCasting === true);
         return casting ? [casting] : [];
       }
-      if (targetType === 'boss_self') return [];
+      if (targetType === 'self') return [];
       return [this.getHighestThreatTarget()];
     };
 
@@ -2430,7 +2435,7 @@ export default class GameScene extends Phaser.Scene {
     if (!isDamageAbility) {
       if (isAoE) {
         console.log(logTag, bossName, 'uses', abilityName, '| party');
-      } else if (targetType !== 'boss_self' && targets.length > 0) {
+      } else if (targetType !== 'self' && targets.length > 0) {
         const logTarget = this.entitySlots[targets[0]]?._data?.name ?? targets[0];
         console.log(logTag, bossName, 'uses', abilityName, '->', logTarget);
       } else {
@@ -2582,7 +2587,7 @@ export default class GameScene extends Phaser.Scene {
         const targetName = this.entitySlots[targetId]?._data?.name ?? targetId;
 
         this.activeSacrifice = { targetId, requiredDamage, bossHealthSnapshot };
-        this.showPopup(targetName + ' is marked for Sacrifice!', '#cc44cc', 3000);
+        this.showPopup(targetName + ' is marked for Sacrifice!', '#cc44cc', 3000, true);
 
         this.time.delayedCall(durationTicks * TICK_MS, () => {
           if (!this.gameRunning || !this.activeSacrifice) return;
@@ -2594,10 +2599,10 @@ export default class GameScene extends Phaser.Scene {
             const targetSlot = this.entitySlots[targetId];
             if (targetSlot && (targetSlot.currentHealth ?? 0) > 0) {
               this._applyDamageToCharacter(targetId, targetSlot.currentHealth, iconKey, 'shadow');
-              this.showPopup('The sacrifice is complete!', '#cc0000', 3000);
+              this.showPopup('The sacrifice is complete!', '#cc0000', 3000, true);
             }
           } else {
-            this.showPopup('The sacrifice is broken!', '#44cc44', 3000);
+            this.showPopup('The sacrifice is interrupted!', '#44cc44', 3000, true);
           }
         });
       }

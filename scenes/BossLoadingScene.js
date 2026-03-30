@@ -90,7 +90,6 @@ export default class BossLoadingScene extends Phaser.Scene {
       fontFamily: 'Cinzel, serif', fontSize: '22px', color: '#555555', align: 'center',
     }).setOrigin(0.5);
 
-    // - Wire up loader events -------------------------------
     this.load.on('progress', (value) => {
       if (this._barFill) {
         this._barFill.width    = barW * value;
@@ -108,7 +107,7 @@ export default class BossLoadingScene extends Phaser.Scene {
       if (this._statusText) this._statusText.setText('Ready!');
     });
 
-    // - Queue the level JSON --------------------------------
+    // Level data
     const { levelKey, levelPath } = this.bossMeta;
     if (!levelKey || !levelPath) return;
 
@@ -119,7 +118,7 @@ export default class BossLoadingScene extends Phaser.Scene {
 
     this.load.json(levelKey, levelPath);
 
-    // Load character roster and ability definitions
+    // Load character roster and abilities
     if (!this.cache.json.exists('characters')) {
       this.load.json('characters', 'data/characters/characters.json');
     }
@@ -201,15 +200,7 @@ export default class BossLoadingScene extends Phaser.Scene {
           endFrame:   11,
           frameRate:  12,
           repeat:     0,
-        },
-        defeated: {
-          ...(boss.animations?.defeated || {}),
-          key:        this.bossMeta.defeatedKey,
-          startFrame: 0,
-          endFrame:   11,
-          frameRate:  10,
-          repeat:     0,
-        },
+        }
       },
     };
 

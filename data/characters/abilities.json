@@ -196,8 +196,8 @@
       {
         "type": "damage",
         "damageType": "nature",
-        "min": 100000,
-        "max": 100000,
+        "min": 1000,
+        "max": 3000,
         "target": "current_target"
       },
       {
@@ -272,8 +272,8 @@
       {
         "type": "heal_over_time",
         "hotId": "sustain_hot",
-        "min": 100000,
-        "max": 100000,
+        "min": 4000,
+        "max": 6000,
         "durationTicks": 6,
         "stackable": false,
         "onRecast": "reset"

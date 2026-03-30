@@ -59,8 +59,8 @@
     "redirectsPlayerDamage": true,
     "spriteScale": 2.5,
     "stats": {
-      "health": 200000,
-      "maxHealth": 200000,
+      "health": 150000,
+      "maxHealth": 150000,
       "mana": 0,
       "maxMana": 0,
       "usesMana": false,
@@ -104,7 +104,7 @@
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
       "immediateMin": 3000,
-      "immediateMax": 3000,
+      "immediateMax": 5000,
       "duration": 0,
       "recastTimer": 5,
       "targetType": "highest_threat",
@@ -125,7 +125,7 @@
       "requiresPortalInactive": true,
       "requiresSecondActorDead": true,
       "targetType": "random_ally",
-      "dialogue": "Malvestian marks {target} as a sacrifice!  Hit him hard to interrupt his ritual!",
+      "dialogue": null,
       "audioDuration": 2000
     },
     "fiendish_portal": {
@@ -150,7 +150,7 @@
         "dispellable": true,
         "dispelType": "magic"
       },
-      "dialogue": "Kil'wretch amplifies your hatred of fire!",
+      "dialogue": null,
       "audioDuration": 2000
     },
     "fire_jolt": {
@@ -159,11 +159,12 @@
       "damageType": "fire",
       "immediateFlag": true,
       "immediateEffect": { "type": "damage" },
-      "immediateMin": 1000,
-      "immediateMax": 2500,
+      "immediateMin": 2500,
+      "immediateMax": 3200,
       "duration": 0,
       "recastTimer": 2,
       "targetType": "random_ignore_threat",
+      "playAttackAnim": true,
       "dialogue": null,
       "audioDuration": 1500
     }

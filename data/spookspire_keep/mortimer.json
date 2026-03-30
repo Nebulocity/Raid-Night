@@ -60,7 +60,7 @@
     "threatTable": { "player": 0, "tank": 0, "healer": 0 },
     "audioDuration": 6000,
     "dialog": {
-      "intro": ["Hm, unannounced visitors. Preparations must be made...", "Would my lovely dinner guests kindly assist in entertaining our visitors?"],
+      "intro": ["Hm, unannounced visitors. Preparations must be made...", "Would my lovely dinner guests kindly assist in entertaining them?"],
       "defeat": ["Alas, the meal service must condlude..."],
       "victory": ["Victory!"]
     },
